@@ -10,11 +10,13 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import random
+from .advanced import Features, train_logistic, predict as logistic_predict
 from dataclasses import dataclass
 from pathlib import Path
 
 TEMPERATURES = (0.5, 0.65, 0.8, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0)
-METHODS = ("coin_flip", "elo", "trend_elo", "calibrated_trend_elo")
+METHODS = ("coin_flip", "elo", "trend_elo", "calibrated_trend_elo", "logistic")
 
 
 @dataclass(frozen=True)
@@ -23,6 +25,7 @@ class Outcome:
 
     base_difference: float
     trend_difference: float
+    win_pct_difference: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -88,7 +91,10 @@ def load_years(web_dir: Path) -> tuple[list[Year], str]:
             trend = float(winner["projectedRating"]) - float(loser["projectedRating"])
             if not (math.isfinite(base) and math.isfinite(trend)):
                 raise ValueError(f"non-finite rating in season {season}")
-            year_games.append(Outcome(base, trend))
+            def win_pct(team: dict) -> float:
+                played = int(team.get("wins", 0)) + int(team.get("losses", 0))
+                return float(team.get("wins", 0)) / played if played else 0.5
+            year_games.append(Outcome(base, trend, win_pct(winner) - win_pct(loser)))
         if year_games:
             years.append(Year(season, tuple(year_games), omitted))
     if not years:
@@ -121,6 +127,59 @@ def scores(probabilities: list[float]) -> dict[str, float | int]:
     }
 
 
+def reliability(probabilities: list[float]) -> list[dict]:
+    """Estimate calibration conditional on the predicted favorite, in 10 bins.
+
+    With stored winner-oriented probabilities, the expected favorite outcome is
+    1 when the recorded winner was favored, 0 when an upset occurred, and 0.5
+    for ties in model strength. This avoids the all-winner-label artifact.
+    """
+    bins: list[list[tuple[float, float]]] = [[] for _ in range(10)]
+    for p in probabilities:
+        confidence = max(p, 1.0 - p)
+        observed = 1.0 if p > .5 else 0.0 if p < .5 else 0.5
+        index = min(9, max(0, int((confidence - .5) * 20)))
+        bins[index].append((confidence, observed))
+    return [{
+        "lower": round(0.5 + i * .05, 2),
+        "upper": round(0.5 + (i + 1) * .05, 2),
+        "count": len(rows),
+        "confidence": round(sum(p for p, _ in rows) / len(rows), 6) if rows else None,
+        "accuracy": round(sum(y for _, y in rows) / len(rows), 6) if rows else None,
+    } for i, rows in enumerate(bins)]
+
+
+def block_bootstrap(years: list[dict], samples: int = 2000, seed: int = 2027) -> dict:
+    """Paired 95% interval for Brier difference to Elo, resampling whole years.
+
+    This is a descriptive uncertainty interval, NOT a formal guarantee of
+    superiority. A season is the resampling unit, not a single correlated game.
+    """
+    rng = random.Random(seed)
+    methods = [method for method in METHODS if method != "elo"]
+    result = {}
+    for method in methods:
+        draws = []
+        for _ in range(samples):
+            selected = [years[rng.randrange(len(years))] for _ in years]
+            n = sum(y["evaluatedGames"] for y in selected)
+            delta = sum(y["evaluatedGames"] *
+                        (y["models"][method]["brier"] - y["models"]["elo"]["brier"])
+                        for y in selected) / n
+            draws.append(delta)
+        draws.sort()
+        result[method] = {
+            "deltaBrierVsElo": round(sum(y["evaluatedGames"] *
+                (y["models"][method]["brier"] - y["models"]["elo"]["brier"])
+                for y in years) / sum(y["evaluatedGames"] for y in years), 6),
+            "interval95": [round(draws[int(.025 * samples)], 6),
+                           round(draws[min(samples - 1, int(.975 * samples))], 6)],
+            "samples": samples,
+            "unit": "tournament season",
+        }
+    return result
+
+
 def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 5) -> dict:
     """Chronological walk-forward test: no outcome from test year tunes test year."""
     if min_training_seasons < 1:
@@ -136,12 +195,21 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
         current = ordered[i]
         past = [game for previous in ordered[:i] for game in previous.games]
         temperature = choose_temperature(past)
+        weights = train_logistic([
+            Features(g.base_difference, g.trend_difference, g.win_pct_difference)
+            for g in past
+        ])
         row: dict[str, list[float]] = {
             "coin_flip": [0.5 for _ in current.games],
             "elo": [probability_of_winner(game.base_difference) for game in current.games],
             "trend_elo": [probability_of_winner(game.trend_difference) for game in current.games],
             "calibrated_trend_elo": [
                 probability_of_winner(game.trend_difference, temperature) for game in current.games
+            ],
+            "logistic": [
+                logistic_predict(Features(g.base_difference, g.trend_difference,
+                                          g.win_pct_difference), weights)
+                for g in current.games
             ],
         }
         for method in METHODS:
@@ -153,6 +221,7 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "evaluatedGames": len(current.games),
             "omittedGames": current.omitted_games,
             "calibrationTemperature": temperature,
+            "logisticWeights": [round(w, 6) for w in weights],
             "models": {method: scores(row[method]) for method in METHODS},
         })
     return {
@@ -164,6 +233,8 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
         "firstTestSeason": test_years[0]["season"],
         "lastTestSeason": test_years[-1]["season"],
         "aggregate": {method: scores(predictions[method]) for method in METHODS},
+        "reliability": {method: reliability(predictions[method]) for method in METHODS},
+        "seasonBlockUncertainty": block_bootstrap(test_years),
         "yearByYear": test_years,
         "limitations": [
             "Matchups are historical observed pairs, not predicted field selection or bracket paths.",
@@ -171,6 +242,8 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "Temperature is chosen from previous seasons' tournament outcomes only.",
             "Incomplete seasons and canceled tournaments are excluded; missing team ratings are counted and skipped.",
             "The baseline Elo parameters were fixed before this evaluation, not independently optimized by year.",
+            "Logistic coefficients are fit on historical *earlier-year* tournament outcomes and regular-season-only features.",
+            "A 95% season-block bootstrap is descriptive uncertainty, not a future guarantee.",
         ],
     }
 
