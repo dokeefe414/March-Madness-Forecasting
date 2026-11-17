@@ -811,3 +811,14 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 @media(max-width:980px){.v13-ops-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.v13-duel-matches{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.v13-research-grid,.v13-check-grid,.v13-duel-matches{grid-template-columns:1fr}.v13-duel-score,.v13-ops-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.v13-ops-metrics,.v13-duel-score{grid-template-columns:1fr}.v13-research-metrics{grid-template-columns:1fr}.v13-duel-actions>div{width:100%}.v13-duel-actions>div button{flex:1}}
+
+/* Mobile first-access navigation: predictable thumb-sized targets */
+.v13-mobile-top-actions{display:none}
+@media(max-width:980px){
+ .v13-mobile-top-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0 12px}
+ .v13-mobile-top-actions button{background:#11313b;color:#c3e8d5;border:1px solid #4b7969;border-radius:9px;
+   min-height:44px;padding:10px 5px;cursor:pointer;font-size:10px;letter-spacing:.25px;font-weight:900}
+ .v13-mobile-top-actions button.selected,.v13-mobile-top-actions button:hover,.v13-mobile-top-actions button:focus-visible{
+   background:#b3ffd4;color:#08291e;border-color:#e1ffeb}
+}
+@media(max-width:375px){.v13-mobile-top-actions button{font-size:9px}}
