@@ -213,8 +213,45 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
     }
 
 
+def independently_verified_finals(scoreboards: list[dict]) -> dict[str, dict]:
+    """Only ESPN's completed final, exact source scores, and date qualify."""
+    verified: dict[str, dict] = {}
+    for scoreboard in scoreboards:
+        if not isinstance(scoreboard, dict) or not isinstance(scoreboard.get("events"), list):
+            raise ValueError("ESPN finals source missing events")
+        for event in scoreboard["events"]:
+            status = ((event.get("status") or {}).get("type") or {})
+            if str(status.get("name") or "").upper() != "STATUS_FINAL" or status.get("completed") is not True:
+                continue
+            event_id = str(event.get("id") or "").strip()
+            if not event_id:
+                raise ValueError("Completed ESPN final missing event ID")
+            try:
+                final_day = parse_time(event["date"]).astimezone(LOCAL).date().isoformat()
+                comps = event.get("competitions") or []
+                if len(comps) != 1:
+                    continue
+                sides = comps[0].get("competitors") or []
+                home = [x for x in sides if x.get("homeAway") == "home"]
+                away = [x for x in sides if x.get("homeAway") == "away"]
+                if len(home) != 1 or len(away) != 1:
+                    continue
+                h, a = int(home[0]["score"]), int(away[0]["score"])
+            except (KeyError, ValueError, TypeError):
+                continue
+            if h <= 0 or a <= 0 or h == a:
+                continue
+            row = {"date":final_day, "homeScore":h, "awayScore":a,
+                   "verification":"independent ESPN completed STATUS_FINAL"}
+            if event_id in verified and verified[event_id] != row:
+                raise ValueError(f"Conflicting ESPN final for {event_id}")
+            verified[event_id] = row
+    return verified
+
+
 def settle_snapshots(snapshots: list[dict], final_games: list[dict],
-                     previously_settled: set[str], now: datetime) -> list[dict]:
+                     previously_settled: set[str], now: datetime,
+                     verified_finals: dict[str,dict] | None = None) -> list[dict]:
     """Settle by exact matchup and Eastern scheduled date; never alter snapshot."""
     by_key: dict[tuple[str, str, str], list[dict]] = {}
     for g in final_games:
@@ -246,6 +283,14 @@ def settle_snapshots(snapshots: list[dict], final_games: list[dict],
             if len(candidates) != 1:
                 continue
             game = candidates[0]
+            if verified_finals is not None:
+                check = verified_finals.get(str(f["eventId"]))
+                if (check is None or check["date"] != f["scheduledEasternDate"] or
+                    check["homeScore"] != game["homeScore"] or
+                    check["awayScore"] != game["awayScore"]):
+                    # No independent final, unexpected score, or changed date.
+                    # Refuse settlement instead of counting provisional scores.
+                    continue
             outcome = int(game["homeScore"] > game["awayScore"])
             p = float(f["homeWinProbability"])
             if not (0 < p < 1):
@@ -263,6 +308,10 @@ def settle_snapshots(snapshots: list[dict], final_games: list[dict],
                 "winnerCorrect": int((p>.5 and outcome==1) or (p<.5 and outcome==0))
                                  if p != .5 else .5,
                 "settlementPolicy": "exact canonical team pair + Eastern scheduled date",
+                "espnFinalVerified": verified_finals is not None,
+                "independentVerification": ("ESPN STATUS_FINAL / matching NCAA score"
+                                             if verified_finals is not None else
+                                             "offline legacy source match only"),
             })
     return records
 
@@ -279,7 +328,9 @@ def _write_json(path: Path, data: dict) -> None:
         stream.write("\n")
 
 
-def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetime) -> dict:
+def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetime,
+                 verified_finals: dict[str,dict] | None = None,
+                 source_warnings: list[str] | None = None) -> dict:
     """Append-only source-based archives; index is a replaceable derived view."""
     folder = Path(out_dir)
     snapshot_dir, settlement_dir = folder / "snapshots", folder / "settlements"
@@ -292,11 +343,7 @@ def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetim
     all_snapshots = _existing(snapshot_dir)
     all_settlements = _existing(settlement_dir)
     done = {r["predictionKey"] for s in all_settlements for r in s["results"]}
-    newly_done = settle_snapshots(all_snapshots, finals, done, now)
-    if not snapshot["predictions"] and not newly_done and (folder / "index.json").exists():
-        # Avoid a noisy daily commit when no new source-verified audit evidence
-        # exists. Preserve the previous index time and verified contents.
-        return json.loads((folder / "index.json").read_text(encoding="utf-8"))
+    newly_done = settle_snapshots(all_snapshots, finals, done, now, verified_finals=verified_finals)
     if newly_done:
         _write_json(settlement_dir / (stamp + ".json"), {
             "generatedAtUtc": now.isoformat().replace("+00:00","Z"),
@@ -317,6 +364,18 @@ def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetim
     index = {
         "schemaVersion": 1, "generatedAtUtc": now.isoformat().replace("+00:00", "Z"),
         "uniqueGames": forward,
+        "archiveHealth": {
+            "generatedAtUtc": now.isoformat().replace("+00:00", "Z"),
+            "newPredictions": len(snapshot.get("predictions", [])),
+            "verifiedNewSettlements": len(newly_done),
+            "everArchivedPredictions": sum(len(x["predictions"]) for x in all_snapshots),
+            "independentFinalVerification": verified_finals is not None,
+            "completedEspnEventsChecked": len(verified_finals or {}),
+            "sourceWarnings": source_warnings or [],
+            "status": ("source-partial" if source_warnings else
+                       "no-pregame-forecasts" if not all_snapshots else "recording"),
+            "policy": "No final settlement without completed ESPN and same-score NCAA evidence",
+        },
         "snapshots": [{
             "id": s["snapshotId"],
             "generatedAtUtc": s["generatedAtUtc"],
@@ -349,11 +408,36 @@ def main() -> None:
         if parse_time(online_model["generatedAtUtc"]) > now:
             raise ValueError("online training artifact is newer than archived forecast")
 
+    today = now.astimezone(LOCAL).date()
+    source_warnings: list[str] = []
     if args.scoreboard_json:
-        scoreboards = [json.loads(args.scoreboard_json.read_text(encoding="utf-8"))]
+        fixture_data = json.loads(args.scoreboard_json.read_text(encoding="utf-8"))
+        scoreboards = fixture_data if isinstance(fixture_data, list) else [fixture_data]
+        finals_scoreboards = scoreboards
     else:
-        days = [now.astimezone(LOCAL).date() + timedelta(days=i) for i in range(2)]
-        scoreboards = [retrieve_fixture(day) for day in days]
+        # Verify up to ten days of still-relevant finals without downloading an
+        # unbounded season. Fetch future fixtures independently of old results.
+        dates = [today + timedelta(days=i) for i in range(3)]
+        all_old = _existing(args.out_dir / "snapshots")
+        past_days = {
+            date.fromisoformat(pred["scheduledEasternDate"])
+            for snap in all_old for pred in snap.get("predictions", [])
+            if today - timedelta(days=10) <=
+               date.fromisoformat(pred["scheduledEasternDate"]) <= today
+        }
+        completed_dates = sorted(past_days | {
+            today - timedelta(days=i) for i in range(1,4)
+        })
+        by_date = {}
+        for day in sorted(set(dates + completed_dates)):
+            try:
+                by_date[day] = retrieve_fixture(day)
+            except (OSError, TimeoutError, ValueError, KeyError) as exc:
+                source_warnings.append(f"{day.isoformat()}: {type(exc).__name__}")
+        scoreboards = [by_date[day] for day in dates if day in by_date]
+        finals_scoreboards = [by_date[day] for day in completed_dates if day in by_date]
+        if not scoreboards:
+            raise RuntimeError("All scheduled ESPN fixture checks failed; no false archive created")
     forecast = forecast_scheduled(scoreboards, ratings, now, online_model=online_model,
                                   state_space=state_space)
     if args.finals_csv:
@@ -361,7 +445,9 @@ def main() -> None:
     else:
         finals_text = fetch_csv()
     finals = final_games(finals_text, now.date())
-    index = write_ledger(args.out_dir, forecast, finals, now)
+    confirmations = independently_verified_finals(finals_scoreboards)
+    index = write_ledger(args.out_dir, forecast, finals, now,
+                         verified_finals=confirmations, source_warnings=source_warnings)
     print(f"Pregame futures: {len(forecast['predictions'])} "
           f"(unmatched {forecast['coverage']['unmatchedOrAmbiguous']}). "
           f"Settled archive predictions: {index['scores']['settledPredictions']}. "
