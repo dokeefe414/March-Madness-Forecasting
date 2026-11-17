@@ -25,6 +25,7 @@ from .core import matchup_probability
 from .reference import canonical
 from .live import SOURCE_URL, final_games, fetch_csv
 from .retrain import validate_for_pick, probability as online_probability
+from .forward_ensemble import candidate as ensemble_candidate, validate_for_fixture as validate_ensemble
 from .performance import summarize_forward
 
 ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard"
