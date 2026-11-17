@@ -108,7 +108,7 @@ jobs:
       - name: Generate static website
         working-directory: web
         env:
-          NEXT_PUBLIC_BASE_PATH: /March-Madness-Forecasting
+          NEXT_PUBLIC_BASE_PATH: /March-Madness-Forecasting26-27
         run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
