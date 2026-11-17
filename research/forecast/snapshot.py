@@ -346,6 +346,44 @@ def settle_snapshots(snapshots: list[dict], final_games: list[dict],
     return records
 
 
+
+def detect_schedule_changes(snapshots: list[dict], scoreboards: list[dict]) -> list[dict]:
+    """Flag observed changed ESPN fixture times without rewriting original picks.
+
+    Only event IDs present in retrieved source boards are compared. If an event
+    disappeared entirely, no authoritative cancellation can be inferred.
+    """
+    source: dict[str, set[str]] = {}
+    for board in scoreboards:
+        for event in board.get("events", []):
+            key = str(event.get("id") or "")
+            if not key or not event.get("date"):
+                continue
+            try:
+                start = parse_time(event["date"]).isoformat()
+            except (TypeError, ValueError):
+                continue
+            source.setdefault(key, set()).add(start)
+    changes: dict[str, dict] = {}
+    for snap in snapshots:
+        for pred in snap.get("predictions", []):
+            key = str(pred["eventId"])
+            original = parse_time(pred["scheduledStartUtc"]).isoformat()
+            observed = source.get(key)
+            if observed is None or original in observed:
+                continue
+            if len(observed) != 1:
+                continue
+            revised = next(iter(observed))
+            changes[key] = {
+                "eventId": key, "home":pred["home"], "away":pred["away"],
+                "originalListedStartUtc":original,"revisedListedStartUtc":revised,
+                "status":"source-time-changed-review",
+                "note":"Reschedule detected only where the same ESPN event ID was observed on fetched scoreboards. Earlier pregame forecast remains immutable; settlement keeps its original verification rules.",
+            }
+    return sorted(changes.values(),key=lambda r:r["eventId"])[:40]
+
+
 def _existing(path: Path) -> list[dict]:
     return [json.loads(f.read_text(encoding="utf-8")) for f in sorted(path.glob("*.json"))]
 
@@ -360,7 +398,8 @@ def _write_json(path: Path, data: dict) -> None:
 
 def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetime,
                  verified_finals: dict[str,dict] | None = None,
-                 source_warnings: list[str] | None = None) -> dict:
+                 source_warnings: list[str] | None = None,
+                 schedule_changes: list[dict] | None = None) -> dict:
     """Append-only source-based archives; index is a replaceable derived view."""
     folder = Path(out_dir)
     snapshot_dir, settlement_dir = folder / "snapshots", folder / "settlements"
@@ -398,6 +437,7 @@ def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetim
             "generatedAtUtc": now.isoformat().replace("+00:00", "Z"),
             "newPredictions": len(snapshot.get("predictions", [])),
             "fixtureCoverage": snapshot.get("coverage", {}),
+            "observedScheduleChanges": schedule_changes or [],
             "verifiedFixtureRun": True,
             "verifiedNewSettlements": len(newly_done),
             "everArchivedPredictions": sum(len(x["predictions"]) for x in all_snapshots),
@@ -444,6 +484,7 @@ def main() -> None:
 
     today = now.astimezone(LOCAL).date()
     source_warnings: list[str] = []
+    schedule_changes: list[dict] = []
     if args.scoreboard_json:
         fixture_data = json.loads(args.scoreboard_json.read_text(encoding="utf-8"))
         scoreboards = fixture_data if isinstance(fixture_data, list) else [fixture_data]
@@ -477,6 +518,7 @@ def main() -> None:
         finals_scoreboards = [by_date[day] for day in completed_dates if day in by_date]
         if not scoreboards:
             raise RuntimeError("All scheduled ESPN fixture checks failed; no false archive created")
+        schedule_changes = detect_schedule_changes(all_old, list(by_date.values()))
     forecast = forecast_scheduled(scoreboards, ratings, now, online_model=online_model,
                                   state_space=state_space, opponent_model=opponent_model)
     if args.finals_csv:
@@ -486,7 +528,8 @@ def main() -> None:
     finals = final_games(finals_text, now.date())
     confirmations = independently_verified_finals(finals_scoreboards)
     index = write_ledger(args.out_dir, forecast, finals, now,
-                         verified_finals=confirmations, source_warnings=source_warnings)
+                         verified_finals=confirmations, source_warnings=source_warnings,
+                         schedule_changes=schedule_changes)
     print(f"Pregame futures: {len(forecast['predictions'])} "
           f"(unmatched {forecast['coverage']['unmatchedOrAmbiguous']}). "
           f"Settled archive predictions: {index['scores']['settledPredictions']}. "
