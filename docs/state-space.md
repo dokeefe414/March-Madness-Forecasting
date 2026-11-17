@@ -41,3 +41,12 @@ py -m unittest discover -s research/tests -p "test_state_space.py" -v
 The Game Center research comparison shows a state-space hypothetical probability only if both teams have source-built latent states and the training date is earlier than the scheduled match. The pretipoff ledger also freezes it as an experimental comparison for later independent evaluation — **not** as the selected forecast.
 
 Compare prospective reliability, drift and delayed-release sensitivity before considering a subsequent model promotion experiment. Do not conflate a big latent mean movement with a certified change point or explain a miss using an injury never verified in the source.
+
+
+## v0.9 innovation-driven adaptive candidate
+
+The original **fixed** Kalman-style model is retained as a control. A *second, independently evaluated* adaptive state filter starts from the same baseline assumptions and source date. Both predictions are frozen before any game-day result is incorporated. The adaptive candidate tracks each prior game's standardized innovation `e/sqrt(S)`.
+
+A watch opens only when **two of the last three innovations** have the same sign and magnitude at least **0.8**; the team's *next* process-noise contribution multiplies by **2.5** (baseline `18²`). The watch clears after persistent evidence stops. An isolated spectacular loss never causes an instant permanent skill or probability edit. Per-team `recentStandardizedInnovations`, `driftWatch`, `driftWatchEpisodes`, latent mean/uncertainty, and `adaptiveStrengths` appear in the public source report. `adaptiveBrier` versus `eloSameDayBrier` are evaluated on the **same date-frozen cases**, and `recentSevenDatesBrier` reports the newest matching cohort.
+
+This remains a **heuristic watch**, not a tested statistical change-point detector or proof that a player's injury, coaching or roster change occurred. Neither fixed nor adaptive model is automatically the real headline probability. Both may be frozen before tipoff as research alternatives so actual forward comparisons can begin. [Detailed equations and validation](v09-model-validation.md).
