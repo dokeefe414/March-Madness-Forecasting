@@ -57,9 +57,9 @@ test("core page has no critical WCAG violations",async ({page})=>{
   expect(severe.map(v=>v.id+": "+v.description)).toEqual([]);
 });
 
-test("game finder supports sourced fixture search, explanations and opponent evidence",async ({page})=>{
+test("game finder supports sourced fixture search, explanations and opponent evidence",async ({page},testInfo)=>{
   // Hermetic browser fixture: never rely on ESPN / NCAA network in CI.
-  const fixture="2027-01-15T20:00:00Z";
+  const fixture=new Date(Date.now()+3*24*60*60*1000).toISOString();
   const profile=(name:string,id:string,elo:number)=>({
     name,teamId:id,rating:elo,trend:3,wins:7,losses:3,
     conference:"Example conference",opponentAverageElo:1502,
@@ -78,7 +78,7 @@ test("game finder supports sourced fixture search, explanations and opponent evi
       generatedAtUtc:"2027-01-15T12:00:00Z",ratingRetrievedAtUtc:"2027-01-15T12:00:00Z",
       lastIncludedGameDate:"2027-01-14",
       coverage:{futureScheduled:1,eligibleForecasts:1,unmatchedOrAmbiguous:0},
-      games:[{eventId:"test-fixture-1",scheduledStartUtc:fixture,scheduledEasternDate:"2027-01-15",
+      games:[{eventId:"test-fixture-1",scheduledStartUtc:fixture,scheduledEasternDate:fixture.slice(0,10),
         neutralSite:false,home:"Example Home",away:"Example Away",homeWinProbability:.69,
         baselineHomeWinProbability:.65,status:"ready",model:"as-of regular-season Elo",
         homeProfile:home,awayProfile:away,
@@ -98,4 +98,5 @@ test("game finder supports sourced fixture search, explanations and opponent evi
   await expect(page.locator(".gc-detail")).toContainText("Example University");
   await expect(page.getByLabel("Hypothetical team A")).toBeVisible();
   await expect(page.getByLabel("Hypothetical team B")).toBeVisible();
+  await page.screenshot({path:"test-results/"+testInfo.project.name+"-game-intelligence.png",fullPage:true});
 });
