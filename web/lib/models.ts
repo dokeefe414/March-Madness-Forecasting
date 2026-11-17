@@ -11,10 +11,14 @@ export type Team = {
   losses: number;
   history: number[];
   seed?: string;
+  pointsForPerGame?: number;
+  pointsAgainstPerGame?: number;
+  marginPerGame?: number;
+  opponentAverageElo?: number;
 };
 
 export type RatingsDataset = {
-  mode: "demo" | "historical";
+  mode: "demo" | "historical" | "current";
   season: number;
   throughDay: number | null;
   label: string;
@@ -36,6 +40,11 @@ export type RatingsDataset = {
     mainDrawOnly?: boolean;
   };
   teams: Team[];
+  retrievedAtUtc?: string;
+  lastGameDate?: string;
+  cutoffDate?: string;
+  recentGames?: Array<{id: string; date: string; home: string; away: string; homeScore: number; awayScore: number}>;
+  isOfficialBracket?: boolean;
 };
 
 export type TitleResult = { teamId: string; titleProbability: number };
