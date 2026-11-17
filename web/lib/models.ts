@@ -45,6 +45,7 @@ export type RatingsDataset = {
   cutoffDate?: string;
   recentGames?: Array<{id: string; date: string; home: string; away: string; homeScore: number; awayScore: number}>;
   isOfficialBracket?: boolean;
+  pregameDiagnostics?: {evaluatedGames: number; brier: number; accuracy: number; coinFlipBrier: number; method: string; caveat: string};
 };
 
 export type TitleResult = { teamId: string; titleProbability: number };
