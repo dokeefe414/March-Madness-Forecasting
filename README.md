@@ -1,74 +1,113 @@
 # MARCH FORECAST
 
-## College basketball forecasting, with the receipts.
+**Know the numbers. Question the models. Forecast the madness.**
 
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml)
-[![Deploy](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml)
+[![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml)
+![Version](https://img.shields.io/badge/release-v0.6%20Predictive%20Intelligence-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
-![TypeScript](https://img.shields.io/badge/Next.js-16-222f46)
-![Provenance](https://img.shields.io/badge/Results-source%20verified-27b88a)
+![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
+![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
-**[OPEN MARCH FORECAST](https://dokeefe414.github.io/March-Madness-Forecasting/)** · [Research methods](docs/validation.md) · [Data sources](docs/current-season.md) · [Bracket engine](docs/bracket-engine.md)
+### [OPEN THE LIVE WEBSITE](https://dokeefe414.github.io/March-Madness-Forecasting/)
 
-March Forecast is a public, responsive men's college basketball analytics and prediction research platform. It brings together historical tournaments, a real 2026–27 NCAA-source results feed, transparent team-strength estimates, holdout-year model validation and deterministic tournament simulations. **We never make up games, official seeds or forecasts to fill gaps in data.**
+[Research models](docs/model-zoo-v06.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
-> **2027 is a new era:** The NCAA men's tournament will expand to **76 teams** with **12 Opening Round games** before the traditional 64-team bracket. The team field will not be officially selected until **Sunday, March 14, 2027**. [Source: NCAA](https://www.ncaa.com/news/basketball-men/article/2026-05-07/how-2027-expanded-ncaa-tournament-and-march-madness-brackets-will-work).
+March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
-## Explore the platform
+> **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
 
-| Workspace | What works | Important boundary |
+---
+
+## What's new in v0.6?
+
+| Area | New capability | What it does *not* claim |
 | --- | --- | --- |
-| **2027 Pulse** | Updated current-season Elo rankings, actual final scores, form changes, margin-per-game, matchup probabilities and a sequential pregame model scorecard | NCAA-derived results published by SportsDataverse; **not** official NCAA power rankings or live play-by-play |
-| **Historical Rankings** | All 42 seasons 1985–2026, team search, sort, season selector and rating timelines | 2026 regular-season mirror is incomplete |
-| **Matchup Lab** | Compare historical teams using frozen Elo-based probabilities | No injury, lineup, travel or possession adjustment |
-| **Bracket Lab** | Historical official seeded 64/65/68-team fields, opening rounds and all six advancement stages | Known historical entrants; generic Final Four region crossover scenario |
-| **Research Lab** | Five methods, reliability charts, per-year Brier/log-loss/accuracy, paired whole-season bootstrap intervals | Conditions on *actual historical matchups*; no claimed 2027 selection odds |
-| **Tournament Archive** | Historical NCAA results, champions, source coverage and held-out diagnostics | 2020 canceled, 2026 supplemental main draw excludes First Four |
+| **NCAA source identity** | Exact 2027 team ID/conference crosswalk **plus independent 2027 Division I subdivision membership evidence**; matched/unmatched coverage, conference filters | D-I source group membership is verified separately; neither membership nor a conference name certifies individual postseason eligibility |
+| **True pace stats** | Opponent-regularized per-100-possession offense, defense, net and pace from real NCAA-derived team box rows | Descriptive efficiency is not yet a historically trained win-probability model |
+| **Strong prediction research** | Seven baseline/learned methods plus a prior-year-tuned **probability ensemble**; boosted Elo, causal EWMA, uncertainty, full walk-forward validation | Out-of-time historical results do not guarantee success in the upcoming season |
+| **Real pregame evidence** | Scheduled future ESPN fixtures, conservative identity matching, strict pretipoff creation timestamps, immutable Git-published picks, later NCAA-score settlements | A scheduled ESPN start is not independently verified actual tipoff; no past picks are backfilled |
+| **2027 selection watch** | 32 conference-leader *proxies*, 44 rating-based at-large *proxies*, 16 near-cutline candidates, wide illustrative strength tiers — **only if crosswalk coverage permits** | Not a committee bracket, NCAA NET, probability of a bid, conference champion, or real seed |
+| **Premium visuals and QA** | Nine-tab responsive site, interactive Elo histories, possession profiles, source status cards, new selection/audit pages, Playwright desktop + mobile tests, axe critical WCAG checks | Visual smoke checks are not a complete human or screen-reader audit |
 
-The bracket engine also accepts a verified **76-team** field with 12 Opening Round slots; it will not invent a field or seed allocations ahead of selection.
+The existing **42-year historical archive (1985–2026)**, historical matchup laboratory, actual tournament-result explorer, and **64/65/68/76** full-field Monte Carlo tournament format are preserved. The official 2027 men's field is **76 teams** including **12 Opening Round games** before the main 64-team bracket; it has not been selected yet. [Official NCAA explanation](https://www.ncaa.com/news/basketball-men/article/2026-05-07/how-2027-expanded-ncaa-tournament-and-march-madness-brackets-will-work).
 
-## Technology and scientific foundation
+## Model performance: results, not slogans
 
-- **Historical archive:** 198,079 sourced men's regular-season games across 1985–2026; 2,585 official Kaggle-format NCAA tournament results through 2025, plus 63 independently sourced 2026 main-draw results with explicitly incomplete First Four data.
-- **Elo model:** starts each team at 1500 every season, `K=24`, home advantage 65 Elo points, bounded recent five-game trend.
-- **Rolling benchmark:** evaluate later NCAA tournament seasons using frozen regular-season data; fit probability temperature and regularized logistic regression using **previous years only**.
-- **Logistic features:** pre-tournament Elo difference, recent form adjustment, and regular-season win percentage. These are not pace-adjusted offensive/defensive possession statistics.
-- **Uncertainty:** favorite reliability bins and reproducible 2,000-replicate *season-block* bootstrap intervals for Brier error differences.
-- **Current season:** `stats.ncaa.org` → SportsDataverse NCAA basketball data release → strict standard-library Python importer → separated 2027 Elo → static web. Source freshness displayed as last included game date and UTC retrieval time.
-- **Tournament:** four sourced regions of 16 main-draw seed positions, optionally paired play-in teams, seeded Monte Carlo 1k/5k/20k runs and full advancement probabilities.
-- **Stack:** Python standard library, Next.js 16, React 19, TypeScript, pure CSS, GitHub Actions and static GitHub Pages. No paid APIs or accounts are required.
+The historical tournament benchmark scores the **same 2,270 games from 35 held-out tournament seasons (1990–2025)** for every model, training or tuning only with earlier seasons. Canceled 2020 and the incomplete 2026 regular-season archive are excluded.
 
-## Architecture at a glance
+| Model | Brier ↓ | Log loss ↓ | Accuracy |
+| --- | ---: | ---: | ---: |
+| Coin flip | 0.2500 | 0.6931 | 50.0% |
+| Standard Elo | 0.2225 | 0.6360 | 63.6% |
+| Form-adjusted Elo | 0.2240 | 0.6391 | 63.5% |
+| Adaptive regime/EWMA | 0.2274 | 0.6460 | 62.0% |
+| Calibrated Elo | 0.2207 | 0.6296 | 63.5% |
+| L2 logistic regression | 0.2291 | 0.6506 | 63.2% |
+| **Boosted Elo** | **0.2181** | **0.6255** | 63.6% |
+| Earlier-heldout-year ensemble | 0.2205 | 0.6296 | 63.6% |
+
+**Boosted Elo currently has the best Brier score in the historical test.** The more complicated adaptive and logistic baselines actually perform worse than standard Elo; their results stay visible. Statistical uncertainty must be judged against the season-block 95% intervals in the dynamically generated research report. The 2027 source is separate from historical Kaggle data; possession-based 2027 statistics are **not quietly inserted into these backtests**. This is scoring on already-realized historical *matchups*, not a proven historical ability to select or fill NCAA brackets.
+
+[Full math, model cards and reproducibility](docs/model-zoo-v06.md) · [Earlier technical benchmark specification](docs/rolling-benchmark.md)
+
+## Explore the application
+
+**2027 Pulse** displays NCAA-source finals, independent 2027 Elo ratings, actual team history, a causal volatility/regime signal, confirmed crosswalk confidence and optional box-score possession estimates. The matchup tool can compare base Elo with historically calibrated/ensemble *scenarios* when that calibration report exists. It explicitly flags that March-neutral calibration was not validated for regular-season home games.
+
+**Field Watch** creates a **hypothetical** 76-team, 32-conference power-based field only when the source independently verifies a team’s 2027 Division I subdivision **and** exact NCAA-source conference identity. Early-season conference leaders are strength proxies, not official championship bids; wide seed tiers describe heuristic relative strength, not seed odds. If coverage is incomplete, the dashboard says so and displays no fake participants.
+
+**Picks Ledger** reads immutable, Git-committed pretipoff probability files. Once the scheduler has really captured matches, it shows forecast date versus listed start, exact event IDs, original predictions, and independently settled Brier/winner results. Before then it shows **no audited forecast archive yet**, not generated hindsight "picks."
+
+**Historical Rankings and Matchup Lab** retain 42 season snapshots, sortable/searchable model rankings and frozen historical neutral matchup scenarios. **Bracket Lab** reconstructs actual historical seed placements, simulates play-ins and every tournament round, and supports **76-team field format** only after verified 2027 seeds become available. **Research Lab** offers eight methods, interactive favorite-confidence reliability plots, per-year model coefficients, game-weighted aggregate scores and paired season-bootstrap intervals. **Archive and About** preserve real historical tournament outcomes and transparent limitations.
+
+## How the engine works
 
 ```mermaid
 flowchart LR
-  A["Pinned historical Kaggle CSV mirror"] --> B["Historical Elo"]
-  B --> C["42 yearly archives"]
-  C --> D["Rolling-year benchmark"]
-  D --> E["Calibration, regression and uncertainty"]
-  C --> F["Full historical-field simulator"]
-  G["NCAA results / SportsDataverse"] --> H["Validate completed scores and dates"]
-  H --> I["Independent 2027 Elo"]
-  E --> J["Next.js static research UI"]
-  F --> J
-  I --> J
+  A["Pinned 1985–2026 Kaggle-format results"] --> B["Chronological Elo snapshots"]
+  B --> C["35-season forward-only benchmark"]
+  C --> D["8 models · calibration · uncertainty"]
+  B --> E["Historical 64/65/68-team field simulations"]
+  F["NCAA-origin 2027 schedule via SportsDataverse"] --> G["Validate completed final scores"]
+  H["NCAA source team IDs / conferences"] --> I["Exact identity join + coverage gate"]
+  J["NCAA source team box / possessions"] --> K["Opponent-adjusted per-100 ratings"]
+  G --> L["Current 2027 team strengths"]
+  I --> L
+  R["SportsDataverse 2027 subdivision groups"] --> S["Exact D-I membership source check"]
+  S --> L
+  K --> L
+  L --> M["76-team provisional power watchlist"]
+  L --> N["Before-start ESPN fixtures"]
+  N --> O["Timestamped Git-committed forecast snapshots"]
+  G --> P["Later NCAA-source result settlement"]
+  O --> P
+  D --> Q["Next.js static website"]
+  E --> Q
+  L --> Q
+  M --> Q
+  P --> Q
 ```
 
-**Different sources, different identity spaces:** the NCAA 2027 schedule uses name-derived `ncaa-` IDs; historical Kaggle snapshots use numerical IDs. The system intentionally does not infer a false crosswalk.
+This separation is intentional: **historical Kaggle numeric IDs**, 2027 NCAA-source names/IDs, and ESPN event IDs are different provenance domains. Exact source-linked mapping is required before joining; a display-name similarity is not enough. A second season-specific subdivision membership source supports independently verified D-I candidate flags.
 
-## Getting started on Windows
+## Quickstart (Windows / VS Code)
 
-Requires Python 3.11+, Node.js 22, npm and Git. From PowerShell (VS Code terminal):
+Requires **Python 3.11+**, **Node 22**, npm, and Git. From PowerShell in the repository root:
 
 ```powershell
 git clone https://github.com/dokeefe414/March-Madness-Forecasting.git
 cd March-Madness-Forecasting
 $env:PYTHONPATH="research"
 
-# Repeatable checks and current data
+# Offline, deterministic unit suite; no data provider account needed
 py -m unittest discover -s research/tests -v
-py -m forecast.benchmark --out web/public/research/benchmark.json
-py -m forecast.live --out web/public/current/2027.json
+
+# Generate earlier-year-trained model report
+py -m forecast.benchmark --web-dir web --out web/public/research/benchmark.json
+
+# Download validated 2027 NCAA-origin scores, team IDs and possession boxes
+py -m forecast.live --model-report web/public/research/benchmark.json --out web/public/current/2027.json
 
 cd web
 npm install
@@ -78,89 +117,112 @@ npm run typecheck
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). To generate the static production site, `npm run build` in `web`. On Linux/macOS, use `python3` and `export PYTHONPATH=research`.
+Open [http://localhost:3000](http://localhost:3000). To make production artifacts, run `npm run build`. On Linux/macOS, use `python3` and `export PYTHONPATH=research`. Internet access is needed only for fetching current public 2027 source data; historical archives, scientific tests and bracket unit tests are self-contained. If the optional team directory/box source is unavailable, actual score-derived ratings can still be generated with **explicit source-unavailable** flags; no placeholders are fabricated.
 
-The latest current-season feed requires an internet connection when you **generate** it, but the historical archives and tests are committed and can be inspected offline. If generated reports are not present, the frontend shows an honest unavailable status instead of silently displaying mock games.
-
-## Reproduce a historical model comparison
+For real browser visual and keyboard checks:
 
 ```powershell
-$env:PYTHONPATH="research"
-py -m forecast.benchmark --web-dir web --out research/outputs/rolling-benchmark.json
-```
-
-The JSON includes aggregate and season-by-season Brier/log-loss/accuracy, training-year cutoffs, model coefficients and temperatures, favorite reliability bin sizes and 95% paired season-bootstrap intervals. **Lower Brier is better**; a negative difference against Elo is an improvement on the measured historical test set, not proof of future superiority.
-
-The historical source itself can be rebuilt independently:
-
-```powershell
-$env:PYTHONPATH="research"
-py -m forecast.download --out-dir research/data/raw
-py -m forecast.history --data-dir research/data/raw --out-dir web --default-season 2025
 cd web
-npm run check:data
+npx playwright install chromium
+npm run test:e2e
 ```
 
-The downloader verifies pinned Git blob SHAs before using data. See [data contract](docs/data-contract.md) and [validation methodology](docs/validation.md).
+On Windows, ensure the Playwright web-server Python command works; see [browser QA guide](docs/browser-quality.md) for the `py -m http.server` alternative. CI runs Chromium against the static `web/out` export, rather than dev-server HMR.
 
-## Publishing and 2027 data updates
+### Run a fixture-only pregame ledger check
 
-The Pages workflow is configured to rebuild both generated reports on **main pushes**, **manual dispatch**, and **best-effort daily at 14:22 UTC in November–April**. The current data source is the SportsDataverse [`ncaa_mbb_schedule_2027.csv.gz` release](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_schedule), derived from NCAA statistics. Strict validation rejects conflicting contests, negative scores, future dates and games after Selection Sunday; scoreboards with missing, zero or tied scores are excluded as not confirmed finals. An unreachable or invalid upstream file **fails deployment instead of generating fictitious scores**; the previous successful deployed site remains published.
-
-Two reports are **generated at deployment, not committed as stale daily data**:
-
-```text
-web/public/current/2027.json            confirmed result-derived ratings
-web/public/research/benchmark.json       reproducible historical evaluation
+```powershell
+$env:PYTHONPATH="research"
+py -m unittest research.tests.test_snapshot -v
+py -m unittest research.tests.test_v06_data -v
 ```
 
-If the webpage is not available, ensure **Settings → Pages → Source: GitHub Actions** and inspect [deployment runs](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml). See [operator runbook](docs/operations.md).
+These fixtures **never** become real game forecasts. Production ledger archiving requires a scheduled job to observe a genuine future fixture and commit the pick **before** the listed start.
 
-## Project organization
+## Automation and publishing
+
+| Workflow | Schedule and purpose |
+| --- | --- |
+| [CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml) | Python scientific/fixture tests, 8-model benchmark artifact, source data integrity, TS bracket tests, TypeScript+build, **Playwright desktop/mobile and critical accessibility checks** |
+| [Pages deploy](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml) | On `main` changes, manual run and best-effort daily 14:22 UTC Nov–Apr. Build historical calibration, fetch NCAA 2027 source/box/directory, output static Next site |
+| [Pregame archive](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml) | On main, manual or best-effort daily **13:07 UTC** Nov–Apr. Fetch future ESPN fixtures, emit real *pre-start* picks, later settle against NCAA finals, commit append-only public history |
+
+Scheduled GitHub Actions may be delayed/omitted. A source outage must not fabricate scores, and an unarchived future fixture is not a historical prediction. The Pages site's last successful build remains available if a mandatory source fetch fails. **Archiver commits require branch/workflow write permissions**, which may need operator changes if an organization has protected main.
+
+### Git-committed proof versus build artifacts
+
+- `web/public/seasons/` and `web/public/tournaments/`: **committed historical** source-derived archival data.
+- `web/public/forecasts/snapshots/` and `settlements/`: **immutable append-only public Git** archives created when real scheduled future fixtures and later confirmed finals are available. `index.json` is a derived dashboard view.
+- `web/public/current/2027.json`: generated **during deployment**, gitignored to avoid stale daily sources.
+- `web/public/research/benchmark.json`: generated reproducible report, gitignored.
+- `web/out`: static Next.js export used for GitHub Pages; not primary data.
+
+Current hosted address: **https://dokeefe414.github.io/March-Madness-Forecasting/**. A Pages run requires Settings → Pages → Source **GitHub Actions**.
+
+## Repository structure
 
 ```text
 research/forecast/
-  core.py             Chronological Elo and baseline simulations
-  advanced.py         L2-regularized logistic probability model
-  benchmark.py        Out-of-time benchmarks, calibration and bootstrap
-  live.py             Strict 2026–27 NCAA-derived final-score import
-  download.py         Pinned historical data verification
-  history.py          Historical season and tournament snapshots
-  cli.py              Research command-line interface
-research/tests/       Offline regression tests for all research systems
-web/components/
-  Dashboard.tsx       App shell, historical rankings, matchups, archive
-  LiveSeason.tsx      Current-season team ratings and recent results
-  ResearchLab.tsx     Calibration charts and held-out model comparisons
-  FullBracketLab.tsx  Interactive historical full-field simulation
-web/lib/fullBracket.ts  64/65/68/76-field validation and seeded Monte Carlo
-web/scripts/            Bracket tests and historical data checks
-web/public/seasons/     Committed historical ratings
-web/public/tournaments/ Committed historical outcomes and seeds
-docs/                   Architecture, data, math, design, operations
-.github/workflows/       CI, daily/static deploy, archival rebuild
+  core.py                 chronological Elo updates and baseline probability
+  advanced.py             L2 regularized matchup logistic model
+  boosted.py              deterministic second-order residual decision stumps
+  dynamics.py             causal EWMA, volatility and regime change signal
+  benchmark.py            eight-method prior-year walk-forward NCAA evaluation
+  reference.py            exact NCAA-source 2027 conference/name crosswalk
+  division.py             independent 2027 Division I subdivision reference join
+  efficiency.py           true possession-based opponent-adjusted team strength
+  selection.py            32+44 provisional strength watchlist and seed tiers
+  live.py                 validated 2027 results and supplemental source imports
+  snapshot.py             pretipoff fixture/P(G) ledger and later NCAA settlement
+  history.py              Kaggle-format frozen historical archives
+  download.py             pinned source download and SHA validation
+research/tests/           hermetic unit, leakage, integrity and fixture tests
+web/
+  components/
+    Dashboard.tsx         nine-tab historical and current application
+    LiveSeason.tsx        team trends, pace profile, conferences, matchup tools
+    SelectionLab.tsx      transparent 2027 power-only watchlist
+    ForecastTracker.tsx   public pretipoff audit trail, Brier/accuracy dashboard
+    TeamTrend.tsx         keyboard-interactive game-by-game Elo trend SVG
+    FullBracketLab.tsx    sourced historical-field Monte Carlo simulator
+    ResearchLab.tsx       eight-method model scores, reliability and uncertainty
+  lib/fullBracket.ts      64,65,68,76 tournament formats and seeded RNG
+  e2e/                   Playwright browser interaction and mobile QA
+  public/forecasts/       append-only audited forecasts when published
+  public/current/2027.json  build-generated, not committed
+  public/research/benchmark.json build-generated, not committed
+  public/seasons/         frozen historical team-rating records
+  public/tournaments/     official historical NCAA results and seeds
+docs/                     complete scientific, design, data and operator docs
+.github/workflows/         CI, Pages deploy, chronological score/pick archive
 ```
 
-## Documentation directory
+## Documentation index
 
-| Topic | Deep dive |
-|---|---|
-| Model mathematics, leakage boundary, calibration and uncertainty | [docs/validation.md](docs/validation.md) |
-| Real 2027 data source, schema and refresh behavior | [docs/current-season.md](docs/current-season.md) |
-| Historic 64/65/68 and future 76-team bracket structure | [docs/bracket-engine.md](docs/bracket-engine.md) |
-| Architecture and data lineage | [docs/architecture.md](docs/architecture.md) |
-| Historical and current JSON contracts | [docs/data-contract.md](docs/data-contract.md) |
-| Design tokens, responsiveness and accessibility | [docs/design-system.md](docs/design-system.md) |
-| CI, publishing, runbooks and incident handling | [docs/operations.md](docs/operations.md) |
-| Detailed Python research usage | [research/README.md](research/README.md) |
-| Earlier held-out tournament baseline specification | [docs/rolling-benchmark.md](docs/rolling-benchmark.md) |
+| Topic | Reference |
+| --- | --- |
+| **Eight models, equations, prior-year fitting, measured results** | [Model zoo & validation](docs/model-zoo-v06.md) |
+| **Exact NCAA team identity/confidence and eligibility limits** | [Identity & conferences](docs/identity-and-conferences.md) |
+| **Source possession formulas and opponent adjustment** | [Adjusted efficiency](docs/adjusted-efficiency.md) |
+| **2027 field coverage gate, bubble and strength tiers** | [Selection watchlist](docs/selection-watchlist.md) |
+| **Pre-start time guards, append-only snapshots and result settlement** | [Forecast audit](docs/forecast-audit.md) |
+| **Browser tests, mobile overflow, accessibility and trace artifacts** | [Browser quality](docs/browser-quality.md) |
+| Original Elo baseline and 0.5 validation | [Validation overview](docs/validation.md) |
+| Current 2027 NCAA-source ingestion and schema problems | [Current season](docs/current-season.md) |
+| Historical and generated data contracts | [Data contract](docs/data-contract.md) |
+| Historical field formats and limits | [Bracket engine](docs/bracket-engine.md) |
+| Engineering architecture and data flow | [Architecture](docs/architecture.md) |
+| CSS tokens, layouts, interaction and accessibility | [Design system](docs/design-system.md) |
+| GitHub Actions scheduling, failures, CI and Pages | [Operations](docs/operations.md) |
+| Earlier rolling-year benchmark baseline | [Rolling benchmark](docs/rolling-benchmark.md) |
+| Python CLI and research modules | [Research guide](research/README.md) |
 
-## Known scientific limits
+## What remains a research challenge
 
-This is a research platform, **not** an official selection forecast, a possession-adjusted efficiency system, an injury-aware model, or a proven real-time 2027 tournament predictor. The current NCAA-derived source may lag the latest score. In-season games include opponents in the source that may not all be Division I. Archived 2026 ratings stop at day 118. Historical known matchups do not measure bracket selection quality, and historical semifinal pairings are approximated for cross-region simulations.
+**There is no authenticated official 2027 field before Selection Sunday.** The selection watchlist is explicitly power-only. Conference mapping **and D-I subdivision membership** are independently sourced but neither is an individual postseason eligibility certification, and current team-box statistics have not been historically evaluated for game probabilities. The pretipoff audit does not have an invented backlog: it will become populated only if actual future fixtures can be matched and archived in time. ESPN's scheduled time is not independent proof of actual tipoff; results are settled conservatively by verified NCAA final-score game identities.
 
-The goal is to make predictions testable and reproducible while improving the model responsibly.
+The first complete v0.6 release prioritizes **evidence, trust, usable visuals and reproducible code**. Future work should backtest real committee/resume/NET selection prediction, secure truly historical possession-by-possession crosswalks, measure 2027 forward model drift, and evaluate injury/transfer-aware features only when real source data and redistribution rights are available.
 
 ---
 
-**Open research, visible assumptions, readable code.** Verified issues, documentation improvements and contributions are welcome.
+**Built in public. Auditable by design.** Visit the [GitHub issues](https://github.com/dokeefe414/March-Madness-Forecasting/issues) for feature proposals and scientifically reproducible corrections.

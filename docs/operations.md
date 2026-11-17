@@ -66,3 +66,33 @@ If benchmarking fails, check source pin matches for history-index/snapshots/tour
 - Update `docs/bracket-engine.md` when official field formats or region crossover rules change.
 - Update `docs/design-system.md` for tab/component redesigns.
 - Before the 2028 season, explicitly review the feed name, source URL, Python `SEASON` and cutoff, unit tests and front-end year label. A 2027 snapshot must not accidentally masquerade as live 2028.
+
+## v0.6 additional workflows and production verification
+
+### Pre-tipoff forecast archiver
+
+`.github/workflows/archive-pregame.yml` schedules a **13:07 UTC best-effort** daily run during Nov–Apr and permits manual dispatch. It fetches validated 2027 source Elo data, lists ESPN scheduled games that start >15 minutes after forecast creation, and Git-commits **new** snapshot/settlement JSON files under `web/public/forecasts` with bot author. GitHub branch protection / token `contents:write` may block bot pushes. Inspect the scheduled job and archive files before saying the audit is operational. Missing future matches is not an error; no forecast is backfilled. After archiver commits, the next regular Pages rebuild will make the derived index visible.
+
+### Source coverage runbook
+
+Four source families determine the 2027 UI, with different fail policies:
+1. SportsDataverse NCAA schedule (`ncaa_mbb_schedule_2027.csv.gz`): **mandatory** and strict on invalid core schema; no published scores if broken.
+2. NCAA 2027 team IDs/conferences (`ncaa_mbb_team_ids_2027.csv.gz`): optional. Exact full-name join; reports source match count, never guesses other teams.
+3. NCAA 2027 team box (`ncaa_mbb_team_box_2027.csv.gz`): optional. Only game-ID-matched, genuine possession rows become per-100 efficiency profiles.
+4. Season group reference (`mbb_group_seasons.csv` and `mbb_team_group_seasons_2027.csv`): optional. Independently confirms `divisionIConfirmed` when a documented season-2027 Division I `subdivision_id` matches the scored team by exact normalized name. Otherwise status unavailable or team unverified. **This is not postseason eligibility certification.**
+
+The watchlist requires both D-I subdivision membership and NCAA conference matching, and at least 76 candidates in exactly 32 mapped leagues. Source absence returns an explicitly missing/hypothetical field, not 76 invented selections.
+
+### Historical model order
+
+Deploy runs `forecast.benchmark` **before** `forecast.live`, so `productionCalibration` contains only historical outcomes through 2025 and is available for clearly labeled regular-season *scenarios*. Never train the current production calibration with 2027 scores or tune it to the same day's held-out outcome. `forecast.snapshot` intentionally records baseline Elo for pregame audit, not these unvalidated March-to-November scenarios.
+
+### CI and browser quality
+
+The third `CI` job now executes Playwright desktop and mobile against the **Next static export**, preventing false confidence from dev-server HMR. Checks include navigation, actual historical bracket interaction, full-page horizontal width, and automated critical WCAG axe violations. Upload `playwright-v06-visual-checks` includes test traces/screenshots for CI failures. All three CI jobs must pass before merging. [Browser guide](browser-quality.md).
+
+### Fixing a failed production release
+
+Inspect the first failure in the [Pages workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml). If the mandatory source, historical calibration generation or production build fails, do not invent data or bypass a cutoff. Fix source parsing using a new hermetic regression test, merge through passing CI, and confirm the next Pages deployment returns success with a current `lastGameDate` and `retrievedAtUtc`. A successful web build alone does not prove the user's website has been deployed.
+
+The 2027 source convention must be reviewed before the 2028 season; never display a 2027 report as new-season 2028 ratings.

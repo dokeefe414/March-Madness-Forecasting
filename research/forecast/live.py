@@ -21,6 +21,11 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 from .core import EloEngine, Game
+from .reference import TEAM_URL, parse_directory, annotate_teams
+from .efficiency import BOX_URL, attach_efficiency, NEEDED as BOX_COLUMNS
+from .selection import build_watchlist
+from .division import GROUP_SEASONS_URL, TEAM_MEMBERSHIP_URL, parse_division_members, annotate_division
+from .dynamics import regime_features
 
 SOURCE_URL = (
     "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/"
@@ -102,7 +107,10 @@ def final_games(csv_text: str, as_of: date | None = None) -> list[dict]:
 
 
 def build_current(games: list[dict], retrieved_at: datetime | None = None,
-                  url: str = SOURCE_URL) -> dict:
+                  url: str = SOURCE_URL, directory_csv: str | None = None,
+                  box_csv: str | None = None,
+                  group_seasons_csv: str | None = None,
+                  membership_csv: str | None = None) -> dict:
     """Fit transparent, reset-at-season-start Elo; derive descriptive margins."""
     if not games:
         raise ValueError("no completed 2026–27 games; refusing to publish false live rankings")
@@ -152,6 +160,39 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
         row["opponentAverageElo"] = round(
             sum(rating_by_id[i] for i in opponents[internal_id]) / played, 1
         )
+        row.update(regime_features(row["history"], row["rating"]))
+    directory_report = {
+        "source": TEAM_URL, "status": "unavailable", "matchedRatedTeams": 0,
+        "ratedTeams": len(rows), "policy": "No conference match without source crosswalk.",
+    }
+    for row in rows:
+        row["conference"] = None
+        row["conferenceVerified"] = False
+    if directory_csv is not None:
+        directory_report = annotate_teams(rows, parse_directory(directory_csv))
+        directory_report["status"] = "ready"
+
+    efficiency_report = {
+        "source": BOX_URL, "status": "unavailable",
+        "matchedTeamGames": 0, "teamsWithMetrics": 0,
+        "policy": "No possession metrics without verified team box rows.",
+    }
+    if box_csv is not None:
+        efficiency_report = attach_efficiency(rows, games, box_csv)
+        efficiency_report["status"] = "ready" if efficiency_report["matchedTeamGames"] else "empty"
+
+    for row in rows:
+        row["divisionIConfirmed"] = None
+    membership_report = {
+        "status": "unavailable", "matchedRatedTeams": 0,
+        "divisionIConfirmed": 0, "explicitlyNonDI": 0,
+        "unmatchedRatedTeams": len(rows),
+        "policy": "No D-I inference without season-specific subdivision membership."
+    }
+    if group_seasons_csv is not None and membership_csv is not None:
+        membership_report = annotate_division(
+            rows, parse_division_members(group_seasons_csv, membership_csv))
+    watchlist = build_watchlist(rows, games[-1]["date"])
     return {
         "mode": "current", "season": SEASON, "throughDay": engine.last_day,
         "label": f"{SEASON} men's season / through {games[-1]['date']}",
@@ -173,6 +214,10 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
             "caveat": "Not timestamped published pregame picks; same-day tip-off order is approximate.",
         },
         "teams": rows,
+        "identityCoverage": directory_report,
+        "divisionCoverage": membership_report,
+        "efficiencyCoverage": efficiency_report,
+        "selectionWatchlist": watchlist,
         "recentGames": list(reversed(games[-16:])),
         "limitations": [
             "NCAA-source schedule is a third-party published snapshot, not an instantaneous live feed.",
@@ -197,9 +242,57 @@ def fetch_csv(url: str = SOURCE_URL) -> str:
     return raw.decode("utf-8-sig")
 
 
+def validate_supplements(directory_csv: str | None, box_csv: str | None,
+                         group_seasons_csv: str | None, membership_csv: str | None
+                         ) -> tuple[dict, list[str]]:
+    """Validate independently so one optional-source failure cannot erase the others.
+
+    Return selected source contents and descriptive warnings. Pure, hermetic,
+    and safe to run before expensive Elo computation in the publishing job.
+    """
+    optional = {
+        "directory_csv": directory_csv,
+        "box_csv": box_csv,
+        "group_seasons_csv": group_seasons_csv,
+        "membership_csv": membership_csv,
+    }
+    warnings: list[str] = []
+    if directory_csv is not None:
+        try:
+            parse_directory(directory_csv)
+        except ValueError as exc:
+            optional["directory_csv"] = None
+            warnings.append(f"NCAA directory rejected: {exc}")
+    if box_csv is not None:
+        reader = csv.DictReader(io.StringIO(box_csv))
+        missing = BOX_COLUMNS - set(reader.fieldnames or ())
+        if missing:
+            optional["box_csv"] = None
+            warnings.append(f"Team-box source headers rejected: {sorted(missing)}")
+    if group_seasons_csv is not None and membership_csv is not None:
+        try:
+            parse_division_members(group_seasons_csv, membership_csv)
+        except ValueError as exc:
+            optional["group_seasons_csv"] = None
+            optional["membership_csv"] = None
+            warnings.append(f"Division membership rejected: {exc}")
+    elif group_seasons_csv is not None or membership_csv is not None:
+        optional["group_seasons_csv"] = None
+        optional["membership_csv"] = None
+        warnings.append("Division membership requires both group and member files")
+    return optional, warnings
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", type=Path, help="Offline CSV/CSV.gz fixture (no network)")
+    parser.add_argument("--input", type=Path, help="Offline schedule CSV/CSV.gz fixture (no network)")
+    parser.add_argument("--directory-input", type=Path, help="Offline NCAA team crosswalk CSV/CSV.gz")
+    parser.add_argument("--box-input", type=Path, help="Offline team box CSV/CSV.gz")
+    parser.add_argument("--group-seasons-input", type=Path, help="Offline MBB division group seasons CSV")
+    parser.add_argument("--membership-input", type=Path, help="Offline 2027 MBB team membership CSV")
+    parser.add_argument("--skip-supplemental", action="store_true", help="For offline baselines only")
+    parser.add_argument("--model-report", type=Path, default=Path("web/public/research/benchmark.json"),
+                        help="Earlier-season-only calibration report, if generated")
     parser.add_argument("--out", type=Path, default=Path("web/public/current/2027.json"))
     args = parser.parse_args()
     if args.input:
@@ -210,11 +303,61 @@ def main() -> None:
         content = fetch_csv()
         origin = SOURCE_URL
     games = final_games(content)
-    output = build_current(games, url=origin)
+    def read_fixture(path: Path) -> str:
+        raw = path.read_bytes()
+        return (gzip.decompress(raw) if raw[:2] == b"\x5cx1f\x5cx8b" else raw).decode("utf-8-sig")
+
+    def supplemental(path: Path | None, source_url: str, label: str) -> str | None:
+        if args.skip_supplemental:
+            return None
+        if path is not None:
+            return read_fixture(path)
+        if args.input is not None:
+            # An offline run never implicitly downloads unrelated sources.
+            return None
+        try:
+            return fetch_csv(source_url)
+        except (OSError, ValueError) as exc:
+            print(f"Supplemental {label} unavailable: {exc}. Publishing a disclosed missing-data state.")
+            return None
+
+    directory_csv = supplemental(args.directory_input, TEAM_URL, "identity")
+    box_csv = supplemental(args.box_input, BOX_URL, "team box")
+    group_seasons_csv = supplemental(args.group_seasons_input, GROUP_SEASONS_URL, "group seasons")
+    membership_csv = supplemental(args.membership_input, TEAM_MEMBERSHIP_URL, "2027 membership")
+    verified, warnings = validate_supplements(
+        directory_csv, box_csv, group_seasons_csv, membership_csv)
+    for warning in warnings:
+        print(f"Optional source validation: {warning}")
+    output = build_current(games, url=origin, **verified)
+    if warnings:
+        output["supplementalSourceWarnings"] = warnings
+    # Historical parameters are an extrapolation scenario, NOT evidence
+    # that March-trained calibration is better for November home games.
+    if args.model_report.exists():
+        report = json.loads(args.model_report.read_text(encoding="utf-8"))
+        cal = report.get("productionCalibration", {})
+        temperature = float(cal.get("temperature", 0))
+        weight = float(cal.get("ensembleCalibratedWeight", -1))
+        trained_until = int(cal.get("trainingThroughSeason", 9999))
+        if report.get("type") != "historical-actual-matchup-walk-forward" or not (
+            0 < temperature < 20 and 0 <= weight <= 1 and trained_until <= 2025):
+            raise ValueError("invalid or future-leaking historical calibration artifact")
+        output["historicalCalibration"] = {
+            "temperature": temperature,
+            "blendWeight": weight,
+            "trainedThroughSeason": trained_until,
+            "source": "Historical frozen tournament benchmark",
+            "caveat": "March-neutral calibration extrapolated to regular-season 2027; not validated for 2027 games.",
+        }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
     print(f"Published {len(games)} confirmed NCAA-source games, "
           f"{len(output['teams'])} teams, through {output['lastGameDate']}")
+    print(f"Division I group-linked teams: {output['divisionCoverage'].get('divisionIConfirmed', 0)}; "
+          f"conference-matched programs: {output['identityCoverage'].get('matchedRatedTeams', 0)}; "
+          f"possession rows: {output['efficiencyCoverage'].get('matchedTeamGames', 0)}; "
+          f"watchlist: {output['selectionWatchlist']['status']}")
     print(f"Current-season snapshot: {args.out}")
 
 

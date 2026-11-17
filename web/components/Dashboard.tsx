@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import rawData from "../data/rankings.json";
 import yearIndex from "../data/history-index.json";
 import { matchupProbability, type RatingsDataset } from "../lib/models";
 import FullBracketLab from "./FullBracketLab";
 import ResearchLab from "./ResearchLab";
 import LiveSeason from "./LiveSeason";
+import SelectionLab from "./SelectionLab";
+import ForecastTracker from "./ForecastTracker";
 
 const initialData = rawData as RatingsDataset;
 const initialTeams = [...initialData.teams].sort((a, b) => b.projectedRating - a.projectedRating);
@@ -20,7 +22,7 @@ type TournamentArchive = {
   seeds: Record<string, string>;
   games: Array<{ day?: number; round?: string; winnerId: string; loserId: string; winnerScore: number; loserScore: number }>;
 };
-type Tab = "current" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
+type Tab = "current" | "selection" | "predictions" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
 type Sort = "rank" | "momentum" | "wins";
 
 function percent(value: number): string {
@@ -70,6 +72,10 @@ export default function Dashboard() {
   const [archiveStatus, setArchiveStatus] = useState<"idle" | "loading" | "error">("idle");
   const sortedTeams = useMemo(() => [...data.teams].sort((a, b) => b.projectedRating - a.projectedRating), [data]);
   const [tab, setTab] = useState<Tab>("current");
+  // SSR markup may be visible before React attaches navigation handlers.
+  // A deterministic hydration signal lets browser tests avoid lost clicks.
+  const [hydrated,setHydrated] = useState(false);
+  useEffect(()=>setHydrated(true),[]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>("rank");
   const [detailId, setDetailId] = useState(initialTeams[0]?.teamId ?? "");
@@ -133,7 +139,7 @@ export default function Dashboard() {
   }
 
   return (
-    <main>
+    <main data-hydrated={hydrated?"yes":"no"}>
       <div className="site-shell">
         <header className="site-header">
           <button className="brand" onClick={() => setTab("current")} aria-label="March Forecast home">
@@ -141,7 +147,7 @@ export default function Dashboard() {
             <span className="brand-title">MARCH<span>FORECAST</span></span>
           </button>
           <nav aria-label="Main navigation" className="desktop-nav">
-            {([["current", "2027 Pulse"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
+            {([["current", "2027 Pulse"], ["selection", "Field Watch"], ["predictions", "Picks Ledger"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
               <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => setTab(id)}>{label}</button>
             ))}
           </nav>
@@ -149,7 +155,7 @@ export default function Dashboard() {
         </header>
 
         <div className="mobile-nav" aria-label="Page sections">
-          {([["current", "2027 Pulse"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
+          {([["current", "2027 Pulse"], ["selection", "Field Watch"], ["predictions", "Picks Ledger"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
             <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => setTab(id)}>{label}</button>
           ))}
         </div>
@@ -212,6 +218,8 @@ export default function Dashboard() {
           </div>
         )}
         {tab === "current" && <LiveSeason/>}
+        {tab === "selection" && <SelectionLab/>}
+        {tab === "predictions" && <ForecastTracker/>}
         {tab === "research" && <ResearchLab/>}
 
         {tab === "rankings" && (

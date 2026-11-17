@@ -42,3 +42,28 @@ jobs:
       - run: npm run test:bracket
       - run: npm run typecheck
       - run: npm run build
+
+  browser:
+    name: Browser E2E and responsive visual smoke checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Real browser navigation, bracket, mobile and accessibility smoke tests
+        run: npm run test:e2e
+      - name: Preserve visual smoke screenshots and failure traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-v06-visual-checks
+          path: |
+            web/test-results
+            web/playwright-report
+          if-no-files-found: warn

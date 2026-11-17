@@ -53,3 +53,13 @@ Some SVG visuals and tables need continued manual audit with screen readers. Bef
 - The future 76-team field is shown as a *format capability*, not a known selection.
 
 CSS lives in `web/app/globals.css`; the complete component list and design ownership are in the root README.
+
+## v0.6 editorial additions and source status
+
+New studio workspaces: `SelectionLab.tsx` has an amber 76-slot motif, per-conference power cards, restrained provisional seed tiers, and a visible **source-coverage gate**. `ForecastTracker.tsx` has an ink-blue pregame receipt concept with locked timestamps, scored-result cards and separate unsettled status. `TeamTrend.tsx` is a focusable SVG trajectory of true sequential Elo updates, not a generic stock chart. `LiveSeason.tsx` adds three visibly separate evidence categories — NCAA team/conference source, independent 2027 Division I subdivision membership, and actual box-score possessions — with an honest empty state per source.
+
+Responsive breakpoints progressively collapse from multi-column cards to one-column sheets under 990/730/500px. A Playwright test on real Chromium at **390px** detected an overflow from a non-wrapping "Immutable Forecast Archive" pill; fixed by allowing section headings and badges to wrap at 650px while preserving text legibility. The test remains in CI, rather than simply setting `overflow-x:hidden` to conceal the problem.
+
+For sourced study, the chart and number labels must be independently readable without color. Keyboard focusable SVG points support Enter/Space and `title` values; a full screen-reader and 200%-zoom audit remains a manual review item.
+
+Visual quality CI: [browser-quality.md](browser-quality.md).

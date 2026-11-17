@@ -15,6 +15,22 @@ export type Team = {
   pointsAgainstPerGame?: number;
   marginPerGame?: number;
   opponentAverageElo?: number;
+  conference?: string | null;
+  conferenceVerified?: boolean;
+  divisionIConfirmed?: boolean | null;
+  ncaaSourceTeamId?: string | null;
+  offRating100?: number;
+  defRating100?: number;
+  pacePossessions?: number;
+  adjOff100?: number;
+  adjDef100?: number;
+  adjNet100?: number;
+  possessionGames?: number;
+  adaptiveRating?: number;
+  volatility?: number;
+  regimeShift?: number;
+  ewmaSlope?: number;
+  sampleStatus?: string;
 };
 
 export type RatingsDataset = {
@@ -45,6 +61,11 @@ export type RatingsDataset = {
   cutoffDate?: string;
   recentGames?: Array<{id: string; date: string; home: string; away: string; homeScore: number; awayScore: number}>;
   isOfficialBracket?: boolean;
+  divisionCoverage?: {status?:string; matchedRatedTeams?:number;divisionIConfirmed?:number; explicitlyNonDI?:number; sourceDivisionIConferenceGroups?:number; unmatchedRatedTeams?:number};
+  identityCoverage?: {status?: string; source?:string; ratedTeams?: number; matchedRatedTeams?: number; unmatchedRatedTeams?: number; conferencesRepresented?: number; matchRate?:number; conferenceCounts?:Record<string,number>};
+  efficiencyCoverage?: {status?: string; source?:string; matchedTeamGames?: number; teamsWithMetrics?: number; scheduledFinalGames?:number; skippedRows?:number};
+  selectionWatchlist?: unknown;
+  historicalCalibration?: {temperature:number;blendWeight:number;trainedThroughSeason:number;source:string;caveat:string};
   pregameDiagnostics?: {evaluatedGames: number; brier: number; accuracy: number; coinFlipBrier: number; method: string; caveat: string};
 };
 

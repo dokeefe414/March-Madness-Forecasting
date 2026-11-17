@@ -76,3 +76,17 @@ final-score inference based on scores because no authoritative final-status
 field is present in the currently documented schedule schema.
 The live results page should be interpreted as the completed-score subset,
 not a guarantee of exhaustively ingesting every NCAA game.
+
+## Season-specific D-I group membership verification
+
+In addition to the NCAA-source 2027 `team_ids` directory, the live importer optionally fetches two independent SportsDataverse basketball group files from release tag `mbb_groups`: `mbb_group_seasons.csv` (resolve the explicitly named Division I subdivision in 2027) and `mbb_team_group_seasons_2027.csv` (verify each team's season membership references that subdivision). See [identity-and-conferences.md](identity-and-conferences.md) for robust interpretation.
+
+Flags `divisionIConfirmed` are `true`, `false` or `null` (unknown). Unknown is never automatically interpreted as ineligible, nor promoted to D-I. The `divisionCoverage` JSON object contains `status`, `matchedRatedTeams`, `divisionIConfirmed`, `explicitlyNonDI`, `unmatchedRatedTeams`, `sourceDivisionIConferenceGroups` and provenance URLs. Field Watch requires both independently sourced D-I membership and NCAA-source conference name matching; an unavailable group feed leaves the watchlist in a transparent insufficient-coverage state.
+
+Offline CLI:
+```powershell
+$env:PYTHONPATH="research"
+py -m forecast.live --input fixture-schedule.csv --directory-input fixture-2027-team-ids.csv --box-input fixture-box.csv --group-seasons-input fixture-mbb-groups.csv --membership-input fixture-2027-memberships.csv --out web/public/current/2027.json
+```
+
+For reproducible source validation, run `py -m unittest discover -s research/tests -v`. Do not commit fixture-generated JSON as a real 2027 current report.
