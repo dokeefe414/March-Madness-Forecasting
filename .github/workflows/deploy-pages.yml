@@ -47,6 +47,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.benchmark --web-dir web --out web/public/research/benchmark.json
+      - name: Publish independently audited historical training dataset and nested out-of-time evaluation
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.historical_dataset --web-dir web --manifest web/public/research/historical-data-manifest.json --evaluation web/public/research/historical-evaluation.json
       - name: Validate and build 2027 NCAA-source results
         env:
           PYTHONPATH: research
