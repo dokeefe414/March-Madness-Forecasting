@@ -4,8 +4,13 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
-    # Best-effort daily refresh during the NCAA basketball season.
-    - cron: "22 14 * 1,2,3,4,11,12 *"
+    # Nightly Eastern local time (EST/EDT, including daylight saving changes).
+    # Best-effort GitHub Actions trigger: actual execution can lag.
+    - cron: "0 1 * * *"
+      timezone: "America/New_York"
+    # Late-result catch-up after West Coast games, during basketball months.
+    - cron: "17 5 * 1,2,3,4,11,12 *"
+      timezone: "America/New_York"
 permissions:
   contents: read
   pages: write
@@ -36,6 +41,14 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.live --model-report web/public/research/benchmark.json --out web/public/current/2027.json
+      - name: Validate accepted-game totals and publish refresh provenance
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.freshness --input web/public/current/2027.json --out web/public/current/refresh-status.json
+      - name: Verify immutable forecast audit before site publication
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.audit --dir web/public/forecasts
       - name: Install frontend dependencies
         working-directory: web
         run: npm install --no-audit --no-fund
