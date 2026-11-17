@@ -678,3 +678,62 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 @media(max-width:720px){.daily-highlights,.v11-model-grid,.v11-drift-data{grid-template-columns:1fr}.daily-heading,.road-heading{align-items:flex-start}.daily-today{width:100%}}
 @media(max-width:480px){.daily-kpis,.road-grid,.road-focus{grid-template-columns:1fr}.daily-shortcuts>*{flex:1 1 42%;text-align:center;font-size:10px}.daily-card{min-height:0}}
 @media(prefers-reduced-motion:reduce){.daily-card button,.daily-shortcuts button{scroll-behavior:auto}}
+
+/* v1.2 — accessible source-evidence workspaces */
+.v12-card,.v12-builder{background:linear-gradient(145deg,#102e39,#0b2530);border:1px solid #426c64;border-radius:15px;padding:clamp(16px,2.5vw,28px);margin:20px 0;color:#e7fff1}
+.v12-head h1,.v12-head h3{font:900 clamp(32px,5vw,56px)/1 "Barlow Condensed",Impact,sans-serif;text-transform:uppercase;color:#edfff4;margin:10px 0}
+.v12-head em{font-style:normal;color:#acffd2}
+.v12-head p,.v12-subtle{font-size:11px;line-height:1.7;color:#a7c7bd;max-width:780px}
+.v12-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:20px 0}
+.v12-stats>div{border:1px solid #416c5e;background:#0c2934;border-radius:10px;padding:13px;min-width:0}
+.v12-stats small,.v12-delays h4{color:#a7d1bc;font-size:9px;letter-spacing:.5px;font-weight:900;display:block}
+.v12-stats strong{display:block;font:900 clamp(23px,3vw,36px)/1.1 "Barlow Condensed",Impact,sans-serif;margin:9px 0;color:#d9ffe4;overflow-wrap:anywhere}
+.v12-delays{border-top:1px solid #41665f;padding:15px 0}
+.v12-delays>div,.v12-result{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #32564e;font-size:11px}
+.v12-delays b,.v12-result b,.v12-delays strong{color:#c5ffdd}
+.v12-team-layout{display:grid;grid-template-columns:minmax(200px,280px) minmax(0,1fr);gap:18px;margin-top:21px;align-items:start}
+.v12-team-list{background:#0e2935;border:1px solid #42665f;border-radius:12px;padding:13px;position:sticky;top:10px}
+.v12-team-list label{display:flex;flex-direction:column;gap:8px;color:#afdac7;font-size:10px;font-weight:900}
+.v12-team-list input{background:#0b202b;color:#f1fff8;border:1px solid #507a70;border-radius:7px;padding:12px;width:100%}
+.v12-team-scroll{max-height:560px;overflow-y:auto;margin-top:12px;display:grid;gap:3px}
+.v12-team-scroll button{display:flex;flex-direction:column;gap:5px;text-align:left;background:transparent;border:1px solid transparent;border-radius:7px;color:#d9f4e7;padding:10px;cursor:pointer}
+.v12-team-scroll button:hover,.v12-team-scroll button.selected,.v12-team-scroll button:focus-visible{border-color:#8dcbab;background:#21493e}
+.v12-team-scroll span{font-size:10px;color:#9cc7b4}
+.v12-team-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.v12-team-title h2{font:900 clamp(32px,5vw,56px)/1 "Barlow Condensed",Impact,sans-serif;color:#e6fff1;margin:10px 0}
+.v12-team-title p{font-size:11px;color:#a1c2b7}
+.v12-team-title button,.v12-builder-actions button{border:1px solid #9ce6b9;background:#275c49;border-radius:8px;color:#edfff4;padding:12px;cursor:pointer;font-size:10px;font-weight:900}
+.v12-team-detail{min-width:0}
+.v12-card h3,.v12-builder-champion strong{font:900 28px/1.1 "Barlow Condensed",Impact,sans-serif;color:#e6fff1;margin:0 0 15px}
+.v12-curve{width:100%;height:135px;background:#0b2230;border-radius:9px}
+.v12-split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.v12-result span{color:#c7dfd4;overflow-wrap:anywhere}
+.v12-peer{display:block;width:100%;text-align:left;padding:12px;border:1px solid #376556;background:#143d3b;color:#c6fbd8;border-radius:8px;margin-top:6px;cursor:pointer}
+.v12-model-table-wrap{overflow-x:auto}
+.v12-model-table{width:100%;border-collapse:collapse;min-width:720px;font-size:11px}
+.v12-model-table th,.v12-model-table td{padding:12px;text-align:left;border-bottom:1px solid #42665c;color:#c8ecdf}
+.v12-model-table thead th{color:#b7ffc9;font-size:9px}
+.v12-calibration{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-top:18px}
+.v12-calibration small{font-size:9px;color:#a3cfb8}
+.v12-calibration-track{height:14px;background:#1d4751;border-radius:8px;overflow:hidden;position:relative;margin-top:8px}
+.v12-calibration-track span,.v12-calibration-track i{display:block;position:absolute;left:0;height:7px;background:#9bcbfb}
+.v12-calibration-track i{top:7px;background:#b6ffca}
+.v12-builder-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0}
+.v12-builder-actions strong{color:#d5ffe5;margin-right:auto;font-size:13px}
+.v12-round-tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px}
+.v12-round-tabs button{white-space:nowrap;background:#102e3d;color:#a9cfbd;border:1px solid #47796e;border-radius:8px;padding:12px;cursor:pointer;font-size:10px;font-weight:900}
+.v12-round-tabs button.active,.v12-round-tabs button:hover{background:#295b4a;color:#e2ffe8;border-color:#afffd0}
+.v12-match-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.v12-match{border:1px solid #3d6c62;background:#0d2a35;border-radius:10px;padding:12px;min-width:0}
+.v12-match>small{display:block;color:#9dbbaa;font-size:9px;margin-bottom:12px}
+.v12-match button{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;border-radius:7px;border:1px solid #355850;background:#173b41;color:#e5fff1;margin:7px 0;padding:10px;cursor:pointer;text-align:left}
+.v12-match button.selected{background:#2e6a4b;border-color:#b8ffcb}
+.v12-match button:disabled{opacity:.55;cursor:not-allowed}
+.v12-match button span{overflow-wrap:anywhere;font-size:11px;font-weight:800}
+.v12-match button b{font-size:9px;white-space:nowrap;color:#b1d6c6}
+.v12-builder-champion{margin-top:20px;border:1px solid #86d9a6;background:#214638;border-radius:12px;padding:20px}
+.v12-builder-champion small{font-size:10px;color:#c0f6d7}
+.v12-builder-champion strong{display:block;margin-top:10px}
+@media(max-width:1000px){.v12-match-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.v12-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.v12-team-layout,.v12-split,.v12-match-grid{grid-template-columns:1fr}.v12-team-list{position:static}.v12-team-scroll{max-height:230px}.v12-calibration{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.v12-stats{grid-template-columns:1fr}.v12-delays>div,.v12-result{align-items:flex-start;flex-direction:column}}
