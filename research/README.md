@@ -68,3 +68,26 @@ py -m forecast.live --out web/public/current/2027.json
 ```
 
 See [validation](../docs/validation.md), [current source](../docs/current-season.md), and [bracket algorithm](../docs/bracket-engine.md) for equations, scientific limitations and reproducibility.
+
+## v0.6 research additions and reproducibility
+
+```powershell
+$env:PYTHONPATH="research"
+py -m unittest discover -s research/tests -v
+py -m forecast.benchmark --out research/outputs/rolling-benchmark.json
+py -m forecast.live --model-report research/outputs/rolling-benchmark.json --out web/public/current/2027.json
+```
+
+Current versioned modules:
+- `forecast.boosted`: symmetric, regularized gradient-boosted Elo residual stumps. Fit only using earlier NCAA tournament seasons.
+- `forecast.dynamics`: causal EWMA of Elo changes, season regime-delta and recent volatility shrinkage; a transparent bounded heuristic, **not** a fitted Kalman filter.
+- `forecast.benchmark`: now **eight** model comparisons including the `blend` using earlier years' *already out-of-time* predictions to choose the ensemble weight. Generated JSON `schemaVersion=3`.
+- `forecast.reference`: validated 2027 NCAA team/conference directory; strict normalized name join.
+- `forecast.division`: independent SportsDataverse season-2027 basketball subdivision membership. `divisionIConfirmed` true/false/null. Unknown is not ineligible.
+- `forecast.efficiency`: source game-ID-matched, per-100 possession offense/defense and opponent-shrunk net estimates.
+- `forecast.selection`: source coverage-gated, 32+44 power-only 76-team hypothetical field, bubble and deliberately heuristic wide strength tiers.
+- `forecast.snapshot`: source-stamped before-ESPN-start pick ledger and later NCAA final-score settlement, append-only public Git history; does not retroactively generate "live" predictions.
+
+Source files: `research/forecast/`; offline tests: `research/tests/test_{v06_data,division,boosted,dynamics,snapshot}.py`. The Python standard library covers the full modeling stack. Source fetching needs internet only when generating current 2027 data or a real pregame pick.
+
+Additional details: [model math](../docs/model-zoo-v06.md), [D-I season reference](../docs/identity-and-conferences.md), [possession ratings](../docs/adjusted-efficiency.md), [watchlist](../docs/selection-watchlist.md), [pregame audit](../docs/forecast-audit.md).

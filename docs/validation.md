@@ -74,3 +74,11 @@ Check the generated JSON keys `aggregate`, `yearByYear`, `reliability` and `seas
 - Historical known opponents cannot measure the actual task of forecasting the committee's selected field.
 
 Next scientifically defensible experiments: possession-informed ratings from sourced box scores, actual 2027 holdouts, season-specific drift monitoring, verified bracket slot import, and model calibration constrained by independent test years.
+
+## v0.6 continuation
+
+This file documents the original base Elo + five-model v0.5 evaluation. The **current authoritative eight-model design, real Brier/log-loss table, chronological meta-training, gradient-boosted residual equations and adaptive EWMA feature** are now in [model-zoo-v06.md](model-zoo-v06.md). The reference report uses `schemaVersion=3`.
+
+The v0.6 **historically trained** calibrated/ensemble matchup options are displayed only as explicitly labeled *scenarios* when 2027 current ratings are loaded; the 2027 matchups are not the historical neutral tournament holdout distribution. The forward pregame proof system uses baseline Elo and must not retroactively promote an OOS historical score to a genuine live-prediction record. See [forecast-audit.md](forecast-audit.md).
+
+Live possession-based team stats are sourced for 2027 but are **not** included as historical model features without a comparable history of pre-selection possession and opponent source data. See [adjusted-efficiency.md](adjusted-efficiency.md). No current D-I source membership is invented from conference names; see [identity-and-conferences.md](identity-and-conferences.md).
