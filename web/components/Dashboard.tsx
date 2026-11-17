@@ -7,6 +7,8 @@ import { matchupProbability, type RatingsDataset } from "../lib/models";
 import FullBracketLab from "./FullBracketLab";
 import ResearchLab from "./ResearchLab";
 import LiveSeason from "./LiveSeason";
+import SelectionLab from "./SelectionLab";
+import ForecastTracker from "./ForecastTracker";
 
 const initialData = rawData as RatingsDataset;
 const initialTeams = [...initialData.teams].sort((a, b) => b.projectedRating - a.projectedRating);
@@ -20,7 +22,7 @@ type TournamentArchive = {
   seeds: Record<string, string>;
   games: Array<{ day?: number; round?: string; winnerId: string; loserId: string; winnerScore: number; loserScore: number }>;
 };
-type Tab = "current" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
+type Tab = "current" | "selection" | "predictions" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
 type Sort = "rank" | "momentum" | "wins";
 
 function percent(value: number): string {
@@ -141,7 +143,7 @@ export default function Dashboard() {
             <span className="brand-title">MARCH<span>FORECAST</span></span>
           </button>
           <nav aria-label="Main navigation" className="desktop-nav">
-            {([["current", "2027 Pulse"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
+            {([["current", "2027 Pulse"], ["selection", "Field Watch"], ["predictions", "Picks Ledger"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
               <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => setTab(id)}>{label}</button>
             ))}
           </nav>
@@ -149,7 +151,7 @@ export default function Dashboard() {
         </header>
 
         <div className="mobile-nav" aria-label="Page sections">
-          {([["current", "2027 Pulse"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
+          {([["current", "2027 Pulse"], ["selection", "Field Watch"], ["predictions", "Picks Ledger"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
             <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => setTab(id)}>{label}</button>
           ))}
         </div>
@@ -212,6 +214,8 @@ export default function Dashboard() {
           </div>
         )}
         {tab === "current" && <LiveSeason/>}
+        {tab === "selection" && <SelectionLab/>}
+        {tab === "predictions" && <ForecastTracker/>}
         {tab === "research" && <ResearchLab/>}
 
         {tab === "rankings" && (
