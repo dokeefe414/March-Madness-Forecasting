@@ -40,3 +40,12 @@ To see interactive traces, download the `playwright-v06-visual-checks` GitHub Ac
 ## Manual quality gate still required
 
 Review the deployed page on real desktop and mobile browsers at 375, 390, 768, 850 and 1440px; check heading legibility, focus/keyboard navigation, 200% zoom, contrast, reduced motion, simulated bracket performance, data freshness and source labels. CSS and browser automated checks are not a guaranteed professional UX assessment. Do not merge a large visual change if new E2E smoke checks fail.
+
+
+## Historical archive regression and renamed GitHub Pages subpath
+
+The published static artifact contains `seasons/YYYY.json` and `tournaments/YYYY.json` for the indexed 1985–2026 historical seasons. Source JSON is data, **not** a server-side application route. Previous browser tests ran solely at `/`, which could not catch GitHub Pages project-prefix errors after the repository was renamed to `March-Madness-Forecasting26-27`.
+
+`web/lib/historicalAssets.ts` now resolves static historical JSON using the current browser pathname, configured Next public base path, canonical Pages project prefix, prior project prefix, and unprefixed development root. Each candidate is same-origin; files are loaded with `cache: no-store`, checked for JSON and schema validity, and returned only for the requested indexed season. Missing resources produce explicit HTTP/path details, never fabricated game data. The bracket view differentiates a true network problem from the documented incomplete 2026 First Four archive, linking users to available actual game results.
+
+The `pages-history` CI job builds the **exact production basePath** and mounts the static export under the actual project subdirectory. It runs `web/e2e/historical-pages.spec.ts`, verifying 2024 and 2023 full seeded fields, actual 2024 and 2022 result lists, and honest 2026 partial coverage. To reproduce locally, set `NEXT_PUBLIC_BASE_PATH=/March-Madness-Forecasting26-27` and `E2E_PAGES_BASE=/March-Madness-Forecasting26-27` for `npx playwright test e2e/historical-pages.spec.ts` in `web`. No additional public CDN or account credentials are required.

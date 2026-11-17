@@ -5,19 +5,20 @@ import type { RatingsDataset } from "../lib/models";
 import BracketScenario from "./BracketScenario";
 import BracketBuilder from "./BracketBuilder";
 import BracketDuel from "./BracketDuel";
+import {fetchHistoricalJson} from "../lib/historicalAssets";
 import {
   buildHistoricalField, simulateFullBracket, SEED_ORDER, type BracketArchive,
   type BracketField, type BracketResult,
 } from "../lib/fullBracket";
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 const stages = [
   ["round32", "R32"], ["sweet16", "S16"], ["elite8", "E8"],
   ["final4", "F4"], ["titleGame", "FINAL"], ["champion", "TITLE"],
 ] as const;
 const fmt = (v: number) => (v * 100).toFixed(v < .01 ? 2 : 1) + "%";
 
-export default function FullBracketLab({ data }: { data: RatingsDataset }) {
+export default function FullBracketLab({ data,onOpenArchive }: { data: RatingsDataset;onOpenArchive?:()=>void }) {
   const [archive, setArchive] = useState<BracketArchive | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState("");
@@ -32,12 +33,14 @@ export default function FullBracketLab({ data }: { data: RatingsDataset }) {
     setStatus("loading");
     setResults(null);
     setArchive(null);
-    fetch(basePath + "/tournaments/" + data.season + ".json")
-      .then((r) => { if (!r.ok) throw new Error("Tournament archive could not be loaded"); return r.json(); })
-      .then((raw: BracketArchive) => {
+    fetchHistoricalJson<BracketArchive>("tournaments",data.season,(value):value is BracketArchive=>{
+      const archive=value as Partial<BracketArchive>|null;
+      return archive?.season===data.season&&Array.isArray(archive.games)&&
+             archive.teams!=null&&typeof archive.teams==="object";
+    })
+      .then((raw) => {
         if (ignore) return;
-        if (raw.season !== data.season) throw new Error("Tournament year mismatch");
-        setArchive(raw); setStatus("ready");
+        setArchive(raw);setMessage("");setStatus("ready");
       })
       .catch((error: Error) => { if (!ignore) { setMessage(error.message); setStatus("error"); } });
     return () => { ignore = true; };
@@ -83,7 +86,10 @@ export default function FullBracketLab({ data }: { data: RatingsDataset }) {
         <div className="big-orb" aria-hidden="true"><span>64</span><small>MAIN DRAW</small></div>
       </div>
       {status === "loading" && <div className="premium-empty" role="status">Loading verified tournament seed data…</div>}
-      {(status === "error" || error) && <div className="premium-empty" role="alert"><strong>FIELD UNAVAILABLE</strong><p>{error || message}</p><p>Try another complete historical season. Partial 2026 coverage cannot reconstruct the full field.</p></div>}
+      {(status === "error" || error) && <div className="premium-empty" role="alert"><strong>{error&&data.tournament?.mainDrawOnly?"TOURNAMENT BRACKET IS INCOMPLETE":"FIELD UNAVAILABLE"}</strong><p>{error || message}</p>
+        <p>{data.season===2026?"The archived 2026 results do not contain all four First Four seed entrants, so a full 68-team bracket cannot be reconstructed without inventing teams. The actual recorded games remain available in the Tournament Archive.":"Choose a complete historical season such as 2025 or 2024 to view its full sourced bracket."}</p>
+        {onOpenArchive&&<button type="button" className="button-outline" onClick={onOpenArchive}>VIEW RECORDED TOURNAMENT RESULTS ↗</button>}
+      </div>}
       {field && (
         <>
           <div className="mini-metrics">
