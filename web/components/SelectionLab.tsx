@@ -46,10 +46,10 @@ export default function SelectionLab(){
         (conference==="all" || t.conference===conference));
   },[watch,filter,search,conference]);
   const selected = (watch?.teams||[]).concat(watch?.bubble||[]).find(t=>t.teamId===detailId)||candidates[0];
-  const confMatched = data?.identityCoverage?.matchedRatedTeams || 0;
-  const confCount = data?.identityCoverage?.conferencesRepresented || 0;
+  const confMatched = data?.divisionCoverage?.divisionIConfirmed || 0;
+  const confCount = watch?.matchedConferences || 0;
   const preview = useMemo(()=>{
-    return (data?.teams||[]).filter(t=>t.conferenceVerified)
+    return (data?.teams||[]).filter(t=>t.conferenceVerified && t.divisionIConfirmed===true)
       .sort((a,b)=>b.projectedRating-a.projectedRating).slice(0,16);
   },[data]);
 
@@ -66,13 +66,13 @@ export default function SelectionLab(){
       <div className="mini-metrics">
         <div><small>2027 FIELD SIZE</small><strong>76</strong><span>NCAA confirmed</span></div>
         <div><small>AUTO / AT-LARGE</small><strong>32 / 44</strong><span>NCAA-defined slots</span></div>
-        <div><small>VERIFIED CONFERENCES</small><strong>{confCount} / 32</strong><span>In scored results directory</span></div>
-        <div><small>LINKED PROGRAMS</small><strong>{confMatched}</strong><span>Exact NCAA-source name matches</span></div>
+        <div><small>VERIFIED CONFERENCES</small><strong>{confCount} / 32</strong><span>Matched D-I candidates</span></div>
+        <div><small>LINKED PROGRAMS</small><strong>{confMatched}</strong><span>Source-linked D-I membership</span></div>
       </div>
       {watch?.status!=="ready" ? <div className="selection-pending">
         <div><span className="feature-kicker">DATA COVERAGE GATE</span><h3>A responsible bracket starts with the right teams.</h3>
         <p>{watch?.reason || "Verified conference membership is still unavailable."}</p>
-        <p>We do not invent missing conferences or treat unverified opponents as officially tournament-eligible. The scoreboard still contains real results; the field scenario activates only with full 32-conference coverage.</p>
+        <p>We do not invent missing conferences or treat unverified D-I opponents as officially tournament-eligible. The scoreboard still contains real results; the field scenario activates only with full 32-conference coverage.</p>
         <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_team_ids" target="_blank" rel="noreferrer">CHECK CONFERENCE SOURCE ↗</a></div>
         <div className="coverage-ring"><strong>{confCount}<small>/32</small></strong><span>CONFERENCES</span></div>
       </div> : <>
@@ -109,7 +109,7 @@ export default function SelectionLab(){
         <p>These are the highest-rated programs that could be joined exactly to the NCAA 2027 team directory. They are not officially qualified.</p>
         <div className="selection-preview">{preview.map((t,i)=><div key={t.teamId}><span>{String(i+1).padStart(2,"0")}</span><strong>{t.name}</strong><small>{t.conference||"—"}</small><b>{t.projectedRating.toFixed(0)}</b></div>)}</div>
       </div>
-      <p className="source-note">Conference source: <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_team_ids" target="_blank" rel="noreferrer">NCAA team-ID crosswalk ↗</a>. Official field rules: <a href="https://www.ncaa.org/championships/march-madness/expansion-what-to-know/" target="_blank" rel="noreferrer">NCAA 2027 expansion ↗</a>. Matching conference membership is not a standalone official eligibility certification. Provisional power-based candidates will evolve with results; no historical backtest of committee selection accuracy has been established.</p>
+      <p className="source-note">D-I group membership source: <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_groups" target="_blank" rel="noreferrer">2027 season subdivision ↗</a>. Conference source: <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_team_ids" target="_blank" rel="noreferrer">NCAA team-ID crosswalk ↗</a>. Official field rules: <a href="https://www.ncaa.org/championships/march-madness/expansion-what-to-know/" target="_blank" rel="noreferrer">NCAA 2027 expansion ↗</a>. Matching conference membership is not a standalone official eligibility certification. Provisional power-based candidates will evolve with results; no historical backtest of committee selection accuracy has been established.</p>
     </>}
   </section>;
 }

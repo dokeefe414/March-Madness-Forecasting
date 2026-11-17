@@ -17,6 +17,7 @@ export type Team = {
   opponentAverageElo?: number;
   conference?: string | null;
   conferenceVerified?: boolean;
+  divisionIConfirmed?: boolean | null;
   ncaaSourceTeamId?: string | null;
   offRating100?: number;
   defRating100?: number;
@@ -60,6 +61,7 @@ export type RatingsDataset = {
   cutoffDate?: string;
   recentGames?: Array<{id: string; date: string; home: string; away: string; homeScore: number; awayScore: number}>;
   isOfficialBracket?: boolean;
+  divisionCoverage?: {status?:string; matchedRatedTeams?:number;divisionIConfirmed?:number; explicitlyNonDI?:number; sourceDivisionIConferenceGroups?:number; unmatchedRatedTeams?:number};
   identityCoverage?: {status?: string; source?:string; ratedTeams?: number; matchedRatedTeams?: number; unmatchedRatedTeams?: number; conferencesRepresented?: number; matchRate?:number; conferenceCounts?:Record<string,number>};
   efficiencyCoverage?: {status?: string; source?:string; matchedTeamGames?: number; teamsWithMetrics?: number; scheduledFinalGames?:number; skippedRows?:number};
   selectionWatchlist?: unknown;
