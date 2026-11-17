@@ -5,7 +5,7 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v0.9%20Predictive%20Accuracy-a6ffce)
+![Version](https://img.shields.io/badge/release-v1.0%20Prediction%20Intelligence-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
@@ -17,6 +17,16 @@
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v1.0 — Prediction intelligence, transparent accuracy and scenario sensitivity
+
+**What is new:** The real Game Center now exposes a source-grounded **team-vs-team strength and adjusted-efficiency comparison** with honest missing-data handling. `Accuracy & Picks` includes **exclusive favorite confidence cohorts**, **25-game chronological forward Brier**, and **Brier skill relative to a 50/50 reference** (including negative results when the public forecasts underperform). The historical Bracket Lab offers a **one-team ±150 Elo sensitivity experiment** with same-seed, same-run paired Monte Carlo simulations and championship probability deltas.
+
+The underlying predictions and rules remain unchanged unless verified forward results justify a pre-existing gated promotion: no invented 2027 bracket, no results leaked into pregame odds, no fake success rate when zero first-archived forecasts have settled, and no turning descriptive efficiency numbers into coefficients.
+
+**Explore:** [Game evidence](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Prospective performance](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Bracket sensitivity lab](https://dokeefe414.github.io/March-Madness-Forecasting/?view=bracket) · [Full v1.0 methods, tests and runbook](docs/v10-prediction-intelligence.md).
 
 ---
 
