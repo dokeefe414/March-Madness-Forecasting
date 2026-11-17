@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { RatingsDataset } from "../lib/models";
 import BracketScenario from "./BracketScenario";
+import BracketBuilder from "./BracketBuilder";
 import {
   buildHistoricalField, simulateFullBracket, SEED_ORDER, type BracketArchive,
   type BracketField, type BracketResult,
@@ -145,6 +146,7 @@ export default function FullBracketLab({ data }: { data: RatingsDataset }) {
               </div>
             </div>
           ) : <div className="premium-empty"><span className="empty-spark">✳</span><h3>RUN THE TOURNAMENT.</h3><p>The title probability leaderboard and every-round advancement paths will appear here.</p></div>}
+          <BracketBuilder key={"builder-"+data.season} field={field}/>
           {results&&<BracketScenario key={data.season} field={field} runs={runs} seed={seed} baseline={results}/>}
           <p className="source-note">Source: actual archived tournament seeds; team strength frozen before tournament play. Opening Round is modeled for historical 65/68 fields; the simulator also supports a future 76-team / 12-opening-game field when verified seed placements are available. Final Four region crossover uses an illustrative W–X / Y–Z pairing; actual year-specific national semifinal placement may differ. This is not the official 2027 field.</p>
         </>
