@@ -449,17 +449,22 @@ def main() -> None:
         scoreboards = fixture_data if isinstance(fixture_data, list) else [fixture_data]
         finals_scoreboards = scoreboards
     else:
-        # Verify up to ten days of still-relevant finals without downloading an
-        # unbounded season. Fetch future fixtures independently of old results.
+        # Revisit unresolved scheduled dates, including previously delayed
+        # independently unverified finals, with a bounded lookback and API budget.
         dates = [today + timedelta(days=i) for i in range(3)]
         all_old = _existing(args.out_dir / "snapshots")
+        previously_done = {r["predictionKey"] for group in _existing(args.out_dir / "settlements")
+                           for r in group.get("results", [])}
         past_days = {
             date.fromisoformat(pred["scheduledEasternDate"])
             for snap in all_old for pred in snap.get("predictions", [])
-            if today - timedelta(days=10) <=
-               date.fromisoformat(pred["scheduledEasternDate"]) <= today
+            if snap["snapshotId"] + ":" + str(pred["eventId"]) not in previously_done
+            and today - timedelta(days=45) <=
+                date.fromisoformat(pred["scheduledEasternDate"]) <= today
         }
-        completed_dates = sorted(past_days | {
+        # Always check recent finals, plus up to 12 oldest unresolved dates.
+        # This caps the external ESPN source request budget per run.
+        completed_dates = sorted((past_days and set(sorted(past_days)[:12]) or set()) | {
             today - timedelta(days=i) for i in range(1,4)
         })
         by_date = {}
