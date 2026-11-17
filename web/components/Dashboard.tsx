@@ -12,10 +12,11 @@ import ModelLab from "./ModelLab";
 import SelectionLab from "./SelectionLab";
 import ForecastTracker from "./ForecastTracker";
 import TeamIntelligence from "./TeamIntelligence";
+import {fetchHistoricalJson} from "../lib/historicalAssets";
 
 const initialData = rawData as RatingsDataset;
 const initialTeams = [...initialData.teams].sort((a, b) => b.projectedRating - a.projectedRating);
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 type TournamentArchive = {
   season: number;
   champion: string | null;
@@ -71,8 +72,10 @@ export default function Dashboard() {
   const [data, setData] = useState<RatingsDataset>(initialData);
   const [selectedYear, setSelectedYear] = useState(initialData.season);
   const [loadStatus, setLoadStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [historicalError,setHistoricalError] = useState("");
   const [archive, setArchive] = useState<TournamentArchive | null>(null);
   const [archiveStatus, setArchiveStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [tournamentError,setTournamentError] = useState("");
   const sortedTeams = useMemo(() => [...data.teams].sort((a, b) => b.projectedRating - a.projectedRating), [data]);
   const [tab, setTab] = useState<Tab>("games");
   useEffect(()=>{
@@ -131,13 +134,15 @@ export default function Dashboard() {
   async function loadYear(year: number) {
     if (year === selectedYear) return;
     setLoadStatus("loading");
+    setHistoricalError("");
     try {
-      const response = await fetch(basePath + "/seasons/" + year + ".json");
-      if (!response.ok) throw new Error("Season unavailable");
-      const snapshot = (await response.json()) as RatingsDataset;
-      if (snapshot.mode !== "historical" || snapshot.season !== year || !Array.isArray(snapshot.teams) || snapshot.teams.length < 2) {
-        throw new Error("Unexpected archive format");
-      }
+      const snapshot = await fetchHistoricalJson<RatingsDataset>(
+        "seasons",year,(value):value is RatingsDataset=>{
+          const season=value as Partial<RatingsDataset>|null;
+          return season?.mode==="historical"&&season.season===year&&
+                 Array.isArray(season.teams)&&season.teams.length>=2;
+        }
+      );
       const ordered = [...snapshot.teams].sort((a, b) => b.projectedRating - a.projectedRating);
       setData(snapshot);
       setSelectedYear(year);
@@ -148,24 +153,31 @@ export default function Dashboard() {
       setSort("rank");
       setArchive(null);
       setArchiveStatus("idle");
+      setTournamentError("");
       setLoadStatus("idle");
     } catch (error) {
       console.error(error);
+      setHistoricalError(error instanceof Error?error.message:"Could not retrieve this historical season.");
       setLoadStatus("error");
     }
   }
 
   async function loadTournamentArchive() {
     setArchiveStatus("loading");
+    setTournamentError("");
     try {
-      const response = await fetch(basePath + "/tournaments/" + selectedYear + ".json");
-      if (!response.ok) throw new Error("Tournament archive unavailable");
-      const parsed = (await response.json()) as TournamentArchive;
-      if (parsed.season !== selectedYear || !Array.isArray(parsed.games)) throw new Error("Unexpected tournament archive");
+      const parsed = await fetchHistoricalJson<TournamentArchive>(
+        "tournaments",selectedYear,(value):value is TournamentArchive=>{
+          const tournament=value as Partial<TournamentArchive>|null;
+          return tournament?.season===selectedYear&&Array.isArray(tournament.games)&&
+                 tournament.teams!=null&&typeof tournament.teams==="object";
+        }
+      );
       setArchive(parsed);
       setArchiveStatus("idle");
     } catch (error) {
       console.error(error);
+      setTournamentError(error instanceof Error?error.message:"Could not retrieve the tournament archive.");
       setArchiveStatus("error");
     }
   }
@@ -236,7 +248,7 @@ export default function Dashboard() {
             </select>
           </label>
           {loadStatus === "loading" && <span className="year-status" role="status">Loading historical season…</span>}
-          {loadStatus === "error" && <span className="year-status error" role="alert">Could not load that season. Please retry.</span>}
+          {loadStatus === "error" && <span className="year-status error" role="alert">Could not load season. {historicalError} <button type="button" onClick={()=>void loadYear(selectedYear===2025?2024:2025)}>TRY ANOTHER YEAR</button></span>}
         </section>
 
         <section className="metrics-strip" aria-label="Research overview">
@@ -253,7 +265,7 @@ export default function Dashboard() {
             <label>CHOOSE SEASON<select value={selectedYear} disabled={loadStatus === "loading"} onChange={e => void loadYear(Number(e.target.value))}>
               {[...yearIndex.seasons].reverse().map(y => <option key={y.season} value={y.season}>{y.season}{y.isComplete ? "" : " (partial)"}</option>)}
             </select></label>
-            {loadStatus === "error" && <span className="year-status error">Could not load historical season.</span>}
+            {loadStatus === "error" && <span className="year-status error" role="alert">Could not load historical season. {historicalError}</span>}
           </div>
         )}
         {tab === "games" && <GameCenter onOpenAccuracy={()=>changeTab("predictions")} onOpenModels={()=>changeTab("models")} onOpenSelection={()=>changeTab("selection")}/>}
@@ -346,7 +358,7 @@ export default function Dashboard() {
             <p className="archive-description">{data.isComplete ? "Regular-season results cover the Kaggle season through Selection Sunday." : "The source regular-season record is incomplete; we do not report a valid tournament score for this incomplete cutoff."} {data.tournament?.mainDrawOnly ? "The 2026 tournament archive includes 63 main-draw games, excluding four First Four play-ins." : ""} When shown, the tournament Brier score uses frozen regular-season ratings and never learns from the games being evaluated.</p>
             <div className="archive-controls">
               <button className="button-primary" onClick={() => void loadTournamentArchive()} disabled={archiveStatus === "loading"}>{archiveStatus === "loading" ? "LOADING…" : archive?.season === selectedYear ? "RELOAD RESULTS" : "VIEW ACTUAL TOURNAMENT GAMES"} <span aria-hidden="true">↗</span></button>
-              {archiveStatus === "error" && <span className="year-status error" role="alert">Could not load results. Please retry.</span>}
+              {archiveStatus === "error" && <span className="year-status error" role="alert">Tournament data unavailable. {tournamentError} <button type="button" onClick={()=>void loadTournamentArchive()}>RETRY</button></span>}
             </div>
             {archive && archive.season === selectedYear && (
               <div className="archive-results">
