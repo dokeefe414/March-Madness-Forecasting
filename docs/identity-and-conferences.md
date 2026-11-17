@@ -75,3 +75,11 @@ An even stronger source than historical name aliases is SportsDataverse's publis
 The per-team lookup prefers a verified NCAA-ID mapping to name-only matching, but if the two source paths disagree on the **ESPN group team ID**, it refuses to assert division membership. Production `divisionCoverage` now reports `seasonNCAAIdMatchedTeams`, `ncaaAliasMatchedTeams` and `crosswalkSource` so improvement can be demonstrated with real counts. Again, source-verified subdivision is **not individual postseason eligibility**. If the upstream crosswalk lacks rows for the 2026–27 season, the importer must *not* borrow prior-year NCAA numeric IDs — stats.ncaa.org IDs are regenerated each season.
 
 This correction follows the initial 0-match NCAA-name/ESPN-name join and still enforces **32 D-I conference groups and 76 rated candidates** before any hypothetical selection field appears. It should never silently lower that gate to force a table of teams.
+
+## Conference GROUP identity versus a display name
+
+The 2027 live build with genuine source inputs reported **32 independently verified D-I source conference group IDs** but only **31 different human-readable conference labels** in the NCAA team directory. This is a provider-label inconsistency; inferring that the tournament has 31 leagues would be wrong. A display name is presentation metadata, *not a primary key*.
+
+The `division.py` output now sets `divisionConferenceGroupId` only when the team is affirmatively linked to a season-2027 Division I membership record with a non-empty `conferenceGroupId`. Unknown or non-D-I teams receive `null`. The provisional field groups by this ID, not the NCAA `conference` string, and requires **32 distinct D-I group IDs**, **76 unique rated programs** and independent team-directory name identity before it can display 76 conditional strength candidates.
+
+The report includes `matchedConferences` (source group ID count), `distinctConferenceDisplayNames`, and `groupingKey`. This lets reviewers reproduce the 32/31 distinction and prevents teams in two verified conferences with the same provider display label from sharing one automatic-bid proxy. As always, the result is *not* the committee's chosen field.

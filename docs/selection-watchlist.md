@@ -47,3 +47,9 @@ Selection `eligible` now requires `divisionIConfirmed is True` from `forecast.di
 ### Cross-provider alias validation
 
 The group lineage uses ESPN team IDs while our schedule uses stats.ncaa.org school names. An exact score-name to ESPN mascot-name match can be zero even when both data sources are correct. `mbb_team_aliases.csv` supplies **date-validated, provider-published NCAA school-name → ESPN group-team ID links**. The D-I group check accepts these source-authored links, but no ambiguous, expired or fuzzy school join. Coverage and the watchlist gate are recomputed from actual imported results; until sufficiently many programs have both proofs, the site stays in its conservative insufficient-coverage state.
+
+## Production fix: group by season-2027 conference IDs
+
+The public source bundle currently has **32 verified D-I conferenceGroupIds** but only **31 NCAA conference display-name strings**. Grouping by `conference` text was needlessly lossy and kept the field in `insufficient-coverage`. The correction requires `divisionConferenceGroupId` assigned by the verified season-2027 D-I group membership source and keys `by_conference` by that explicit ID. Team cards continue to show NCAA human-readable labels, with source group IDs available for audit. A simulation with 32 unique group IDs and 31 shared display labels remains eligible for an **unofficial** 76-team power watchlist. No missing league is guessed or created.
+
+Tests explicitly verify the 32-ID/31-label case, gate absent groups, require D-I status and preserve exactly 32 conference-proxy plus 44 strength-based at-large candidates. This change does not predict conference tournament winners or official bids.

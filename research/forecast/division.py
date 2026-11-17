@@ -215,6 +215,14 @@ def annotate_division(teams: list[dict], membership: dict[str, dict]) -> dict:
         else:
             match = matched_id or matched_name
         team["divisionIConfirmed"] = bool(match["divisionIConfirmed"]) if match else None
+        # The provider's season-2027 conference *group ID* is the authority
+        # for identity and AQ grouping. NCAA display labels may collapse
+        # multiple distinct source leagues (31 names vs 32 source groups).
+        team["divisionConferenceGroupId"] = (
+            match["conferenceGroupId"]
+            if match and match["divisionIConfirmed"] and match["conferenceGroupId"]
+            else None
+        )
         if matched_id and match:
             id_matched += 1
         elif matched_name and match and matched_name.get("joinedBy"):
@@ -233,6 +241,7 @@ def annotate_division(teams: list[dict], membership: dict[str, dict]) -> dict:
         "matchedRatedTeams": matched, "divisionIConfirmed": divi,
         "explicitlyNonDI": non_divi, "unmatchedRatedTeams": len(teams)-matched,
         "sourceDivisionIConferenceGroups": len(source_groups),
+        "conferenceGroupingMethod": "season-2027 independent source conference_group_id",
         "seasonNCAAIdMatchedTeams": id_matched,
         "ncaaAliasMatchedTeams": alias_matched,
         "crosswalkSource": CROSSWALK_URL,

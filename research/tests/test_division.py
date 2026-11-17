@@ -42,6 +42,10 @@ class DivisionMembershipTests(unittest.TestCase):
                          [True, False, True, None])
         self.assertEqual(report["divisionIConfirmed"], 2)
         self.assertEqual(report["sourceDivisionIConferenceGroups"], 2)
+        self.assertEqual(rows[0]["divisionConferenceGroupId"], "mbb:big-south")
+        self.assertIsNone(rows[1]["divisionConferenceGroupId"])
+        self.assertEqual(rows[2]["divisionConferenceGroupId"], "mbb:metro")
+        self.assertIsNone(rows[3]["divisionConferenceGroupId"])
         self.assertEqual(report["unmatchedRatedTeams"], 1)
 
     def test_conflicting_alias_dropped(self):
