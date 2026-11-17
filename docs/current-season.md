@@ -102,3 +102,7 @@ Offline flag: `--alias-input fixture-mbb-team-aliases.csv`. The live task fetche
 To resolve the NCAA-name versus ESPN-group team gap, `forecast.live` additionally fetches `ncaa_espn_team_crosswalk.csv` (SportsDataverse `mbb_crosswalk` release). It validates explicit season `2026-27`, source `ncaa_team_id`, source `espn_team_id`, and a genuine non-unmatched `match_method`. The source-defined ESPN ID matches the season-2027 division group membership ID; no integer equality or school nickname inference is used. `divisionCoverage.seasonNCAAIdMatchedTeams` and `crosswalkSource` report actual results. Missing mappings remain unknown, not D-I certified.
 
 Offline flag: `--crosswalk-input local-ncaa-espn-team-crosswalk.csv`. Use this alongside `--group-seasons-input` and `--membership-input` to verify the join locally.
+
+### Division I source conference IDs for the provisional field
+
+Where the source provider has 32 2027 Division I `conferenceGroupId` values but only 31 display labels, `divisionConferenceGroupId` is attached to each confirmed D-I team (null otherwise). Field Watch uses the verified group ID for unique conference/automatic-bid proxy grouping; it never invents a missing conference to reach 32. `selectionWatchlist.matchedConferences`, `distinctConferenceDisplayNames`, and `groupingKey` make this discrepancy explicit.

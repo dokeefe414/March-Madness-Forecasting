@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { RatingsDataset, Team } from "../lib/models";
 
 type WatchTeam = {teamId:string; name:string; conference:string; projectedRating:number; wins:number;
- losses:number; games:number; category:string; powerRank:number|null; sampleBand:string;illustrativeSeedRange?:number[]|null};
+ losses:number; games:number; category:string; powerRank:number|null; sampleBand:string;illustrativeSeedRange?:number[]|null;conferenceGroupId?:string};
 type Watchlist = {season:number; asOfDate:string; official:false; status:string; method:string;fieldSize:number;
  automaticSlotCount:number;atLargeSlotCount:number;eligibleCandidateCount:number;matchedConferences:number;
  reason?:string; teams:WatchTeam[];bubble:WatchTeam[];cutlineRating?:number;limitations:string[]};
@@ -97,6 +97,7 @@ export default function SelectionLab(){
           </div>
           <aside className="watch-spotlight">
             {selected ? <><span className="feature-kicker">PROGRAM WATCH / POWER RATING</span><h3>{selected.name}</h3><p className="watch-conference">{selected.conference}</p>
+              <p className="watch-group-source">Verified 2027 conference group: {selected.conferenceGroupId||"not available"}</p>
               <div className="watch-rating">{selected.projectedRating.toFixed(0)}<span>MODEL ELO</span></div>
               <div className="watch-facts"><div><small>POWER POSITION</small><strong>{selected.powerRank||"Outside 76"}</strong></div><div><small>SEASON SAMPLE</small><strong>{selected.games} games</strong></div><div><small>ILLUSTRATIVE SEED TIER</small><strong>{selected.illustrativeSeedRange?selected.illustrativeSeedRange.join("–"):"N/A"}</strong></div><div><small>DATA CONFIDENCE</small><strong>{selected.sampleBand}</strong></div></div>
               <div className="watch-tag">{selected.category.replaceAll("-"," ").toUpperCase()}</div>
@@ -106,10 +107,10 @@ export default function SelectionLab(){
         </div>
       </>}
       <div className="selection-foot"><span className="feature-kicker">CONFERENCE-LINKED SOURCE LEADERS</span>
-        <p>These are the highest-rated programs that could be joined exactly to the NCAA 2027 team directory. They are not officially qualified.</p>
+        <p>These are the highest-rated programs independently linked to source Division I membership and the NCAA 2027 directory. They are not officially qualified.</p>
         <div className="selection-preview">{preview.map((t,i)=><div key={t.teamId}><span>{String(i+1).padStart(2,"0")}</span><strong>{t.name}</strong><small>{t.conference||"—"}</small><b>{t.projectedRating.toFixed(0)}</b></div>)}</div>
       </div>
-      <p className="source-note">D-I group membership source: <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_groups" target="_blank" rel="noreferrer">2027 season subdivision ↗</a>. Conference source: <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_team_ids" target="_blank" rel="noreferrer">NCAA team-ID crosswalk ↗</a>. Official field rules: <a href="https://www.ncaa.org/championships/march-madness/expansion-what-to-know/" target="_blank" rel="noreferrer">NCAA 2027 expansion ↗</a>. Matching conference membership is not a standalone official eligibility certification. Provisional power-based candidates will evolve with results; no historical backtest of committee selection accuracy has been established.</p>
+      <p className="source-note">D-I group membership source: <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_groups" target="_blank" rel="noreferrer">2027 season subdivision ↗</a>. Conference display-name source: <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_team_ids" target="_blank" rel="noreferrer">NCAA team-ID crosswalk ↗</a>. Official field rules: <a href="https://www.ncaa.org/championships/march-madness/expansion-what-to-know/" target="_blank" rel="noreferrer">NCAA 2027 expansion ↗</a>. Matching conference membership is not a standalone official eligibility certification. Provisional power-based candidates will evolve with results; no historical backtest of committee selection accuracy has been established.</p>
     </>}
   </section>;
 }
