@@ -63,6 +63,17 @@ class RetrainTests(unittest.TestCase):
             full_by_day[day]=1
         self.assertGreater(len(full_by_day),1)
 
+    def test_scheduled_retraining_never_auto_promotes_even_with_forward_claim(self):
+        # A separately passed forward-gate report cannot silently change
+        # the public selected model during a scheduled CI/Pages build.
+        data=mock_games()
+        report=build_report(data,rating(data),NOW,
+                            forward_evidence={"promote":True,"status":"eligible",
+                                              "pairedGames":150,"pairedDates":18})
+        self.assertEqual(report["mode"],"shadow")
+        self.assertIs(report["promoteAutomatically"],False)
+        self.assertIsInstance(report["eligibleForManualReview"],bool)
+
     def test_active_model_has_strict_asof_and_valid_coefficients(self):
         sample={"type":"current-season-chronological-logistic","mode":"active",
                 "season":2027,"ratingRetrievedAtUtc":"2026-12-21T17:50:00Z",
