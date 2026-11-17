@@ -13,7 +13,7 @@ from datetime import datetime,timedelta,timezone,date
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from .snapshot import (_one_team,parse_time,retrieve_fixture,
+from .snapshot import (parse_time,retrieve_fixture,
                        forecast_scheduled,BUFFER_MINUTES,ESPN_BASE)
 from .live import REGULAR_SEASON_CUTOFF
 
@@ -86,12 +86,9 @@ def build_game_center(scoreboards:list[dict],ratings:dict,games:list[dict],
     included_before=now.astimezone(LOCAL).date().isoformat()
     eligible_games=sorted((g for g in games if g["date"]<included_before),
                           key=lambda g:(g["date"],g["id"]))
-    by_name={}
-    by_id={}
-    for team in ratings["teams"]:
-        by_name.setdefault(team["name"].casefold(),[]).append(team)
-        if team.get("espnSourceTeamId"):
-            by_id.setdefault(str(team["espnSourceTeamId"]),[]).append(team)
+    by_team_id={team["teamId"]:team for team in ratings["teams"]}
+    if len(by_team_id)!=len(ratings["teams"]):
+        raise ValueError("Duplicated current-season team identity")
     # Reuse the exact probability engine used by Git's immutable pregame ledger.
     forecast=forecast_scheduled(scoreboards,ratings,now,online_model,state_space)
     frozen={p["eventId"]:p for p in forecast["predictions"]}
@@ -131,15 +128,13 @@ def build_game_center(scoreboards:list[dict],ratings:dict,games:list[dict],
                 team=side.get("team") or {}
                 return str(team.get("location") or team.get("shortDisplayName") or
                            team.get("displayName") or "Unidentified program").strip()
-            home=_one_team(side_h[0],{row["name"].casefold():[row] for row in ratings["teams"]},by_id)
-            away=_one_team(side_a[0],{row["name"].casefold():[row] for row in ratings["teams"]},by_id)
-            # Preserve the full canonical matcher used by the actual picker;
-            # a best-effort view label is never allowed to introduce odds.
+            # Only use the actual archived-forecast probability engine's
+            # unique identity decision. No second approximate name join in
+            # this presentation module is allowed to override it.
             pick=frozen.get(eid)
             coverage["futureScheduled"]+=1
-            if pick:
-                home=next((t for t in ratings["teams"] if t["teamId"]==pick["homeTeamId"]),None)
-                away=next((t for t in ratings["teams"] if t["teamId"]==pick["awayTeamId"]),None)
+            home=by_team_id.get(pick["homeTeamId"]) if pick else None
+            away=by_team_id.get(pick["awayTeamId"]) if pick else None
             if pick and home and away:
                 coverage["eligibleForecasts"]+=1
                 h_hist=_evidence(eligible_games,home["name"],included_before)
