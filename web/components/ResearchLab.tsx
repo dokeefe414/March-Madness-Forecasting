@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type Method = "coin_flip" | "elo" | "trend_elo" | "adaptive_form" | "calibrated_trend_elo" | "logistic" | "boosted";
+type Method = "coin_flip" | "elo" | "trend_elo" | "adaptive_form" | "calibrated_trend_elo" | "logistic" | "boosted" | "blend";
 type Metric = {games: number; brier: number; logLoss: number; accuracy: number};
 type Bin = {lower: number; upper: number; count: number; confidence: number | null; accuracy: number | null};
 type Report = {
@@ -20,7 +20,7 @@ type Report = {
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const methods: Array<[Method, string]> = [
   ["coin_flip", "Coin flip"], ["elo", "Standard Elo"], ["trend_elo", "Form-adjusted Elo"], ["adaptive_form", "Adaptive time-series"],
-  ["calibrated_trend_elo", "Calibrated Elo"], ["logistic", "Trained logistic"], ["boosted", "Boosted Elo"],
+  ["calibrated_trend_elo", "Calibrated Elo"], ["blend", "Past-year ensemble"], ["logistic", "Trained logistic"], ["boosted", "Boosted Elo"],
 ];
 const label = (id: Method) => methods.find(([key]) => key === id)?.[1] ?? id;
 const metricDisplay = (value: number, metric: keyof Metric) =>
@@ -108,7 +108,7 @@ export default function ResearchLab() {
               const pct = metric === "accuracy" ? val / baselineBound * 100 : (1 - val / baselineBound) * 100;
               return <button className={method === key ? "research-leader active" : "research-leader"} key={key} onClick={()=>setMethod(key)}>
                 <span className="ranking-index">{String(i+1).padStart(2,"0")}</span>
-                <span className="leader-description"><strong>{name}</strong><small>{key === "adaptive_form" ? "Causal EWMA, shift and volatility" : key === "boosted" ? "Earlier-year learned residual stumps" : key === "logistic" ? "Earlier-year learned coefficients" : key === "coin_flip" ? "No features" : key === "calibrated_trend_elo" ? "Past-year log-loss temperature" : "Fixed formula"}</small><span className="leaderbar"><i style={{width:Math.max(4,Math.min(100,pct))+"%"}}/></span></span>
+                <span className="leader-description"><strong>{name}</strong><small>{key === "blend" ? "Past held-out-year weight selection" : key === "adaptive_form" ? "Causal EWMA, shift and volatility" : key === "boosted" ? "Earlier-year learned residual stumps" : key === "logistic" ? "Earlier-year learned coefficients" : key === "coin_flip" ? "No features" : key === "calibrated_trend_elo" ? "Past-year log-loss temperature" : "Fixed formula"}</small><span className="leaderbar"><i style={{width:Math.max(4,Math.min(100,pct))+"%"}}/></span></span>
                 <strong className="leader-value">{metricDisplay(val, metric)}</strong>
               </button>;
             })}

@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 TEMPERATURES = (0.5, 0.65, 0.8, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0)
-METHODS = ("coin_flip", "elo", "trend_elo", "adaptive_form", "calibrated_trend_elo", "logistic", "boosted")
+METHODS = ("coin_flip", "elo", "trend_elo", "adaptive_form", "calibrated_trend_elo", "logistic", "boosted", "blend")
 
 
 @dataclass(frozen=True)
@@ -120,6 +120,25 @@ def choose_temperature(training_games: list[Outcome]) -> float:
     return min(TEMPERATURES, key=lambda t: (loss(t), abs(math.log(t))))
 
 
+def choose_blend_weight(past_elo: list[float], past_calibrated: list[float]) -> float:
+    """Conservative mix selected ONLY on older *out-of-time* tournaments.
+
+    Prior seasons' calibrated model predictions were themselves generated
+    with even earlier-year training. Never fit this stacking weight on the
+    current season's outcomes or on in-sample trained predictions.
+    """
+    if len(past_elo) != len(past_calibrated):
+        raise ValueError("ensemble must compare paired games")
+    if not past_elo:
+        return 0.0  # first evaluation year: no meta-training history
+    candidates = (0.0, 0.25, 0.5, 0.75, 1.0)
+    def objective(weight: float) -> float:
+        return (sum((1.0 - ((1-weight)*a+weight*c))**2
+                    for a,c in zip(past_elo,past_calibrated)) / len(past_elo)
+                + 0.0002*weight)  # mild simplicity bias
+    return min(candidates, key=lambda w:(objective(w),w))
+
+
 def scores(probabilities: list[float]) -> dict[str, float | int]:
     """Every probability is P(actual winner); Brier and log loss are symmetric."""
     if not probabilities:
@@ -198,6 +217,8 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
         raise ValueError("not enough seasons to train and evaluate")
     predictions: dict[str, list[float]] = {method: [] for method in METHODS}
     test_years = []
+    prior_elo_predictions: list[float] = []
+    prior_calibrated_predictions: list[float] = []
     for i in range(min_training_seasons, len(ordered)):
         current = ordered[i]
         past = [game for previous in ordered[:i] for game in previous.games]
@@ -210,6 +231,7 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             Features(g.base_difference, g.trend_difference, g.win_pct_difference)
             for g in past
         ])
+        stacking_weight = choose_blend_weight(prior_elo_predictions, prior_calibrated_predictions)
         row: dict[str, list[float]] = {
             "coin_flip": [0.5 for _ in current.games],
             "elo": [probability_of_winner(game.base_difference) for game in current.games],
@@ -232,8 +254,14 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
                 for g in current.games
             ],
         }
+        row["blend"] = [
+            (1-stacking_weight)*p_elo + stacking_weight*p_calibrated
+            for p_elo,p_calibrated in zip(row["elo"],row["calibrated_trend_elo"])
+        ]
         for method in METHODS:
             predictions[method].extend(row[method])
+        prior_elo_predictions.extend(row["elo"])
+        prior_calibrated_predictions.extend(row["calibrated_trend_elo"])
         test_years.append({
             "season": current.season,
             "trainingSeasons": i,
@@ -241,6 +269,7 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "evaluatedGames": len(current.games),
             "omittedGames": current.omitted_games,
             "calibrationTemperature": temperature,
+            "ensembleCalibrationWeight": stacking_weight,
             "logisticWeights": [round(w, 6) for w in weights],
             "boostedStumps": [{
                 "feature": s.feature, "threshold": s.threshold,
@@ -249,7 +278,7 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "models": {method: scores(row[method]) for method in METHODS},
         })
     return {
-        "schemaVersion": 2,
+        "schemaVersion": 3,
         "type": "historical-actual-matchup-walk-forward",
         "sourceCommit": source_commit,
         "minTrainingSeasons": min_training_seasons,
@@ -257,6 +286,13 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
         "firstTestSeason": test_years[0]["season"],
         "lastTestSeason": test_years[-1]["season"],
         "aggregate": {method: scores(predictions[method]) for method in METHODS},
+        "productionCalibration": {
+            "temperature": choose_temperature([g for season in ordered for g in season.games]),
+            "ensembleCalibratedWeight": choose_blend_weight(
+                prior_elo_predictions, prior_calibrated_predictions),
+            "trainingThroughSeason": ordered[-1].season,
+            "policy": "Historical completed tournament outcomes only; ensemble alpha learned from OOS year scores.",
+        },
         "reliability": {method: reliability(predictions[method]) for method in METHODS},
         "seasonBlockUncertainty": block_bootstrap(test_years),
         "yearByYear": test_years,
@@ -269,6 +305,7 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "Logistic coefficients are fit on historical *earlier-year* tournament outcomes and regular-season-only features.",
             "Gradient-boosted residual stumps are fit on earlier tournament years only; each paired sample has a symmetric winner/loser orientation.",
             "Adaptive regime feature uses only same-season prior regular-season Elo history; the model is heuristic and not trained on held-out outcomes.",
+            "Ensemble weight uses only older seasons from prior held-out calibrated-Elo predictions; first year defaults to plain Elo.",
             "A 95% season-block bootstrap is descriptive uncertainty, not a future guarantee.",
         ],
     }
