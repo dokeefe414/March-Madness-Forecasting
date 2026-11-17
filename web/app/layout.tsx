@@ -4,10 +4,10 @@ import PwaEnable from "../components/PwaEnable";
 
 export const metadata: Metadata = {
   title: "March Forecast | College Basketball Modeling",
-  manifest: "/March-Madness-Forecasting/manifest.webmanifest",
+  manifest: "/March-Madness-Forecasting26-27/manifest.webmanifest",
   applicationName: "March Forecast",
   appleWebApp: {capable:true,title:"March Forecast",statusBarStyle:"black-translucent"},
-  icons: {icon:"/March-Madness-Forecasting/icon.svg"},
+  icons: {icon:"/March-Madness-Forecasting26-27/icon.svg"},
   description: "Explore transparent college basketball team ratings, neutral-site matchup projections, and tournament simulations.",
 };
 
