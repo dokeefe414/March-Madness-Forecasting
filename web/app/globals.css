@@ -529,3 +529,61 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 .ml-model-card h3{min-height:0}.ml-paired{grid-template-columns:1fr}.ml-proof-bars>div{grid-template-columns:83px minmax(0,1fr) 54px}
 .ml-recent{padding:14px}.ml-hero-status strong{font-size:64px}}
 @media(prefers-reduced-motion:reduce){.ml-model-card{transition:none}.ml-model-card:hover{transform:none}}
+
+
+/* =============================================================
+   v0.9 REAL GAME REPLAY, LIVE ARCHIVE HEALTH AND QUICK JUMP CARDS
+   ============================================================= */
+.gc-archive-health{font-size:10px!important;line-height:1.6!important;color:#a9d5c0!important;
+ border-top:1px solid #3d675b;padding-top:12px;margin-top:16px!important}
+.gc-model-cta{background:#172e3b;color:#c4ffe0;border-color:#507d6f}
+.gc-model-cta:hover{background:#2a484e;color:#effff3}
+.gc-detail{scroll-margin-top:20px}
+.gc-quick-actions{display:flex;flex-wrap:wrap;gap:9px;padding:13px 0;border-bottom:1px solid #305450}
+.gc-quick-actions button,.gc-back{border:1px solid #5c8678;padding:10px 13px;border-radius:8px;
+ color:#bafed5;font-size:10px;letter-spacing:.7px;font-weight:900;cursor:pointer;background:#153a3b}
+.gc-quick-actions button:hover,.gc-back:hover{background:#245e4e;color:#eafff3}
+.live-open-games{width:100%;margin:14px 0;border:1px solid #7cbd94;background:#1c4d3f;
+ color:#d6ffe3;font-size:11px;font-weight:900;letter-spacing:.6px;border-radius:10px;
+ padding:14px 17px;cursor:pointer;text-align:left}
+.live-open-games:hover,.live-open-games:focus-visible{background:#29674a}
+.ga{border:1px solid #456c62;border-radius:13px;padding:clamp(14px,2vw,23px);margin:30px 0 4px;
+ background:linear-gradient(125deg,#12333a,#102a31);min-width:0}
+.ga-heading h3,.gc-recent-settled h3{font:900 clamp(30px,4vw,48px)/.95 "Barlow Condensed",Impact,sans-serif;
+ text-transform:uppercase;color:#eafff3;margin:8px 0 11px}
+.ga-heading p,.gc-recent-settled p{font-size:11px;line-height:1.7;color:#adcbbe}
+.ga-postgame{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(130px,.75fr) minmax(130px,.75fr);
+ gap:10px;margin:16px 0}
+.ga-postgame>div{background:#0e2933;border:1px solid #35645a;border-radius:10px;padding:13px;min-width:0}
+.ga-postgame small,.ga-history .section-kicker{font-size:9px;letter-spacing:.7px;color:#9ecab7;font-weight:900}
+.ga-postgame h4{font:900 clamp(21px,2.6vw,32px)/1 "Barlow Condensed",Impact,sans-serif;color:#e9fff0;margin:7px 0}
+.ga-postgame>div p,.ga-postgame>div span{font-size:10px;color:#aac9bf;line-height:1.6}
+.ga-postgame>div>strong{display:block;font:900 clamp(26px,3vw,45px)/1 "Barlow Condensed",Impact,sans-serif;color:#baffd5;margin:9px 0}
+.ga-postgame>p{grid-column:1/-1;border-radius:8px;padding:12px;font-size:11px;line-height:1.6}
+.ga-loss{background:#382c25;color:#f6d9b7;border:1px solid #957659}
+.ga-win{background:#1e4435;color:#c4ffdb;border:1px solid #579274}
+.ga-history{margin-top:18px;padding-top:17px;border-top:1px solid #396b60}
+.ga-history h4{font:900 30px/1 "Barlow Condensed",Impact,sans-serif;color:#f4fff6;margin:7px 0}
+.ga-empty{padding:11px;border-radius:8px;background:#0f2933;border:1px dashed #42695c;font-size:11px;line-height:1.6;color:#a8c6bb;margin:10px 0}
+.ga-probability svg{max-width:100%;width:100%;height:auto;max-height:230px}
+.ga-capture-list{display:flex;flex-direction:column;gap:7px;margin-top:9px}
+.ga-capture-list>div{display:grid;grid-template-columns:minmax(110px,.6fr) minmax(90px,.4fr) minmax(130px,1fr);
+ gap:12px;align-items:center;border-radius:7px;background:#0d2630;padding:9px}
+.ga-capture-list span,.ga-capture-list small{font-size:10px;color:#a3c3bc}
+.ga-capture-list strong{font-size:12px;color:#c5ffda}
+.ga-disclaimer{color:#d8bb93;font-size:11px;line-height:1.7}
+.gc-postgame-view .gc-back{margin:13px 0}
+.gc-recent-settled{margin:25px 0;padding:clamp(17px,3vw,26px);border-radius:14px;
+ background:linear-gradient(115deg,#143a36,#092632);border:1px solid #39685a}
+.gc-recent-settled em{font-style:normal;color:#b5ffd0}
+.gc-settled-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:18px}
+.gc-settled-grid button{min-width:0;cursor:pointer;text-align:left;background:#0f2b35;border:1px solid #325a58;
+ color:#dbffea;border-radius:9px;padding:13px;display:flex;flex-direction:column;gap:8px}
+.gc-settled-grid button:hover,.gc-settled-grid button.active{border-color:#a4f2bb;background:#215143}
+.gc-settled-grid small{font-size:8px;font-weight:900;letter-spacing:.6px;color:#91bea8}
+.gc-settled-grid strong{font:900 21px/1.15 "Barlow Condensed",Impact,sans-serif}
+.gc-settled-grid span{color:#b7d6c6;font-size:9px;line-height:1.45}
+@media(max-width:1130px){.gc-settled-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.ga-postgame{grid-template-columns:1fr}.gc-settled-grid{grid-template-columns:1fr}
+.ga-capture-list>div{grid-template-columns:1fr;gap:3px}.gc-quick-actions button{width:100%;text-align:center}
+.gc-model-cta{width:100%}}
