@@ -62,3 +62,16 @@ Add detailed possession-based efficiency metrics, formal rolling-year cross-vali
 ## Chronological tournament benchmark (v0.3)
 
 `forecast.benchmark` reads the committed complete pre-tournament Elo season snapshots and subsequently observed NCAA tournament pairings. Each holdout year uses its own frozen regular-season features. Only **earlier** years' tournament outcomes choose a scalar probability temperature for the trend-Elo model. No selection seeds, tourney outcomes, or later-season results train that held-out year's estimator. The CI-generated JSON artifact records per-year and aggregate scores and missing-team omissions. See [rolling-benchmark.md](rolling-benchmark.md). This is a conditional matchup evaluation, *not* 2027 bracket/selection forecasting.
+
+## Platform v0.5 architecture
+
+The upgrade adds four independently testable systems without replacing frozen historical data:
+
+1. `forecast.advanced` fits an L2-regularized no-intercept logistic matchup model on previous NCAA tournament seasons, using only each team's already completed regular-season Elo, trend and win percentage features. `forecast.benchmark` adds reliability bins and paired whole-season bootstrap intervals to existing rolling-year evaluation.
+2. `forecast.live` ingests the separate NCAA-source 2027 results via SportsDataverse, validates scores, dates and contests, computes **independent 2027** Elo ratings and writes a generated snapshot with explicit freshness. Historical Kaggle IDs are *not* joined to NCAA name-based IDs.
+3. `web/lib/fullBracket.ts` validates 64/65/68/76-entrant structures and performs deterministic Monte Carlo from sourced historical seed slots, with opening-round and advancement outputs. It does not invent the unselected 2027 field.
+4. `LiveSeason.tsx`, `ResearchLab.tsx` and `FullBracketLab.tsx` provide distinct visual experiences accessible through the existing Dashboard shell, preserving historical ranking/matchup/archive functions.
+
+`web/public/current/2027.json` and `web/public/research/benchmark.json` are generated **only during deploy or explicit local rebuild**, not committed. The Pages workflow ensures fresh validated inputs before creating the static export. The CI tests remain independent of network availability.
+
+Expanded 2027 tournament entrants: **76**; Opening Round games: **12**. Details: [bracket engine](bracket-engine.md). Other contracts: [2027 pipeline](current-season.md), [validation](validation.md), [visual system](design-system.md), [operations](operations.md).

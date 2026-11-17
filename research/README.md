@@ -50,3 +50,21 @@ The championship simulation requires entrants supplied in bracket order and supp
 ## Chronological tournament benchmark
 
 From the repository root, run `PYTHONPATH=research python -m forecast.benchmark` to score real observed tournament matchups by held-out year. This compares 50%/base Elo/trend Elo with a temperature-calibrated trend Elo whose temperature is fitted **only on earlier years**. Unlike a full bracket simulator, evaluation is conditional on realized historical opponents. See [docs/rolling-benchmark.md](../docs/rolling-benchmark.md).
+
+## v0.5 expanded research engine
+
+- `forecast.advanced`: prior-year-trained, no-intercept L2 logistic classifier with Elo-strength, recent-form and win-percentage differences. It does **not** use 2027 tournament outcomes or claim possession-based offensive/defensive efficiency.
+- `forecast.benchmark`: five-method walk-forward tournament evaluations, reliability plots, calibration temperature, logistic weight audit and 2,000-replicate whole-season bootstrap.
+- `forecast.live`: NCAA-source independent 2027 Elo from confirmed SportsDataverse schedule final scores, with strict deduplication/date/score validation and a distinct `ncaa-` identity namespace.
+- `web/lib/fullBracket.ts`: historical 64/65/68 full fields and verified 76-entry field simulation support, without fabricating new-season seeds.
+
+From the root:
+
+```powershell
+$env:PYTHONPATH="research"
+py -m unittest discover -s research/tests -v
+py -m forecast.benchmark --out web/public/research/benchmark.json
+py -m forecast.live --out web/public/current/2027.json
+```
+
+See [validation](../docs/validation.md), [current source](../docs/current-season.md), and [bracket algorithm](../docs/bracket-engine.md) for equations, scientific limitations and reproducibility.
