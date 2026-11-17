@@ -92,3 +92,7 @@ The 2026 Kaggle regular season is incomplete and the bracket archive excludes Fi
 The current dashboard additionally shows `adaptiveRating`, `regimeShift`, `volatility` from **already completed** 2027 Elo increments and optional `adjOff100`, `adjDef100` from genuine NCAA box-score possessions with source coverage. The adjusted possession metrics are a *team-profile descriptive model*, not features in the historical eight-way comparison.
 
 The selection watchlist requires independent 2027 Division I **group-season membership** as well as a sourced NCAA conference identity before proposing any strength-only candidates. This prevents promoting non-D-I games to hypothetical March selection based solely on their presence in the schedule. Confirmed D-I membership still does not imply postseason eligibility. Unknown teams are neither assumed D-I nor declared ineligible.
+
+## v0.7 regular-season retrained model (separate from historical tournament benchmark)
+
+The eight historical models above continue to be evaluated on **historical actual tournament matchups**. Separately, `forecast.retrain` now learns a logistic Elo residual on 2027 **regular-season** games after every source refresh, holding entire dates out during rolling-origin evaluation and excluding the current date completely. It automatically promotes or demotes only after meeting fixed paired Brier and date-block bootstrap gates. Its measured errors are **not comparable across populations** to the historical tournament benchmark. [2027 in-season model methodology](online-retraining.md).

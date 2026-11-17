@@ -11,7 +11,7 @@
 
 ### [OPEN THE LIVE WEBSITE](https://dokeefe414.github.io/March-Madness-Forecasting/)
 
-[Research models](docs/model-zoo-v06.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
@@ -167,6 +167,7 @@ research/forecast/
   advanced.py             L2 regularized matchup logistic model
   boosted.py              deterministic second-order residual decision stumps
   dynamics.py             causal EWMA, volatility and regime change signal
+  retrain.py              in-season logistic learning and chronological Elo promotion
   benchmark.py            eight-method prior-year walk-forward NCAA evaluation
   reference.py            exact NCAA-source 2027 conference/name crosswalk
   division.py             independent 2027 D-I subdivision + season-specific NCAA/ESPN source crosswalk
@@ -181,6 +182,7 @@ web/
   components/
     Dashboard.tsx         nine-tab historical and current application
     LiveSeason.tsx        team trends, pace profile, conferences, matchup tools
+    OnlineLearning.tsx    live in-season model scorecard, gate and source report
     SelectionLab.tsx      transparent 2027 power-only watchlist
     ForecastTracker.tsx   public pretipoff audit trail, Brier/accuracy dashboard
     TeamTrend.tsx         keyboard-interactive game-by-game Elo trend SVG
@@ -202,6 +204,7 @@ docs/                     complete scientific, design, data and operator docs
 | Topic | Reference |
 | --- | --- |
 | **Eight models, equations, prior-year fitting, measured results** | [Model zoo & validation](docs/model-zoo-v06.md) |
+| **Nightly fitting, previous-date evaluation and model promotion** | [In-season retraining](docs/online-retraining.md) |
 | **Exact NCAA team identity/confidence and eligibility limits** | [Identity & conferences](docs/identity-and-conferences.md) |
 | **Source possession formulas and opponent adjustment** | [Adjusted efficiency](docs/adjusted-efficiency.md) |
 | **2027 field coverage gate, bubble and strength tiers** | [Selection watchlist](docs/selection-watchlist.md) |
@@ -257,3 +260,14 @@ At each site refresh the pipeline:
 **Important:** A 1:00 a.m. refresh is **not** a live real-time scoreboard, and some late-night games may still be underway. The public schedule does not supply a guaranteed authoritative final-status field for every published row; games with missing, zero or tied scores are excluded, but a positive in-progress score may require confirmation. The delayed 5:17 a.m. pass reduces the risk of missed late scores; the system must not claim more certainty than its provider supports. After **Selection Sunday March 14, 2027**, this model deliberately stops including postseason results in the regular-season forecast snapshot to avoid leakage. The next NCAA season needs an explicit version/source/cutoff migration.
 
 Monitor the [daily deployment workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml) and [pregame archive workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml). See [operations](docs/operations.md) and [current source runbook](docs/current-season.md).
+
+
+## v0.7 — Automatic 2027 time-series-informed outcome retraining
+
+Alongside automatically updating each team's Elo rating history, both the **1:00 a.m. Eastern** primary refresh and **5:17 a.m. Eastern in-season catch-up** now fit a **regularized outcome model** from sourced **previous-date** 2027 regular-season game results. The 9:07 a.m. Eastern pretipoff archiver also refits it before saving future-game probabilities.
+
+This is different from a cosmetic time-series chart: the model's coefficients are learned from prior games and tested only on **later calendar dates**. The entire current date is excluded, and all games on any validation date are evaluated **before** that date's results update ratings. The training audit reports comparable Brier scores and day-block uncertainty.
+
+**Conservative automatic promotion:** new coefficients train every refresh, but the model stays in **shadow mode** and genuine archived picks remain Elo until it has at least 120 validation games over 12 dates, beats Elo by 0.002 Brier on the exact same games, and has positive lower day-block confidence bound. If it clears that bar, it becomes eligible for future non-neutral pregame forecasts, with original model/version receipts stored immutably. A future failure of the gate returns new picks to Elo; old picks are never rewritten.
+
+See the site's **Current Pulse → Automated Model Lab** section, [public 2027 learned-model report](https://dokeefe414.github.io/March-Madness-Forecasting/current/2027-online-model.json), and [methodology/validation instructions](docs/online-retraining.md). This is an in-season regular-game model, **not** an automatically retrained NCAA bracket or committee prediction engine.
