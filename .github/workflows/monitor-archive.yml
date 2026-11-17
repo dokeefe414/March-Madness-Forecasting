@@ -1,0 +1,27 @@
+name: Monitor before-tipoff prediction archive freshness
+on:
+  workflow_dispatch:
+  schedule:
+    # After the 09:07/16:07 Eastern archival runs and 10:17/17:17 Pages refreshes.
+    # Raises a visible GitHub Actions failure if the archive is missing or old.
+    - cron: "35 11,18 * 1,2,3,4,11,12 *"
+      timezone: "America/New_York"
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Ensure prior real-game forecast evidence was archived
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check missing or stale archive (never invent win percentage)
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.archive_health --ledger web/public/forecasts --require-recent --max-age-hours 26
+      - name: Verify original predictions and recorded score arithmetic
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.audit --dir web/public/forecasts

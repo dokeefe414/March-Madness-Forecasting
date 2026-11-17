@@ -30,3 +30,7 @@ web/public/current/refresh-status.json
 # 2027 v0.8 generated game picker and experimental state model files
 web/public/current/upcoming.json
 web/public/current/2027-state-space.json
+
+# Refreshed opponent-aware experiment and public archive health are CI-generated.
+web/public/current/2027-opponents.json
+web/public/current/archive-health.json
