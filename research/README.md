@@ -104,3 +104,12 @@ Use `python -m forecast.retrain --games web/public/current/2027-games.json --rat
 `forecast.retrain --ledger web/public/forecasts` now adds an actual prospective shadow-vs-Elo gate (>=40 distinct settled first picks and >=0.002 mean paired Brier gain) on top of earlier chronological validation before promoting any learned model. This is a **guard**, not a claim of guaranteed accuracy improvement after every loss.
 
 See [Game Center](../docs/game-center.md), [Forward performance](../docs/forward-performance.md), [State-space model](../docs/state-space.md).
+
+
+## v0.9 versioned forecasting reliability and chronological research
+
+New modules: `forecast/opponents.py` (team performance adjusted for prior-opponent Elo at the time of each game, with previous-date-only score-margin residual), `forecast/archive_health.py` (source-controlled archive age/presence monitor), and extended `forecast/state_space.py` (bounded adaptive Gaussian process noise after repeated signed standardized innovations). Each research model publishes the same previously sourced outcome cohort's Elo-vs-challenger retrospective Brier and explicitly states that this is **not** an actual archived pretipoff forecast.
+
+`forecast/snapshot.py` now requires independently completed ESPN `STATUS_FINAL` and exact NCAA score/date/ID agreement before new public results are settled; its selected forecast, Elo and research-alternative probabilities are frozen ahead of the scheduled game start. `forecast/performance.py` audits model competitors on genuinely published earliest first-pick games only. A standalone 11:35/18:35 ET GitHub monitor fails visibly if an in-season daily archive is missing, stale or has no confirmed pregame picks. Site refreshes after 09:07/16:07 ET archive ensure today's source results become visible without relying on bot commits to retrigger the Pages build.
+
+Model equations and chronological-trust caveats: [v09-model-validation](../docs/v09-model-validation.md). Test/check and recovery: [v09-forecast-operations](../docs/v09-forecast-operations.md). Public UX includes direct `?view=models` and individual verified game `?view=games&game=<ESPN event id>` links. Missing verified evidence means no accuracy claim and no post-hoc rewriting of missed forecasts.
