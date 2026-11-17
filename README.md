@@ -5,7 +5,7 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v1.0%20Prediction%20Intelligence-a6ffce)
+![Version](https://img.shields.io/badge/release-v1.1%20Season%20Intelligence-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
@@ -17,6 +17,21 @@
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v1.1 — Daily basketball intelligence and verified forecast operations
+
+**Live website:** [Open daily forecast desk](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Real scored picks](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Causal research and drift](https://dokeefe414.github.io/March-Madness-Forecasting/?view=models) · [Road to March](https://dokeefe414.github.io/March-Madness-Forecasting/?view=selection).
+
+- A faster daily front page surfaces today's source-backed future fixtures, strongest favorites, closest model calls, verified archive health and one-tap navigation to detailed matchup receipts.
+- Successful archive runs always publish a dated derived manifest with source coverage, even on legitimately empty schedule days. Git pushes retry safely without a force update; monitors distinguish true empty days from missing/stale/partial evidence.
+- Two **research-only** current-season causal challengers—Bayesian-style Elo shrinkage and online gradient residual stumps—are independently compared with previous-date Elo on the same previously completed games. No model is automatically promoted.
+- Prospective 50-game drift review compares consecutive, nonoverlapping 25-game Brier windows using only independently settled, original pretipoff first picks. Insufficient samples show no numerical claim.
+- Road to March highlights source-qualified provisional strength leaders and hypothetical neutral-site Elo peer matchups; no official field, seeds, or championship chances are invented.
+- Accessibility improvements: skip link, direct destinations, mobile-first cards and source-freshness notices.
+
+**Validation matters:** a green site deployment is *not* proof that the scheduled pregame recorder has captured and independently settled live games. Inspect the immutable Git ledger and the archive monitor to verify real production evidence. Details, mathematical assumptions, safe recovery and test commands: [v1.1 science + operations](docs/v11-season-intelligence.md).
 
 ---
 
