@@ -191,23 +191,43 @@ export default function Dashboard() {
             <span className="brand-mark">M<span>F</span></span>
             <span className="brand-title">MARCH<span>FORECAST</span></span>
           </button>
-          <nav aria-label="Main navigation" className="desktop-nav">
-            {([["games", "Find a Game"], ["teams", "Teams"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["models", "Model Lab"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
-              <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => changeTab(id)}>{label}</button>
-            ))}
+          <nav aria-label="Main navigation" className="desktop-nav mf-simple-nav">
+            {([["games","Find a Game"],["teams","Teams"],["bracket","Bracket"],["predictions","Accuracy & Picks"],["models","Model Lab"]] as [Tab,string][]).map(([id,label])=>
+              <button key={id} type="button" aria-current={tab===id?"page":undefined} className={tab===id?"nav-link active":"nav-link"} onClick={()=>changeTab(id)}>{label}</button>)}
+            <details key={"desktop-"+tab} className="mf-more">
+              <summary aria-label="More pages">More <span aria-hidden="true">▾</span></summary>
+              <div className="mf-more-menu" aria-label="Other pages">
+                <p>THIS SEASON</p>
+                {([["current","2027 Pulse"],["selection","Field Watch"],["compare","Matchups"]] as [Tab,string][]).map(([id,label])=>
+                  <button type="button" key={id} aria-current={tab===id?"page":undefined} className={tab===id?"active":""} onClick={()=>changeTab(id)}>{label}</button>)}
+                <p>HISTORY & RESEARCH</p>
+                {([["rankings","Historical"],["history","Archive"],["research","Research"],["method","About"]] as [Tab,string][]).map(([id,label])=>
+                  <button type="button" key={id} aria-current={tab===id?"page":undefined} className={tab===id?"active":""} onClick={()=>changeTab(id)}>{label}</button>)}
+              </div>
+            </details>
           </nav>
           <a className="github-link" href="https://github.com/dokeefe414/March-Madness-Forecasting26-27" target="_blank" rel="noreferrer">VIEW CODE <span aria-hidden="true">↗</span></a>
         </header>
 
-        <div className="v13-mobile-top-actions" role="navigation" aria-label="Quick daily tools">
-          {([["games","GAMES"],["teams","TEAMS"],["predictions","ACCURACY"],["bracket","BRACKETS"]] as [Tab,string][]).map(([id,label])=>
-            <button type="button" key={id} aria-current={tab===id?"page":undefined} className={tab===id?"selected":""}
-              onClick={()=>changeTab(id)}>{label}</button>)}
-        </div>
-        <div className="mobile-nav" aria-label="Page sections">
-          {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["models", "Model Lab"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
-            <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => changeTab(id)}>{label}</button>
-          ))}
+        <nav className="mobile-nav mf-simple-nav" aria-label="Mobile main navigation">
+          {([["games","Find a Game"],["teams","Teams"],["bracket","Bracket"],["predictions","Accuracy & Picks"],["models","Model Lab"]] as [Tab,string][]).map(([id,label])=>
+            <button type="button" key={id} aria-current={tab===id?"page":undefined} className={tab===id?"mobile-link active":"mobile-link"} onClick={()=>changeTab(id)}>{label}</button>)}
+          <details key={"mobile-"+tab} className="mf-more">
+            <summary aria-label="More pages">More <span aria-hidden="true">▾</span></summary>
+            <div className="mf-more-menu" aria-label="Other pages">
+              <p>THIS SEASON</p>
+              {([["current","2027 Pulse"],["selection","Field Watch"],["compare","Matchups"]] as [Tab,string][]).map(([id,label])=>
+                <button type="button" key={id} aria-current={tab===id?"page":undefined} className={tab===id?"active":""} onClick={()=>changeTab(id)}>{label}</button>)}
+              <p>HISTORY & RESEARCH</p>
+              {([["rankings","Historical"],["history","Archive"],["research","Research"],["method","About"]] as [Tab,string][]).map(([id,label])=>
+                <button type="button" key={id} aria-current={tab===id?"page":undefined} className={tab===id?"active":""} onClick={()=>changeTab(id)}>{label}</button>)}
+            </div>
+          </details>
+        </nav>
+        <div className="mf-location" aria-live="polite">
+          <span>{(["games","teams","bracket","predictions","models"] as Tab[]).includes(tab)?"YOUR WORKSPACE":"MORE / EXPLORE"}</span>
+          <strong>{({games:"Find a Game",teams:"Teams",bracket:"Bracket",predictions:"Accuracy & Picks",models:"Model Lab",current:"2027 Pulse",selection:"Field Watch",compare:"Matchups",rankings:"Historical",history:"Archive",research:"Research",method:"About"} as Record<Tab,string>)[tab]}</strong>
+          {tab!=="games"&&<button type="button" onClick={()=>changeTab("games")}>Back to Games</button>}
         </div>
 
         <div id="main-content" tabIndex={-1}/>
