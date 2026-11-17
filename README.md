@@ -144,8 +144,8 @@ These fixtures **never** become real game forecasts. Production ledger archiving
 | Workflow | Schedule and purpose |
 | --- | --- |
 | [CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml) | Python scientific/fixture tests, 8-model benchmark artifact, source data integrity, TS bracket tests, TypeScript+build, **Playwright desktop/mobile and critical accessibility checks** |
-| [Pages deploy](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml) | On `main` changes, manual run and best-effort daily 14:22 UTC Nov–Apr. Build historical calibration, fetch NCAA 2027 source/box/directory, output static Next site |
-| [Pregame archive](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml) | On main, manual or best-effort daily **13:07 UTC** Nov–Apr. Fetch future ESPN fixtures, emit real *pre-start* picks, later settle against NCAA finals, commit append-only public history |
+| [Pages deploy](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml) | On `main` changes, manual run, **1:00 a.m. Eastern every night** (EST/EDT), and **5:17 a.m. Eastern** Nov–Apr catch-up. Build historical calibration, fetch NCAA 2027 source/box/directory, output static Next site |
+| [Pregame archive](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml) | On main, manual or best-effort daily **9:07 a.m. Eastern** Nov–Apr. Fetch future ESPN fixtures, emit real *pre-start* picks, later settle against NCAA finals, commit append-only public history |
 
 Scheduled GitHub Actions may be delayed/omitted. A source outage must not fabricate scores, and an unarchived future fixture is not a historical prediction. The Pages site's last successful build remains available if a mandatory source fetch fails. **Archiver commits require branch/workflow write permissions**, which may need operator changes if an organization has protected main.
 
@@ -241,3 +241,19 @@ py -m forecast.audit --dir web/public/forecasts
 ```
 
 The integrity audit confirms: 15-minute pregame publication buffer, source rating not newer than forecast generation, forecast probabilities preserved during settlement, binary observed winner consistent with final scores, correct Brier/log-loss/accuracy, uniqueness of settlement, and public aggregate scores matching actual files. It runs on every GitHub Actions archival capture and every CI pull request before allowing publication. A report with zero snapshots is a **valid empty archive**, not evidence of past public forecasts. External source truth and actual tipoff times are not independently guaranteed. Full details: [Forecast audit](docs/forecast-audit.md).
+
+## Nightly 1:00 a.m. Eastern automated updates
+
+**Yes — the website schedules a source refresh every night at 1:00 a.m. `America/New_York`, automatically respecting EST and EDT.** GitHub Actions does not guarantee second-accurate execution, so the job may start late or occasionally be dropped. While NCAA basketball is in season (November–April), a **5:17 a.m. Eastern follow-up** gives late West Coast games and delayed upstream score publications another opportunity to reach the site. The standalone pretipoff archival workflow runs at **9:07 a.m. Eastern** in-season to capture upcoming fixture probabilities and grade earlier predictions; it never backfills fake prior pregame picks.
+
+At each site refresh the pipeline:
+
+1. Rebuilds the held-out historical research/calibration report from pinned archives.
+2. Fetches the **latest available** NCAA-derived 2027 schedule and final-score subset; recalculates all team **wins, losses, Elo, form, conference/D-I matches, possession-derived statistics where available**, watchlist and matchup probabilities.
+3. Refuses to publish if required source fetch, score validation or computed model/accounting checks fail. `forecast.freshness` audits source UTC retrieval, accepted-game win/loss totals, unique team IDs, pregame diagnostic counts and latest result date.
+4. Produces a machine-readable [refresh status](https://dokeefe414.github.io/March-Madness-Forecasting/current/refresh-status.json) showing source time, newest included game, program/game counts and source lag; `source-may-be-delayed` is a visible warning, not a fabricated result.
+5. Rechecks the append-only pregame audit, validates historical files and builds/deploys the static site. If deployment fails, the previous successful GitHub Pages version stays available.
+
+**Important:** A 1:00 a.m. refresh is **not** a live real-time scoreboard, and some late-night games may still be underway. The public schedule does not supply a guaranteed authoritative final-status field for every published row; games with missing, zero or tied scores are excluded, but a positive in-progress score may require confirmation. The delayed 5:17 a.m. pass reduces the risk of missed late scores; the system must not claim more certainty than its provider supports. After **Selection Sunday March 14, 2027**, this model deliberately stops including postseason results in the regular-season forecast snapshot to avoid leakage. The next NCAA season needs an explicit version/source/cutoff migration.
+
+Monitor the [daily deployment workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml) and [pregame archive workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml). See [operations](docs/operations.md) and [current source runbook](docs/current-season.md).

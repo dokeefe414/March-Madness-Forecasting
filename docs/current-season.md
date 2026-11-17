@@ -40,7 +40,7 @@ The output includes `mode=current`, `season=2027`, `retrievedAtUtc`, `lastGameDa
 
 ## Automation and fail-safe publication
 
-The GitHub Pages workflow pulls the feed on main pushes, manually, and best-effort each day at **14:22 UTC during November–April**. GitHub may delay scheduled jobs. It then generates both current and historical reports before building the site.
+The GitHub Pages workflow pulls the feed on main pushes, manually, and best-effort at **1:00 a.m. America/New_York daily**, with a **5:17 a.m. Eastern** catch-up during November–April. GitHub may delay scheduled jobs. It then generates both current and historical reports before building the site.
 
 If the release disappears, contains inconsistent scores, is empty, exceeds size limits or cannot be fetched, **the deploy fails** and leaves the last successful website intact. It must never substitute fabricated results. An absent local JSON displays an explicit unavailable state in the app.
 
@@ -106,3 +106,13 @@ Offline flag: `--crosswalk-input local-ncaa-espn-team-crosswalk.csv`. Use this a
 ### Division I source conference IDs for the provisional field
 
 Where the source provider has 32 2027 Division I `conferenceGroupId` values but only 31 display labels, `divisionConferenceGroupId` is attached to each confirmed D-I team (null otherwise). Field Watch uses the verified group ID for unique conference/automatic-bid proxy grouping; it never invents a missing conference to reach 32. `selectionWatchlist.matchedConferences`, `distinctConferenceDisplayNames`, and `groupingKey` make this discrepancy explicit.
+
+## 1 a.m. Eastern pipeline and status endpoint
+
+The main website's GitHub Pages workflow uses native timezone-aware GitHub Actions `schedule` events: `0 1 * * *` with `timezone: America/New_York` every night, plus `17 5 * 1,2,3,4,11,12 *` for a 5:17 a.m. catch-up in basketball season. UTC time changes automatically with DST. GitHub Actions and the upstream provider can be delayed: these are **scheduled checks**, not a permanent score-stream subscription or a guarantee that all 1 a.m. games are final.
+
+After pulling NCAA-derived results, `forecast.freshness` independently checks that the 2027 report has been freshly retrieved, contains valid unique IDs and finite ratings, and satisfies `sum(team.wins) = sum(team.losses) = regularSeasonGames`. It also checks the most-recent accepted game, the source timestamp and retrospective diagnostic counts. If a necessary invariant is broken, the deployment fails closed.
+
+A successful build exposes `/current/refresh-status.json` with `auditTimeUtc`, `retrievedAtUtc`, `lastIncludedGameDate`, `sourceLagCalendarDaysUtc`, accepted-game and rated-team counts, verified D-I count, and a descriptive staleness status. A game from the latest provider file is **not** evidence that an in-progress scoreboard represents a final: nonzero unequal scores may still be provisional when no verified final-state flag is present. The engine excludes blank, zero and tied scores and re-reads all source games each pass, so late corrections can be incorporated on subsequent refreshes, but it does not pretend to authenticate every final.
+
+For pregame picks, `archive-pregame.yml` runs at **9:07 a.m. Eastern November–April**, keeping the earlier prediction and later result settlement paths separate. At the season's Selection Sunday cutoff (2027-03-14) the 2027 regular-season snapshot freezes; postcutoff postseason scores do **not** retroactively alter the regular-season model's historical features. Migrating to 2028 requires an intentional code/data revision.

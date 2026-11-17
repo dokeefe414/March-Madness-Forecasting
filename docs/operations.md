@@ -5,10 +5,10 @@
 | Workflow | Trigger | Guarantees |
 |---|---|---|
 | `CI` | feature branch push, main push, pull request | Hermetic Python tests, held-out historical benchmark, JSON report artifact, 42-year data consistency, TypeScript bracket simulations, TypeScript typecheck and production Next build |
-| `Deploy website to GitHub Pages` | main push, dispatch, daily best-effort 14:22 UTC Nov–Apr | Real NCAA-source 2027 finals → current Elo snapshot → historical research report → data check → static Next export → GitHub Pages |
+| `Deploy website to GitHub Pages` | main push, dispatch, daily best-effort 1:00 a.m. Eastern all year + 5:17 a.m. Eastern Nov–Apr backup | Real NCAA-source 2027 finals → current Elo snapshot → historical research report → data check → static Next export → GitHub Pages |
 | `Rebuild historical snapshots` | manual dispatch | Regenerate source-pinned historical artifacts without silently changing main |
 
-Historical unit tests and website builds do not require a live network feed. Only the publishing job fetches it, and an upstream error must **fail closed**. GitHub's scheduled cron is best-effort; it may skip or delay a run under load.
+Historical unit tests and website builds do not require a live network feed. Publishing and pretipoff archival jobs fetch it, and an upstream error must **fail closed**. GitHub's scheduled cron is best-effort; it may skip or delay a run under load.
 
 ## Published files versus committed historical archives
 
@@ -71,7 +71,7 @@ If benchmarking fails, check source pin matches for history-index/snapshots/tour
 
 ### Pre-tipoff forecast archiver
 
-`.github/workflows/archive-pregame.yml` schedules a **13:07 UTC best-effort** daily run during Nov–Apr and permits manual dispatch. It fetches validated 2027 source Elo data, lists ESPN scheduled games that start >15 minutes after forecast creation, and Git-commits **new** snapshot/settlement JSON files under `web/public/forecasts` with bot author. GitHub branch protection / token `contents:write` may block bot pushes. Inspect the scheduled job and archive files before saying the audit is operational. Missing future matches is not an error; no forecast is backfilled. After archiver commits, the next regular Pages rebuild will make the derived index visible.
+`.github/workflows/archive-pregame.yml` schedules a **9:07 a.m. America/New_York best-effort** daily run during Nov–Apr and permits manual dispatch. It fetches validated 2027 source Elo data, lists ESPN scheduled games that start >15 minutes after forecast creation, and Git-commits **new** snapshot/settlement JSON files under `web/public/forecasts` with bot author. GitHub branch protection / token `contents:write` may block bot pushes. Inspect the scheduled job and archive files before saying the audit is operational. Missing future matches is not an error; no forecast is backfilled. After archiver commits, the next regular Pages rebuild will make the derived index visible.
 
 ### Source coverage runbook
 
@@ -110,3 +110,21 @@ Check deployed `divisionCoverage.seasonNCAAIdMatchedTeams` and `divisionIConfirm
 ### 32 source conferences but 31 display labels
 
 The deployment artifact may report 32 independently verified 2027 D-I conference groups and only 31 distinct NCAA team-directory conference display strings. This is not evidence of missing a D-I league; it is a difference in data labeling. Field Watch now requires and groups by `divisionConferenceGroupId` from verified season-2027 group membership, not the display label. Validate output `selectionWatchlist.matchedConferences=32`, `distinctConferenceDisplayNames=31`, `conferenceLeaders=32`, `atLargeCandidates=44`, and `len(teams)=76` on the first successful production build, and confirm the UI still calls it hypothetical. Do not bypass D-I verification or re-label an Elo AQ proxy as a real conference champion.
+
+## Nightly update automation (November 2026 configuration)
+
+The publishing job's primary scheduled trigger is **`cron: "0 1 * * *"`, `timezone: "America/New_York"`**, every day of the year. This is 1 a.m. local Eastern even when daylight saving changes; it is **not** fixed 05:00 or 06:00 UTC. GitHub's scheduled actions are best-effort and can start late or be dropped at busy times, particularly at the top of the hour. A second `cron: "17 5 * 1,2,3,4,11,12 *"` in the same timezone provides a late-score catch-up in basketball months. Do **not** remove the main-push and manual dispatch triggers: they provide recovery after outages and publish verified code changes.
+
+The independent `archive-pregame.yml` job runs at **9:07 a.m. Eastern** during those months, after late-score catch-up. Its source-linked picks are immutably committed if and only if it can find valid scheduled events with more than a 15-minute pregame buffer. It also settles previous picks once accepted results appear; it never overwrites prior prediction files. A bot commit to main triggers normal publishing, so the website may rebuild outside the two fixed overnight windows.
+
+`research/forecast/freshness.py` runs **after** the real source ingest and **before** the Next.js build. It fails deployment for incorrect season or source provenance, source retrieved more than two hours earlier, future timestamps, invalid rating or duplicate ID, impossible win/loss totals, mismatched latest result date, or inconsistent sequential pregame evaluation count. It writes `web/public/current/refresh-status.json`, which reports real UTC refresh time, most recent scored game, total accepted games, team count, verified D-I program count and the provider lag. A feed with no recent games is disclosed as `source-may-be-delayed`, not silently represented as live. This guard verifies internal consistency, **not** the truth or final-state of every upstream game.
+
+```powershell
+$env:PYTHONPATH="research"
+py -m forecast.benchmark --web-dir web --out web/public/research/benchmark.json
+py -m forecast.live --model-report web/public/research/benchmark.json --out web/public/current/2027.json
+py -m forecast.freshness --input web/public/current/2027.json --out web/public/current/refresh-status.json
+py -m forecast.audit --dir web/public/forecasts
+```
+
+If no update appears after the expected time, inspect [deploy runs](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml), the last game date and both UTC timestamps. Try the **Run workflow** control on the Actions page; a scheduled event is not guaranteed to execute on the dot. If `forecast.freshness` rejects a malformed feed, repair the cause with a hermetic regression test rather than bypassing the validation. GitHub disables scheduled actions on inactive public repositories after 60 days; check the Actions tab in the off-season. GitHub Actions also requires that workflow files reside on default `main`.

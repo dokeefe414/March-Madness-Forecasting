@@ -39,7 +39,7 @@ The scheduled GitHub Action commits the append-only changes on `main` with the o
 
 ## Operational schedule
 
-`.github/workflows/archive-pregame.yml`: best-effort at **13:07 UTC daily** during Nov–Apr plus manual dispatch. GitHub schedule dispatches can be delayed or skipped; do not represent silence as proof no games were available. Archive job must run from a branch with the workflow enabled (main). The index absence is a legitimate "no audited forecasts yet" UI state.
+`.github/workflows/archive-pregame.yml`: best-effort at **9:07 a.m. Eastern daily** during Nov–Apr plus manual dispatch. GitHub schedule dispatches can be delayed or skipped; do not represent silence as proof no games were available. Archive job must run from a branch with the workflow enabled (main). The index absence is a legitimate "no audited forecasts yet" UI state.
 
 ### Local offline test
 
@@ -84,3 +84,7 @@ py -m forecast.audit --dir web/public/forecasts
 An empty ledger reports `verified` but **zero** predictions and settlements. That is not proof of a deployed pretipoff track record, only confirmation that no archived evidence has been tampered with. A valid internal archive cannot independently establish actual start times or the truth of the upstream ESPN/NCAA source; those limitations remain.
 
 The settlement worker now defensively refuses to grade a forecast unless its source rating was obtained at or before forecast creation, and creation preceded the scheduled tipoff by the committed buffer. This is an extra defense even if someone manually deposits a malformed snapshot artifact.
+
+## Nightly coordination
+
+The current-season page refreshes at the scheduled **1:00 a.m. Eastern** every night, and at **5:17 a.m. Eastern** in season to pick up late-released results. The immutable forecast archiver runs separately at **9:07 a.m. Eastern** in-season, once the morning's latest available ratings have been assembled. Each cron uses GitHub Actions' native `timezone: America/New_York` to respect EDT/EST automatically. Archive jobs can be delayed; the event-time and source-retrieval guards apply regardless of how late the job starts. The website is rebuilt after archived bot commits (main branch push) or its own schedules. This **does not** certify the provider's actual tipoff or supply real-time score streaming.
