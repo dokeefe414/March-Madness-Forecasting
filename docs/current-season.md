@@ -61,3 +61,18 @@ The published `pregameDiagnostics` object reports `evaluatedGames`, `brier`, `ac
 ### Date-format compatibility (deployment incident, Nov 16, 2026)
 
 The first v0.5 deployment intentionally failed before publication because the real schedule release contained U.S. calendar dates such as `11/07/2026`, while the initial parser expected ISO dates. `parse_source_date` now accepts **explicit ISO `YYYY-MM-DD` and U.S. `MM/DD/YYYY`** formats, normalizes both to a Python `date`, and rejects ambiguous/unknown date styles instead of guessing. A hermetic test now includes the observed U.S. format. This fixes the source-format mismatch without bypassing any cutoff or quality validation.
+
+### Incomplete score rows in the real release (deployment correction)
+
+The actual 2027 schedule feed included at least one contest with score fields
+that did not represent a valid completed NCAA men's basketball game
+(identified in the publish logs as contest `6625413`).
+The exporter does not guarantee every nonempty scoreboard entry is a final.
+Our ingest now **excludes** scoreboards with zero for either side or tied
+scores; a true NCAA basketball final is never tied. Records with missing scores
+remain excluded. **Negative scores, conflicting contest IDs, invalid team
+identities and malformed dates still abort ingestion.** This is a conservative
+final-score inference based on scores because no authoritative final-status
+field is present in the currently documented schedule schema.
+The live results page should be interpreted as the completed-score subset,
+not a guarantee of exhaustively ingesting every NCAA game.
