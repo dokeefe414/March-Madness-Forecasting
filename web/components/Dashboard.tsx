@@ -2,11 +2,22 @@
 
 import { useMemo, useState } from "react";
 import rawData from "../data/rankings.json";
+import yearIndex from "../data/history-index.json";
 import { matchupProbability, simulateBracket, type RatingsDataset, type Team, type TitleResult } from "../lib/models";
 
-const data = rawData as RatingsDataset;
-const sortedTeams = [...data.teams].sort((a, b) => b.projectedRating - a.projectedRating);
-type Tab = "rankings" | "compare" | "bracket" | "method";
+const initialData = rawData as RatingsDataset;
+const initialTeams = [...initialData.teams].sort((a, b) => b.projectedRating - a.projectedRating);
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+type TournamentArchive = {
+  season: number;
+  champion: string | null;
+  mainDrawOnly: boolean;
+  note: string;
+  teams: Record<string, string>;
+  seeds: Record<string, string>;
+  games: Array<{ day?: number; round?: string; winnerId: string; loserId: string; winnerScore: number; loserScore: number }>;
+};
+type Tab = "rankings" | "compare" | "bracket" | "history" | "method";
 type Sort = "rank" | "momentum" | "wins";
 
 function percent(value: number): string {
@@ -39,7 +50,7 @@ function Delta({ value }: { value: number }) {
   return <span className={positive ? "delta positive" : "delta negative"}>{positive ? "+" : ""}{value.toFixed(1)}</span>;
 }
 
-function DataDisclaimer() {
+function DataDisclaimer({ data }: { data: RatingsDataset }) {
   return (
     <div className="disclaimer" role="note">
       <span className="disclaimer-icon">i</span>
@@ -49,12 +60,18 @@ function DataDisclaimer() {
 }
 
 export default function Dashboard() {
+  const [data, setData] = useState<RatingsDataset>(initialData);
+  const [selectedYear, setSelectedYear] = useState(initialData.season);
+  const [loadStatus, setLoadStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [archive, setArchive] = useState<TournamentArchive | null>(null);
+  const [archiveStatus, setArchiveStatus] = useState<"idle" | "loading" | "error">("idle");
+  const sortedTeams = useMemo(() => [...data.teams].sort((a, b) => b.projectedRating - a.projectedRating), [data]);
   const [tab, setTab] = useState<Tab>("rankings");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>("rank");
-  const [detailId, setDetailId] = useState(sortedTeams[0]?.teamId ?? "");
-  const [teamAId, setTeamAId] = useState(sortedTeams[0]?.teamId ?? "");
-  const [teamBId, setTeamBId] = useState(sortedTeams[1]?.teamId ?? "");
+  const [detailId, setDetailId] = useState(initialTeams[0]?.teamId ?? "");
+  const [teamAId, setTeamAId] = useState(initialTeams[0]?.teamId ?? "");
+  const [teamBId, setTeamBId] = useState(initialTeams[1]?.teamId ?? "");
   const [simulation, setSimulation] = useState<TitleResult[] | null>(null);
 
   const teamA = sortedTeams.find((t) => t.teamId === teamAId) ?? sortedTeams[0];
@@ -67,13 +84,56 @@ export default function Dashboard() {
     if (sort === "momentum") rows.sort((a, b) => b.trend - a.trend);
     if (sort === "wins") rows.sort((a, b) => b.wins - a.wins);
     return rows;
-  }, [search, sort]);
+  }, [search, sort, sortedTeams]);
 
   const topEight = sortedTeams.slice(0, 8);
   const bracket = topEight.length === 8
     ? [topEight[0], topEight[7], topEight[3], topEight[4], topEight[1], topEight[6], topEight[2], topEight[5]]
     : [];
   const probA = teamA && teamB ? matchupProbability(teamA.projectedRating, teamB.projectedRating) : 0.5;
+
+  async function loadYear(year: number) {
+    if (year === selectedYear) return;
+    setLoadStatus("loading");
+    try {
+      const response = await fetch(basePath + "/seasons/" + year + ".json");
+      if (!response.ok) throw new Error("Season unavailable");
+      const snapshot = (await response.json()) as RatingsDataset;
+      if (snapshot.mode !== "historical" || snapshot.season !== year || !Array.isArray(snapshot.teams) || snapshot.teams.length < 2) {
+        throw new Error("Unexpected archive format");
+      }
+      const ordered = [...snapshot.teams].sort((a, b) => b.projectedRating - a.projectedRating);
+      setData(snapshot);
+      setSelectedYear(year);
+      setDetailId(ordered[0].teamId);
+      setTeamAId(ordered[0].teamId);
+      setTeamBId(ordered[1].teamId);
+      setSearch("");
+      setSort("rank");
+      setArchive(null);
+      setArchiveStatus("idle");
+      setSimulation(null);
+      setLoadStatus("idle");
+    } catch (error) {
+      console.error(error);
+      setLoadStatus("error");
+    }
+  }
+
+  async function loadTournamentArchive() {
+    setArchiveStatus("loading");
+    try {
+      const response = await fetch(basePath + "/tournaments/" + selectedYear + ".json");
+      if (!response.ok) throw new Error("Tournament archive unavailable");
+      const parsed = (await response.json()) as TournamentArchive;
+      if (parsed.season !== selectedYear || !Array.isArray(parsed.games)) throw new Error("Unexpected tournament archive");
+      setArchive(parsed);
+      setArchiveStatus("idle");
+    } catch (error) {
+      console.error(error);
+      setArchiveStatus("error");
+    }
+  }
 
   return (
     <main>
@@ -84,7 +144,7 @@ export default function Dashboard() {
             <span className="brand-title">MARCH<span>FORECAST</span></span>
           </button>
           <nav aria-label="Main navigation" className="desktop-nav">
-            {([["rankings", "Rankings"], ["compare", "Matchups"], ["bracket", "Bracket Lab"], ["method", "Methodology"]] as [Tab, string][]).map(([id, label]) => (
+            {([["rankings", "Rankings"], ["compare", "Matchups"], ["bracket", "Bracket Lab"], ["history", "Archive"], ["method", "Methodology"]] as [Tab, string][]).map(([id, label]) => (
               <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => setTab(id)}>{label}</button>
             ))}
           </nav>
@@ -92,7 +152,7 @@ export default function Dashboard() {
         </header>
 
         <div className="mobile-nav" aria-label="Page sections">
-          {([["rankings", "Rankings"], ["compare", "Matchups"], ["bracket", "Bracket"], ["method", "Method"]] as [Tab, string][]).map(([id, label]) => (
+          {([["rankings", "Rankings"], ["compare", "Matchups"], ["bracket", "Bracket"], ["history", "Archive"], ["method", "Method"]] as [Tab, string][]).map(([id, label]) => (
             <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => setTab(id)}>{label}</button>
           ))}
         </div>
@@ -120,7 +180,21 @@ export default function Dashboard() {
           )}
         </section>
 
-        <DataDisclaimer />
+        <DataDisclaimer data={data} />
+        <section className="year-picker-panel" aria-label="Historical season browser">
+          <div className="year-picker-info">
+            <span className="section-kicker">HISTORICAL DATA EXPLORER</span>
+            <strong>42 seasons. Actual NCAA game results.</strong>
+            <small>{data.label} · {data.regularSeasonGames?.toLocaleString() ?? "—"} source games · {data.teams.length} teams.</small>
+          </div>
+          <label className="year-picker-label">SELECT SEASON
+            <select aria-label="Select historical season" value={selectedYear} disabled={loadStatus === "loading"} onChange={(event) => void loadYear(Number(event.target.value))}>
+              {[...yearIndex.seasons].reverse().map((year) => <option key={year.season} value={year.season}>{year.season}{year.isComplete ? "" : " (partial)"}</option>)}
+            </select>
+          </label>
+          {loadStatus === "loading" && <span className="year-status" role="status">Loading historical season…</span>}
+          {loadStatus === "error" && <span className="year-status error" role="alert">Could not load that season. Please retry.</span>}
+        </section>
 
         <section className="metrics-strip" aria-label="Research overview">
           <div className="strip-stat"><span>01 / TRACKED TEAMS</span><strong>{data.teams.length.toString().padStart(2, "0")}</strong><small>{data.mode === "demo" ? "Example programs" : "In this snapshot"}</small></div>
@@ -219,9 +293,43 @@ export default function Dashboard() {
           </section>
         )}
 
+        {tab === "history" && (
+          <section className="content-section" id="history">
+            <div className="section-heading"><div><div className="section-kicker">04 — BACK THROUGH MARCH</div><h2>Tournament <span>archive</span></h2><p>Real tournament outcomes, documented season coverage, and frozen pre-tournament Elo evaluation on completed historical seasons.</p></div></div>
+            <div className="history-summary">
+              <div className="history-stat"><span>SEASON</span><strong>{selectedYear}</strong></div>
+              <div className="history-stat"><span>CHAMPION</span><strong>{data.tournament?.champion ?? "No tournament"}</strong></div>
+              <div className="history-stat"><span>RESULTS AVAILABLE</span><strong>{data.tournament?.games ?? 0} games</strong></div>
+              <div className="history-stat"><span>TOURNAMENT BRIER</span><strong>{data.tournament?.brier == null ? "N/A" : data.tournament.brier.toFixed(4)}</strong></div>
+            </div>
+            <p className="archive-description">{data.isComplete ? "Regular-season results cover the Kaggle season through Selection Sunday." : "The source regular-season record is incomplete; we do not report a valid tournament score for this incomplete cutoff."} {data.tournament?.mainDrawOnly ? "The 2026 tournament archive includes 63 main-draw games, excluding four First Four play-ins." : ""} When shown, the tournament Brier score uses frozen regular-season ratings and never learns from the games being evaluated.</p>
+            <div className="archive-controls">
+              <button className="button-primary" onClick={() => void loadTournamentArchive()} disabled={archiveStatus === "loading"}>{archiveStatus === "loading" ? "LOADING…" : archive?.season === selectedYear ? "RELOAD RESULTS" : "VIEW ACTUAL TOURNAMENT GAMES"} <span aria-hidden="true">↗</span></button>
+              {archiveStatus === "error" && <span className="year-status error" role="alert">Could not load results. Please retry.</span>}
+            </div>
+            {archive && archive.season === selectedYear && (
+              <div className="archive-results">
+                <div className="archive-results-head"><strong>{selectedYear} GAME RESULTS</strong><span>{archive.games.length} games</span></div>
+                <p className="method-note">{archive.note}</p>
+                {archive.games.length === 0 && <div className="empty-state">No NCAA men's tournament was held in 2020.</div>}
+                <div className="archive-list">
+                  {[...archive.games].reverse().map((game, index) => (
+                    <div className="archive-game" key={index}>
+                      <span className="game-round">{game.round || "DAY " + game.day}</span>
+                      <strong>{archive.teams[game.winnerId] ?? game.winnerId}</strong>
+                      <span className="game-score">{game.winnerScore}–{game.loserScore}</span>
+                      <span>{archive.teams[game.loserId] ?? game.loserId}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
         {tab === "method" && (
           <section className="content-section" id="method">
-            <div className="section-heading"><div><div className="section-kicker">04 — OPEN METHODOLOGY</div><h2>Show the <span>work</span></h2><p>Every model starts with a measurable baseline. Here is what this first version actually does.</p></div></div>
+            <div className="section-heading"><div><div className="section-kicker">05 — OPEN METHODOLOGY</div><h2>Show the <span>work</span></h2><p>Every model starts with a measurable baseline. Here is what this first version actually does.</p></div></div>
             <div className="method-grid">
               <div className="method-card"><span>01 / DATA</span><h3>Games, in order.</h3><p>Our Python importer reads historical Kaggle regular-season results and team names. Each season is processed chronologically, with optional day cutoffs.</p></div>
               <div className="method-card"><span>02 / RATINGS</span><h3>Transparent Elo.</h3><p>Teams begin at 1500 each season. Opponent strength, game result, and home court determine rating changes. A bounded recent trend creates a simple forward projection.</p></div>

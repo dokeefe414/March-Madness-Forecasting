@@ -1,0 +1,36 @@
+name: Rebuild historical snapshots
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Download SHA-verified historical source
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.download --out-dir research/data/raw
+      - name: Regenerate all season and tournament JSON
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.history --data-dir research/data/raw --out-dir web --default-season 2025
+      - name: Verify full data contract
+        working-directory: web
+        run: npm run check:data
+      - name: Publish reproducible snapshots as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: validated-men-ncaa-historical-json
+          path: |
+            web/data/
+            web/public/seasons/
+            web/public/tournaments/
+          retention-days: 14

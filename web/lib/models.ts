@@ -10,6 +10,7 @@ export type Team = {
   wins: number;
   losses: number;
   history: number[];
+  seed?: string;
 };
 
 export type RatingsDataset = {
@@ -19,6 +20,21 @@ export type RatingsDataset = {
   label: string;
   source: string;
   method: string;
+  isComplete?: boolean;
+  regularSeasonGames?: number;
+  sourceUrl?: string;
+  sourceCommit?: string;
+  tournament?: {
+    champion: string | null;
+    championId: string | null;
+    games: number;
+    evaluatedGames: number;
+    missingTeams: number;
+    brier: number | null;
+    accuracy: number | null;
+    source: string;
+    mainDrawOnly?: boolean;
+  };
   teams: Team[];
 };
 

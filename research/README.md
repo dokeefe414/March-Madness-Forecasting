@@ -1,43 +1,48 @@
-# Research engine (v0.1 baseline)
+# Historical men's NCAA research engine
 
-The Python code is dependency-free (standard library, Python 3.11+). It provides a chronological Elo baseline, a deliberately simple bounded recent-trend forecast, pre-game regular-season Brier evaluation, and a generic power-of-two tournament simulator.
+This is a dependency-free (Python 3.11+) chronological Elo baseline plus season-by-season tournament evaluation and source archival tooling. It is NOT a fitted ARIMA, Kalman or neural forecaster.
 
-## Data source
+## Real data source and verification
 
-Download data from Kaggle's March Machine Learning Mania competition and place these files in research/data/raw/ (ignored by Git):
+We pin the men's 2026 Kaggle March Machine Learning Mania CSVs as mirrored by Andreachurchwell/march-madness-bracket-simulator at the Git commit f8c521735ec41580711ce2d3e27dfd40f24e9e29. See root README for source and Kaggle links.
 
-- MTeams.csv
-- MRegularSeasonCompactResults.csv
+The public mirror includes 198,079 regular-season records from 1985 through an **incomplete 2026 season (day 118)**, 2,585 tournament games and 2,626 seed assignments through 2025. It separately has a community 2026 main-draw file: 63 results, not the four First Four play-in games.
 
-No data is downloaded automatically and no dataset license is implied. Kaggle's Season and DayNum are used to select information available by a historical cutoff. Historical team IDs are not assumed to represent unchanged rosters.
+Raw CSV files stay in research/data/raw (gitignored); SHA-1 Git blob hashes are checked against the frozen Git tree. To regenerate website data:
 
-## Commands (from repository root)
+    PYTHONPATH=research python -m forecast.download --out-dir research/data/raw
+    PYTHONPATH=research python -m forecast.history --data-dir research/data/raw --out-dir web --default-season 2025
 
-Run tests:
+Windows PowerShell:
+
+    $env:PYTHONPATH="research"
+    py -m forecast.download
+    py -m forecast.history
+
+## Research tests
 
     PYTHONPATH=research python -m unittest discover -s research/tests -v
 
-Export a historical snapshot for website display:
+For historical single-season exports:
 
-    PYTHONPATH=research python -m forecast.cli rank --data-dir research/data/raw --season 2025 --through-day 132 --out web/data/rankings.json
+    PYTHONPATH=research python -m forecast.cli rank --data-dir research/data/raw --season 2025 --through-day 132 --out research/outputs/2025.json
 
-Evaluate pre-game regular-season probabilities:
+For regular-season pregame Brier diagnostics:
 
     PYTHONPATH=research python -m forecast.cli backtest --data-dir research/data/raw --seasons 2022 2023 2024 2025
 
-Run a simulation with a manually supplied bracket JSON:
+For a small seeded bracket simulation:
 
     PYTHONPATH=research python -m forecast.cli simulate --bracket research/bracket.example.json --runs 10000 --seed 42 --out research/outputs/bracket.json
 
-For Windows PowerShell, set PYTHONPATH via:
+The championship simulation requires entrants supplied in bracket order and supports a power-of-two draw. A real 2027 76-team bracket requires play-in handling before the main 64-team draw.
 
-    $env:PYTHONPATH="research"; py -m unittest discover -s research/tests -v
+## Evaluation and leakage controls
 
-A bracket input contains an entrants array with unique teamId and numeric rating, in actual bracket matchup order. This simulator starts at a power-of-two main draw. For a 76-team event, play-in entrants must be resolved before handing the remaining 64 teams to it. Ratings are not seeding or selection predictions.
-
-## Important limits
-
-- The baseline uses win/loss outcomes and location, not offensive efficiency or injuries.
-- The projection is a clipped, shrunk slope of recent Elo changes; it is *not* a Kalman filter, ARIMA, or a trained model.
-- The Brier number measures chronological **regular-season** game predictions, not the accuracy of March Madness brackets. Tournament validation, calibration studies, yearly holdouts, selection forecasts, and distribution-shift detection remain future work.
-- Team rankings can change if new games or cutoff dates change. Do not present sample/demo data as real NCAA predictions.
+- The model resets Elo at 1500 each season (no assumption of unchanged rosters).
+- Ratings use the result/location of each regular-season match and never use NCAA tournament outcomes during fitting.
+- The tournament Brier score freezes postseason predictions at the end of the included regular season.
+- Historical seeds are for metadata and past-bracket visualization, not inputs to probabilities.
+- 2020 has no tournament; 2026's partial source does not yield a tournament Brier score.
+- Small data imperfections and Kaggle same-day ordering can affect results; some same-day predictions are not guaranteed to be temporally ordered in the real world.
+- No held-out-year hyperparameter tuning or uncertainty quantification has been performed yet. Do not treat these scores as calibrated evidence of superiority.
