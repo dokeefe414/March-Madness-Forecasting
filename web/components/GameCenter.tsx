@@ -49,13 +49,14 @@ function ProfilePanel({profile,side}:{profile:Profile;side:"HOME"|"AWAY"}){
   </div>;
 }
 
-export default function GameCenter({onOpenAccuracy}:{onOpenAccuracy?:()=>void}){
+export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy?:()=>void;onOpenModels?:()=>void}){
   const [schedule,setSchedule]=useState<Schedule|null>(null);
   const [ratings,setRatings]=useState<RatingsDataset|null>(null);
   const [forward,setForward]=useState<Forward|null>(null);
   const [problem,setProblem]=useState("");
   const [search,setSearch]=useState("");
   const [day,setDay]=useState("all");
+  const [teamFilter,setTeamFilter]=useState("");
   const [selectedId,setSelectedId]=useState("");
   const [showAll,setShowAll]=useState(false);
   const [a,setA]=useState("");
@@ -73,7 +74,10 @@ export default function GameCenter({onOpenAccuracy}:{onOpenAccuracy?:()=>void}){
         throw new Error("Scheduled game/ratings source validation failed.");
       setSchedule(s);setRatings(r);setForward(l?.uniqueGames||null);
       setA(r.teams[0]?.teamId||"");setB(r.teams[1]?.teamId||"");
-      const link=new URLSearchParams(window.location.search).get("game");
+      const params=new URLSearchParams(window.location.search);
+      const team=params.get("team");
+      if(team&&r.teams.some(t=>t.teamId===team))setTeamFilter(team);
+      const link=params.get("game");
       const initial=s.games.find(g=>g.eventId===link)?.eventId||s.games.find(g=>g.status==="ready")?.eventId||s.games[0]?.eventId||"";
       setSelectedId(initial);
       setNow(Date.now());
@@ -83,9 +87,10 @@ export default function GameCenter({onOpenAccuracy}:{onOpenAccuracy?:()=>void}){
   const eligible=useMemo(()=>schedule?.games||[],[schedule]);
   const availableDays=useMemo(()=>[...new Set(eligible.map(x=>x.scheduledEasternDate))].sort(),[eligible]);
   const rows=useMemo(()=>eligible.filter(x=>(day==="all"||x.scheduledEasternDate===day) &&
+      (!teamFilter||x.homeTeamId===teamFilter||x.awayTeamId===teamFilter) &&
       (showAll||!now||new Date(x.scheduledStartUtc).getTime()>now) &&
       (x.home+" "+x.away).toLowerCase().includes(search.toLowerCase())),
-    [eligible,search,day,showAll,now]);
+    [eligible,search,day,showAll,now,teamFilter]);
   // Never display an expired source capture as a currently upcoming pick.
   // Started games remain inspectable only when the user explicitly enables it.
   const selected=rows.find(x=>x.eventId===selectedId)||rows[0];
@@ -98,6 +103,9 @@ export default function GameCenter({onOpenAccuracy}:{onOpenAccuracy?:()=>void}){
     setSelectedId(id);
     const url=new URL(window.location.href);url.searchParams.set("game",id);
     window.history.replaceState(null,"",url.toString());
+    // On mobile, move directly from the fixture card to its detailed model
+    // analysis instead of making the user scroll through the full fixture list.
+    document.getElementById("gc-match-detail")?.scrollIntoView({behavior:"smooth",block:"start"});
   };
   const total=eligible.length;
   return <section className="content-section gc" id="games">
@@ -110,6 +118,7 @@ export default function GameCenter({onOpenAccuracy}:{onOpenAccuracy?:()=>void}){
       <aside className="gc-hero-score"><small>REAL FORWARD FORECAST ACCURACY</small><strong>{forward?.score.accuracy!=null?percent(forward.score.accuracy):"—"}</strong>
         <span>{forward?.settledUniqueGames||0} uniquely settled future games</span>
         <p>{!forward?.settledUniqueGames?"Not a historical backtest. This percentage starts when real pretipoff predictions have settled.":"Every actual game counts once; repeated snapshots cannot inflate accuracy."}</p>
+        {onOpenModels&&<button className="gc-accuracy-cta gc-model-cta" onClick={onOpenModels}>COMPARE THE MODELS ↗</button>}
         {onOpenAccuracy?<button className="gc-accuracy-cta" onClick={onOpenAccuracy}>OPEN ACCURACY & PICKS ↗</button>:
           <a href="#gc-accuracy-notes">HOW THIS IS MEASURED ↓</a>}
       </aside>
@@ -123,6 +132,12 @@ export default function GameCenter({onOpenAccuracy}:{onOpenAccuracy?:()=>void}){
         <label className="gc-search">SEARCH MATCHUP<input aria-label="Search upcoming games" value={search} onChange={e=>setSearch(e.target.value)} placeholder="School, conference, opponent…"/></label>
         <label className="gc-date">GAME DATE<select aria-label="Filter upcoming games by date" value={day} onChange={e=>setDay(e.target.value)}>
           <option value="all">All upcoming days</option>{availableDays.map(d=><option key={d} value={d}>{d}</option>)}</select></label>
+        <label className="gc-date">TEAM<select aria-label="Filter fixtures by team" value={teamFilter}
+          onChange={e=>{setTeamFilter(e.target.value);const url=new URL(window.location.href);
+            if(e.target.value)url.searchParams.set("team",e.target.value);else url.searchParams.delete("team");
+            window.history.replaceState(null,"",url.toString());}}>
+          <option value="">All teams</option>{(ratings?.teams||[]).sort((x,y)=>x.name.localeCompare(y.name)).map(t=><option key={t.teamId} value={t.teamId}>{t.name}</option>)}
+        </select></label>
         <label className="gc-check"><input type="checkbox" checked={showAll} onChange={e=>setShowAll(e.target.checked)}/> Include started since last refresh</label>
       </div>
       {schedule.sourceWarnings?.length?<p className="gc-warning" role="status">ESPN schedule partly unavailable; listed games may be incomplete. No missing schedule is filled in.</p>:null}
@@ -138,7 +153,7 @@ export default function GameCenter({onOpenAccuracy}:{onOpenAccuracy?:()=>void}){
             {!rows.length?<div className="gc-list-empty">No qualifying source fixtures in this view. Try another day or explore a hypothetical matchup below.</div>:null}
           </div>
         </div>
-        <article className="gc-detail" aria-live="polite">
+        <article className="gc-detail" id="gc-match-detail" aria-live="polite">
           {selected&&selected.status==="ready"&&selected.homeWinProbability!=null&&selected.homeProfile&&selected.awayProfile?
           <>
             {alreadyStarted&&<div className="gc-warning" role="status">HISTORICAL CAPTURE ONLY · The listed tipoff time has passed since the source refresh. This frozen percentage is not a live in-game forecast.</div>}
