@@ -46,3 +46,7 @@ The championship simulation requires entrants supplied in bracket order and supp
 - 2020 has no tournament; 2026's partial source does not yield a tournament Brier score.
 - Small data imperfections and Kaggle same-day ordering can affect results; some same-day predictions are not guaranteed to be temporally ordered in the real world.
 - No held-out-year hyperparameter tuning or uncertainty quantification has been performed yet. Do not treat these scores as calibrated evidence of superiority.
+
+## Chronological tournament benchmark
+
+From the repository root, run `PYTHONPATH=research python -m forecast.benchmark` to score real observed tournament matchups by held-out year. This compares 50%/base Elo/trend Elo with a temperature-calibrated trend Elo whose temperature is fitted **only on earlier years**. Unlike a full bracket simulator, evaluation is conditional on realized historical opponents. See [docs/rolling-benchmark.md](../docs/rolling-benchmark.md).

@@ -115,10 +115,21 @@ This project exports a static Next.js site to GitHub Pages.
 
 If Pages is not enabled, the repo and CI can be healthy but the website will not yet publish. No login, paid API keys or database is required.
 
+## Rolling-year forecasting benchmark
+
+The repository includes a **leakage-aware walk-forward evaluation** on real historical tournament games. It compares 50/50, base Elo, trend-adjusted Elo, and a trend-Elo probability calibrated using **only earlier tournament years**. The report separates test-season scores from the prior-year calibration history and excludes 2020 and the incomplete 2026 regular season.
+
+```powershell
+$env:PYTHONPATH="research"
+py -m forecast.benchmark --web-dir web --out research/outputs/rolling-benchmark.json
+```
+
+See [benchmark methodology](docs/rolling-benchmark.md) for exact assumptions and caveats. Every CI run produces a downloadable `rolling-tournament-benchmark` JSON artifact; the metric is conditional on the **actual historical matchups**, not a simulated field or a validated 2027 forecast.
+
 ## Research roadmap
 
 1. Audit data completeness against the canonical Kaggle competition export and add verified full 2026 regular-season and play-in data.
-2. Implement *rolling held-out season* evaluation for model selection; compare Elo, last-value, static power metrics, ARIMA, standard Kalman and adaptive Kalman. Study response to distribution shifts.
+2. Extend the **implemented chronological rolling held-out-season tournament benchmark** with model selection for Elo, last-value, static power metrics, ARIMA, standard Kalman and adaptive Kalman. Study response to distribution shifts.
 3. Add pace-adjusted offensive/defensive efficiency and strength of schedule using detailed historical game data (available from 2003 for men).
 4. Add probability calibration and uncertainty intervals. Publish season-by-season benchmark results with honest limitations.
 5. Build a full format-aware bracket simulator with projected field selection, actual seeds, year-specific First Four/play-in slots, a custom bracket interface and immutable forecast timestamps.

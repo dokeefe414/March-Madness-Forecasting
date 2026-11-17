@@ -58,3 +58,7 @@ The committed static season JSON is source-derived and browseable without a paid
 ## Follow-on architecture
 
 Add detailed possession-based efficiency metrics, formal rolling-year cross-validation, calibrators fit on past years only, Kalman/filter-based adaptation to changes and confidence bands. Later introduce actual 2026–27 data feeds with a dated immutable prediction snapshot and model version. Do not schedule scraping or claim live updates without a reliable data provider.
+
+## Chronological tournament benchmark (v0.3)
+
+`forecast.benchmark` reads the committed complete pre-tournament Elo season snapshots and subsequently observed NCAA tournament pairings. Each holdout year uses its own frozen regular-season features. Only **earlier** years' tournament outcomes choose a scalar probability temperature for the trend-Elo model. No selection seeds, tourney outcomes, or later-season results train that held-out year's estimator. The CI-generated JSON artifact records per-year and aggregate scores and missing-team omissions. See [rolling-benchmark.md](rolling-benchmark.md). This is a conditional matchup evaluation, *not* 2027 bracket/selection forecasting.
