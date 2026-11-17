@@ -67,6 +67,14 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.challengers --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/challengers.json
+      - name: Run full date-frozen gradient-boosted CART and Bayesian Gaussian skill experiments
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.advanced_models --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/advanced-models.json
+      - name: Publish verified archive operations and feed provenance
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.operations --ledger web/public/forecasts --out web/public/current/operations.json
       - name: Build independently auditable settlement backlog report
         env:
           PYTHONPATH: research
