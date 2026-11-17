@@ -82,6 +82,7 @@ export default function Dashboard() {
   },[]);
   function changeTab(next:Tab){
     setTab(next);
+    window.scrollTo({top:0,behavior:"instant"});
     const url=new URL(window.location.href);
     url.searchParams.set("view",next);
     window.history.replaceState(null,"",url.toString());
@@ -179,7 +180,7 @@ export default function Dashboard() {
 
         <div className="mobile-nav" aria-label="Page sections">
           {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["models", "Model Lab"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
-            <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => setTab(id)}>{label}</button>
+            <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => changeTab(id)}>{label}</button>
           ))}
         </div>
 
