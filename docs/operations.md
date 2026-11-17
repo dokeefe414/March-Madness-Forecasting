@@ -100,3 +100,9 @@ The 2027 source convention must be reviewed before the 2028 season; never displa
 ### 2027 name-space reconciliation runbook
 
 The initial v0.6 source-run returned **365 exact NCAA directory matches but 0 direct ESPN-subdivision-name matches**. Check [SportsDataverse `mbb_groups`](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_groups) asset `mbb_team_aliases.csv`. The importer now consumes only NCAA-source name aliases with a matching 2027-valid season window and the original ESPN group team ID, then checks the source team's 2027 Division I membership. If no matches appear, inspect schema, provider alias dates and coverage **without relaxing** the ID/season validation. The watchlist is deliberately unavailable until joined Division I membership is actually verified.
+
+### Season-specific NCAA-to-ESPN ID crosswalk
+
+The team-group source uses ESPN team IDs, while the NCAA schedule/team-directory uses distinct, season-specific stats.ncaa.org team IDs. The 2026–27 `ncaa_espn_team_crosswalk.csv` in [`mbb_crosswalk`](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_crosswalk) provides the explicit dated numeric mapping. It is now the **primary** cross-provider lookup when a 2027 mapping exists; old/source-dated NCAA name aliases are additional conservative fallback.
+
+Check deployed `divisionCoverage.seasonNCAAIdMatchedTeams` and `divisionIConfirmed` after refreshing. If zero, confirm whether the upstream crosswalk already contains `season=2026-27` rows before considering fixes. **Do not** use 2025–26 NCAA IDs for 2026–27 because the NCAA issues new team IDs each year. Keep the hypothetical watchlist unavailable rather than inventing a field.

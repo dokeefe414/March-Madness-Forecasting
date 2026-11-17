@@ -65,3 +65,13 @@ The revised `forecast.division.parse_ncaa_aliases` **only** accepts provider-aut
 A missing/invalid alias file cannot erase verified 2027 scores or possession data: it causes only source-alias coverage to be unavailable, and the original exact-name join remains conservative. The watchlist still needs 32 source-linked D-I conferences and 76 candidates to display even a hypothetical power field.
 
 This can materially improve verified D-I coverage **after a successful new deployment**. No numerical improvement is claimed until the new production logs and `divisionCoverage` actually show it.
+
+## Primary same-season numeric NCAA→ESPN crosswalk
+
+An even stronger source than historical name aliases is SportsDataverse's published [`ncaa_espn_team_crosswalk.csv` under `mbb_crosswalk`](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_crosswalk), documented in the [sdv-py IDs/crosswalk guide](https://py.sportsdataverse.org/docs/mbb/reference/additional/ids-and-crosswalks). It associates the **2026–27 NCAA season-specific `ncaa_team_id`** directly with the provider's own **`espn_team_id`**. The NCAA side comes from the *same 2027 season* `ncaa_mbb_team_ids_2027.csv.gz` source that already matched 365 schools in the first v0.6 production run.
+
+`forecast.division.parse_ncaa_espn_ids` requires the explicitly matching season `2026-27` (or year 2027) and a non-unmatched `match_method`; it drops blank/ambiguous/repeated conflicting mappings and wrong-year links. A stats.ncaa.org team ID **must never be equated to an ESPN team ID**: the actual provider crosswalk states both numbers. The ESPN ID then finds the team in the independently sourced 2027 season subdivision membership table, where the team's `subdivision_id` must explicitly reference the published 2027 Division I group.
+
+The per-team lookup prefers a verified NCAA-ID mapping to name-only matching, but if the two source paths disagree on the **ESPN group team ID**, it refuses to assert division membership. Production `divisionCoverage` now reports `seasonNCAAIdMatchedTeams`, `ncaaAliasMatchedTeams` and `crosswalkSource` so improvement can be demonstrated with real counts. Again, source-verified subdivision is **not individual postseason eligibility**. If the upstream crosswalk lacks rows for the 2026–27 season, the importer must *not* borrow prior-year NCAA numeric IDs — stats.ncaa.org IDs are regenerated each season.
+
+This correction follows the initial 0-match NCAA-name/ESPN-name join and still enforces **32 D-I conference groups and 76 rated candidates** before any hypothetical selection field appears. It should never silently lower that gate to force a table of teams.

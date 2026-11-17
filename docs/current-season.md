@@ -96,3 +96,9 @@ For reproducible source validation, run `py -m unittest discover -s research/tes
 A fifth **optional** source `mbb_team_aliases.csv` under the `mbb_groups` release supplies season-dated NCAA-name aliases attached to the source's ESPN group-team IDs. This permits a documented identity join where the NCAA score feed says, for example, a school-only name but the group reference uses an ESPN mascot display name. Only `source=ncaa`, `name_kind=name`, `team_id_source=espn` and a valid 2027 year window can contribute. Conflicting aliases are rejected and the fallback is an **unverified** team, not a guessed identity.
 
 Offline flag: `--alias-input fixture-mbb-team-aliases.csv`. The live task fetches the public source automatically unless `--input` is used. Logs report how many scored programs are actually D-I group-linked after this source join.
+
+### Source-native same-season numeric crosswalk
+
+To resolve the NCAA-name versus ESPN-group team gap, `forecast.live` additionally fetches `ncaa_espn_team_crosswalk.csv` (SportsDataverse `mbb_crosswalk` release). It validates explicit season `2026-27`, source `ncaa_team_id`, source `espn_team_id`, and a genuine non-unmatched `match_method`. The source-defined ESPN ID matches the season-2027 division group membership ID; no integer equality or school nickname inference is used. `divisionCoverage.seasonNCAAIdMatchedTeams` and `crosswalkSource` report actual results. Missing mappings remain unknown, not D-I certified.
+
+Offline flag: `--crosswalk-input local-ncaa-espn-team-crosswalk.csv`. Use this alongside `--group-seasons-input` and `--membership-input` to verify the join locally.
