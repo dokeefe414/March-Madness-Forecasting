@@ -207,3 +207,12 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 @media(max-width:730px){.picks-board{grid-template-columns:1fr}.picks-insights{grid-template-columns:1fr}.source-quality{grid-template-columns:1fr}.selection-pending{grid-template-columns:1fr}.coverage-ring{display:none}.selection-watermark,.picks-watermark{display:none}.watch-filters{align-items:stretch}.watch-search,.watch-search input,.watch-search select{width:100%;min-width:0;max-width:none}.watch-segments{width:100%}.watch-segments button{flex:1}.source-quality>div{padding:13px}}
 @media(max-width:500px){.selection-preview{grid-template-columns:1fr}.watch-table-head,.watch-row{grid-template-columns:41px minmax(0,1fr) 65px 62px;gap:5px;padding:12px 8px}.watch-table-head{font-size:8px}.watch-row{min-height:62px}.watch-rank{font-size:20px}.watch-name strong{font-size:11px}.watch-name small{font-size:8px}.watch-row>b{font-size:19px}.watch-row>span:nth-child(3){font-size:11px}.watch-spotlight{padding:18px}.watch-rating{font-size:62px;margin:23px 0 17px}.selection-foot{padding:16px}.picks-insights{padding:15px}.picks-proof{grid-template-columns:1fr}.pick-card{padding:15px}.pick-versus strong{font-size:28px}.pick-prob-row>div:first-child{font-size:26px}.live-filters label{width:100%}.live-filters select{flex:1}.trend-current small{max-width:125px;text-align:right;white-space:normal}.trend-header h4{font-size:22px}}
 @media(prefers-reduced-motion:reduce){.pick-card,.watch-row,.watch-segments button{transition:none!important}}
+
+/* Mobile regression: long audit/status pills must wrap under narrow titles.
+   The E2E 390px snapshot caught a 23px overrun in the Picks Ledger heading. */
+@media(max-width:650px){
+  .section-heading{flex-wrap:wrap;justify-content:flex-start;gap:13px}
+  .section-heading>div{min-width:0;max-width:100%;width:100%}
+  .section-heading .research-pill{white-space:normal;overflow-wrap:anywhere;max-width:100%;align-self:flex-start;line-height:1.35}
+  .picks-exp,.selection-exp,.current-exp,.research-exp{min-width:0;max-width:100%}
+}
