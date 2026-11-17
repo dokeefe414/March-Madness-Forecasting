@@ -47,7 +47,7 @@ The new `uniqueGames.pairedModelComparisons` provides actual paired first-pick B
 
 ## Runbook for a failed refresh or missing picks
 
-1. Open [GitHub Actions archive](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml), [monitor](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml), and [Pages](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml).
+1. Open [GitHub Actions archive](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/archive-pregame.yml), [monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml), and [Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml).
 2. Check whether the archive workflow exists/has run on `main`, and whether a provider failed or a Git push was rejected. The previous green Pages build cannot substitute for this check.
 3. Use `workflow_dispatch` on **main** to re-run the archive action after the source becomes available. Do not manually fill an unseen predicted probability or alter immutable snapshot contents.
 4. Inspect `web/public/forecasts/index.json`, `archiveHealth`, and the source-explicit `/current/archive-health.json`. Expect the game picker to display **—** for accuracy if no first-pick settlement has been verified.
