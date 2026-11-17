@@ -182,6 +182,7 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 challenger=online_probability(((home["rating"]+65-away["rating"])/400,
                        max(-1.,min(1.,form_gap)),home_rate-away_rate,1.),candidate["modelWeights"])
             state_probability=None
+            adaptive_probability=None
             if state_space is not None and not neutral and (
                     not state_space.get("trainedThroughDate") or
                     state_space["trainedThroughDate"] < future_eastern_day):
@@ -189,6 +190,10 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 if home["name"] in strengths and away["name"] in strengths:
                     state_probability=matchup_probability(strengths[home["name"]]["mean"],
                                       strengths[away["name"]]["mean"],65)
+                adapted=state_space.get("adaptiveStrengths",{})
+                if home["name"] in adapted and away["name"] in adapted:
+                    adaptive_probability=matchup_probability(adapted[home["name"]]["mean"],
+                                         adapted[away["name"]]["mean"],65)
             opponent_probability=None
             if opponent_model is not None and not neutral and (
                 not opponent_model.get("trainedThroughDate") or
@@ -214,6 +219,7 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 "challengerHomeWinProbability":round(challenger,7) if challenger is not None else None,
                 "stateSpaceHomeWinProbability":round(state_probability,7) if state_probability is not None else None,
                 "opponentAdjustedHomeWinProbability":round(opponent_probability,7) if opponent_probability is not None else None,
+                "adaptiveStateSpaceHomeWinProbability":round(adaptive_probability,7) if adaptive_probability is not None else None,
                 "modelId": selected.get("modelId") if selected else None,
                 "modelTrainingThroughDate": selected.get("trainedThroughDate") if selected else None,
                 "match": "exact canonical NCAA name to ESPN team location/display",

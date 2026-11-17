@@ -56,7 +56,9 @@ def summarize_forward(snapshots: list[dict], settlements: list[dict]) -> dict:
                          "stateSpace":(float(pred["stateSpaceHomeWinProbability"])
                                 if pred.get("stateSpaceHomeWinProbability") is not None else None),
                          "opponent":(float(pred["opponentAdjustedHomeWinProbability"])
-                                     if pred.get("opponentAdjustedHomeWinProbability") is not None else None)})
+                                     if pred.get("opponentAdjustedHomeWinProbability") is not None else None),
+                         "adaptiveState":(float(pred["adaptiveStateSpaceHomeWinProbability"])
+                                          if pred.get("adaptiveStateSpaceHomeWinProbability") is not None else None)})
     selected.sort(key=lambda r:(r["date"],r["eventId"]))
     by_model=defaultdict(list)
     comparable=defaultdict(list)
@@ -64,7 +66,8 @@ def summarize_forward(snapshots: list[dict], settlements: list[dict]) -> dict:
         by_model[row["model"]].append(row)
         for key,label in (("elo","Elo reference"),("challenger","Online challenger"),
                           ("stateSpace","State-space research"),
-                          ("opponent","Opponent-aware research")):
+                          ("opponent","Opponent-aware research"),
+                          ("adaptiveState","Adaptive state-space research")):
             if row[key] is not None:
                 comparable[label].append(_rate(row[key],row["observedHome"]))
     timeline=[]

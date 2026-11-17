@@ -173,6 +173,7 @@ def build_game_center(scoreboards:list[dict],ratings:dict,games:list[dict],
                       "challengerHomeWinProbability":pick.get("challengerHomeWinProbability"),
                       "stateSpaceHomeWinProbability":pick.get("stateSpaceHomeWinProbability"),
                       "opponentAdjustedHomeWinProbability":pick.get("opponentAdjustedHomeWinProbability"),
+                      "adaptiveStateSpaceHomeWinProbability":pick.get("adaptiveStateSpaceHomeWinProbability"),
                       "model":pick["model"],"modelId":pick.get("modelId"),
                       "status":"ready","reason":None,
                       "homeProfile":_team_detail(home,h_hist),
@@ -180,7 +181,13 @@ def build_game_center(scoreboards:list[dict],ratings:dict,games:list[dict],
                       "factors":factors,
                       "headToHead":[{"date":g["date"],"home":g["home"],"away":g["away"],
                                      "homeScore":g["homeScore"],"awayScore":g["awayScore"]} for g in reversed(meetings)],
-                      "commonOpponents":_common(eligible_games,home["name"],away["name"],included_before)}
+                      "commonOpponents":_common(eligible_games,home["name"],away["name"],included_before),
+                      "driftWatch":{
+                          "home":(state_space or {}).get("adaptiveStrengths",{}).get(home["name"],{}).get("driftWatch"),
+                          "away":(state_space or {}).get("adaptiveStrengths",{}).get(away["name"],{}).get("driftWatch"),
+                          "homeInnovations":(state_space or {}).get("adaptiveStrengths",{}).get(home["name"],{}).get("recentStandardizedInnovations",[]),
+                          "awayInnovations":(state_space or {}).get("adaptiveStrengths",{}).get(away["name"],{}).get("recentStandardizedInnovations",[]),
+                      }}
             else:
                 coverage["unmatchedOrAmbiguous"]+=1
                 item={"eventId":eid,"scheduledStartUtc":starts.isoformat().replace("+00:00","Z"),
