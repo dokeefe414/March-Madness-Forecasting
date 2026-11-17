@@ -189,3 +189,47 @@ test("v1.1 model lab labels new challengers as retrospective, not public picks",
   await expect(page.getByRole("heading",{name:/Is the model drifting/i})).toBeVisible();
   await expect(page.getByText(/Strict previous-date replay/i)).toBeVisible();
 });
+
+test("v1.2 team intelligence deep links and game evidence page exist",async ({page})=>{
+ // Hermetic source-backed mock: the repository does not commit generated
+ // /current artifacts (they are built by the Pages publication workflow).
+ const team=(id:string,name:string,rating:number)=>({teamId:id,name,rank:1,rating,projectedRating:rating,trend:4,wins:6,losses:2,history:[1500,rating],conference:"Example League",conferenceVerified:true,
+   opponentAverageElo:1490,adjOff100:109,adjDef100:97,pacePossessions:67});
+ const retrievedAtUtc="2026-11-17T12:00:00Z";
+ await page.route("**/current/2027.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   season:2027,mode:"current",retrievedAtUtc,teams:[team("ncaa-duke","Duke",1550),team("ncaa-unc","North Carolina",1510)]})}));
+ await page.route("**/current/2027-games.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   season:2027,retrievedAtUtc,games:[{id:"game-1",date:"2026-11-16",home:"Duke",away:"North Carolina",homeScore:78,awayScore:72}]})}));
+ await page.route("**/current/upcoming.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   games:[{eventId:"next-1",homeTeamId:"ncaa-duke",awayTeamId:"ncaa-unc",home:"Duke",away:"North Carolina",scheduledStartUtc:new Date(Date.now()+3*86400000).toISOString(),homeWinProbability:.6}]})}));
+ await page.goto("/?view=teams");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ await expect(page.getByRole("heading",{name:/TEAM INTELLIGENCE/i})).toBeVisible();
+ await expect(page.getByRole("textbox",{name:"Search teams"})).toBeVisible();
+ await expect(page.locator(".v12-team-detail")).toBeVisible({timeout:20000});
+ await page.getByRole("textbox",{name:"Search teams"}).fill("Duke");
+ await expect(page.locator(".v12-team-scroll button").first()).toBeVisible();
+});
+test("v1.2 bracket pick-em has rounds, chooser and reset",async ({page})=>{
+ await page.goto("/?view=bracket");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ await expect(page.getByRole("button",{name:/SIMULATE FULL FIELD/i})).toBeVisible({timeout:20000});
+ await expect(page.getByRole("heading",{name:/Build your own bracket/i})).toBeVisible();
+ await expect(page.getByRole("group",{name:"Tournament round"})).toBeVisible();
+ await page.getByRole("group",{name:"Tournament round"}).getByRole("button",{name:"ROUND OF 64"}).click();
+ await expect(page.locator(".v12-match").first()).toBeVisible();
+ await page.locator(".v12-match button:enabled").first().click();
+ await expect(page.getByText(/available games picked/)).toBeVisible();
+ await page.getByRole("button",{name:"RESET PICKS"}).click();
+ await expect(page.getByText(/Bracket picks reset/)).toBeVisible();
+});
+test("v1.2 installable manifest and settlement diagnostic shell load",async ({page})=>{
+ await page.goto("/?view=predictions");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ await expect(page.getByRole("heading",{name:/Prediction ledger/i})).toBeVisible();
+ await expect(page.getByRole("heading",{name:/What happened after the pick/i})).toBeVisible();
+ const manifest=await page.request.get("/manifest.webmanifest");
+ expect(manifest.status()).toBe(200);
+ const json=await manifest.json();
+ expect(json.name).toMatch(/March Forecast/);
+});

@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
+import ModelEvidence from "./ModelEvidence";
 
 const base=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Paired={pairedGames:number;pairedDates:number;baselineEloBrier:number|null;
@@ -183,6 +184,7 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
       </div>
       <p className="ml-footer">{drift?.status==="review"?"Review recommended; no automatic retuning.":"Review begins only after 50 actual independently settled first picks."} An error increase is descriptive, not automatically statistical evidence of distribution shift.</p>
    </section>
+   <ModelEvidence/>
    <div className="ml-recent">
      <div><span className="section-kicker">04 / THE MOST RECENT OPPONENT EXPERIMENT</span>
        <h3>Game-day <em>performance.</em></h3>
