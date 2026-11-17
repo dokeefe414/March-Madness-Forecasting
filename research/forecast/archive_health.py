@@ -34,22 +34,33 @@ def assess_archive(folder:Path,now:datetime|None=None,max_age_hours:float=26.)->
     if age<-.05:raise ValueError("Archive manifest timestamp is in the future")
     oldest=data.get("uniqueGames",{}).get("forecastedUniqueGames",0)
     scored=data.get("uniqueGames",{}).get("settledUniqueGames",0)
-    warnings=(data.get("archiveHealth") or {}).get("sourceWarnings") or []
+    archive_meta=data.get("archiveHealth") or {}
+    warnings=archive_meta.get("sourceWarnings") or []
+    coverage=archive_meta.get("fixtureCoverage") or {}
+    clean_empty=bool(archive_meta.get("verifiedFixtureRun") and not warnings and
+                     coverage.get("eventsSeen") is not None and
+                     coverage.get("unmatchedOrAmbiguous",0)==0 and
+                     coverage.get("unsafeSameDateRatings",0)==0 and
+                     not oldest)
     status=("off-season" if not active else
             "stale" if age>max_age_hours else
             "source-partial" if warnings else
+            "no-eligible-fixtures" if clean_empty else
             "no-picks-yet" if not oldest else "current")
     msg={
       "current":"Archive has a recent source-backed run; outcomes may still be pending.",
       "stale":"Archived prediction evidence is older than expected; inspect the GitHub pregame workflow.",
       "source-partial":"Recent archive exists but an ESPN schedule day was unavailable.",
       "no-picks-yet":"Archiver ran but no verified, strictly pre-tipoff predictions have been committed.",
+      "no-eligible-fixtures":"A verified source check ran but found no currently eligible, unambiguous future fixtures.",
       "off-season":"Archive is outside the regular-season update period.",
     }[status]
     return {"schemaVersion":1,"status":status,
             "checkedAtUtc":now.isoformat().replace("+00:00","Z"),
             "lastArchiveUtc":data["generatedAtUtc"],"ageHours":round(age,2),
             "archivedPredictions":oldest,"settledUniqueGames":scored,
+            "verifiedFixtureRun":bool(archive_meta.get("verifiedFixtureRun")),
+            "fixtureCoverage":coverage,
             "sourceWarnings":warnings,"message":msg,
             "ageThresholdHours":max_age_hours,
             "policy":"This status is a repository artifact check, not a real-time feed monitor"}
