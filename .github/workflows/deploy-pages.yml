@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Archive real pre-tipoff forecasts"]
+    types: [completed]
   schedule:
     # Nightly Eastern local time (EST/EDT, including daylight saving changes).
     # Best-effort GitHub Actions trigger: actual execution can lag.
@@ -25,6 +28,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   deploy:
+    # Do not republish when source capture failed: keep last honest site.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
