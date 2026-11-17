@@ -233,6 +233,8 @@ def main() -> None:
     parser.add_argument("--directory-input", type=Path, help="Offline NCAA team crosswalk CSV/CSV.gz")
     parser.add_argument("--box-input", type=Path, help="Offline team box CSV/CSV.gz")
     parser.add_argument("--skip-supplemental", action="store_true", help="For offline baselines only")
+    parser.add_argument("--model-report", type=Path, default=Path("web/public/research/benchmark.json"),
+                        help="Earlier-season-only calibration report, if generated")
     parser.add_argument("--out", type=Path, default=Path("web/public/current/2027.json"))
     args = parser.parse_args()
     if args.input:
@@ -271,6 +273,24 @@ def main() -> None:
         # score-derived Elo available, but expose empty supplemental coverage.
         print(f"Supplemental crosswalk/box validation failed: {exc}. No inferred identity or efficiency data.")
         output = build_current(games, url=origin)
+    # Historical parameters are an extrapolation scenario, NOT evidence
+    # that March-trained calibration is better for November home games.
+    if args.model_report.exists():
+        report = json.loads(args.model_report.read_text(encoding="utf-8"))
+        cal = report.get("productionCalibration", {})
+        temperature = float(cal.get("temperature", 0))
+        weight = float(cal.get("ensembleCalibratedWeight", -1))
+        trained_until = int(cal.get("trainingThroughSeason", 9999))
+        if report.get("type") != "historical-actual-matchup-walk-forward" or not (
+            0 < temperature < 20 and 0 <= weight <= 1 and trained_until <= 2025):
+            raise ValueError("invalid or future-leaking historical calibration artifact")
+        output["historicalCalibration"] = {
+            "temperature": temperature,
+            "blendWeight": weight,
+            "trainedThroughSeason": trained_until,
+            "source": "Historical frozen tournament benchmark",
+            "caveat": "March-neutral calibration extrapolated to regular-season 2027; not validated for 2027 games.",
+        }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
     print(f"Published {len(games)} confirmed NCAA-source games, "
