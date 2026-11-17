@@ -16,6 +16,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m unittest discover -s research/tests -v
+      - name: Test nightly source quality and date guards
+        env:
+          PYTHONPATH: research
+        run: python -m unittest discover -s research/tests -p "test_freshness.py" -v
       - name: Audit any committed pregame forecast ledger
         env:
           PYTHONPATH: research
