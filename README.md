@@ -5,7 +5,7 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v1.1%20Season%20Intelligence-a6ffce)
+![Version](https://img.shields.io/badge/release-v1.2%20Team%20%26%20Forecast%20Intelligence-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
@@ -17,6 +17,20 @@
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v1.2 — Verified results, team intelligence, model evidence and bracket building
+
+**Go straight to what matters:** [Today's games](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Team intelligence](https://dokeefe414.github.io/March-Madness-Forecasting/?view=teams) · [Real prediction accuracy](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Fair model comparisons](https://dokeefe414.github.io/March-Madness-Forecasting/?view=models) · [Build a historical bracket](https://dokeefe414.github.io/March-Madness-Forecasting/?view=bracket).
+
+- **Settlement investigation:** public source-derived backlog separates future, recently started, independently unresolved and 48h+ delayed archived games. The pregame recorder now retries the oldest unresolved fixture dates up to 45 days back with a bounded ESPN budget. It never invents scores or counts prospective picks before a matching, independently verified final.
+- **Teams workspace:** searchable, shareable 2026–27 team pages combine actual NCAA results, Elo trajectories, sourced efficiency/pace, recent opponents, and upcoming verified fixtures. Missing source metrics remain blank.
+- **Model lab:** a unified table compares actual first-published, source-settled paired model probabilities on the same games, including Brier differences, date-block confidence intervals when the sample supports them, and calibration bins. Original validation gates are preserved.
+- **Make your own tournament bracket:** pick play-in and later round winners in a complete sourced historical field; save locally, reset and share a scenario link. This does not fabricate the unselected 2027 NCAA tournament.
+- **Accessible mobile/installable site:** responsive cards, stable shareable tabs, keyboard skip navigation and an HTTPS-scoped progressive web app shell. Real forecast JSON is network-only, never served from an offline cache.
+
+**Technical specification and testing:** [v1.2 implementation, data provenance and acceptance criteria](docs/v12-team-and-accuracy.md). Green CI verifies code; only actual source-backed recorded finals verify live forecast outcomes.
 
 ---
 
