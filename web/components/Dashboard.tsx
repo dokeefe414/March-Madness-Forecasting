@@ -8,6 +8,7 @@ import FullBracketLab from "./FullBracketLab";
 import ResearchLab from "./ResearchLab";
 import LiveSeason from "./LiveSeason";
 import GameCenter from "./GameCenter";
+import ModelLab from "./ModelLab";
 import SelectionLab from "./SelectionLab";
 import ForecastTracker from "./ForecastTracker";
 
@@ -23,7 +24,7 @@ type TournamentArchive = {
   seeds: Record<string, string>;
   games: Array<{ day?: number; round?: string; winnerId: string; loserId: string; winnerScore: number; loserScore: number }>;
 };
-type Tab = "games" | "current" | "selection" | "predictions" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
+type Tab = "games" | "models" | "current" | "selection" | "predictions" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
 type Sort = "rank" | "momentum" | "wins";
 
 function percent(value: number): string {
@@ -73,6 +74,25 @@ export default function Dashboard() {
   const [archiveStatus, setArchiveStatus] = useState<"idle" | "loading" | "error">("idle");
   const sortedTeams = useMemo(() => [...data.teams].sort((a, b) => b.projectedRating - a.projectedRating), [data]);
   const [tab, setTab] = useState<Tab>("games");
+  useEffect(()=>{
+    const requested=new URLSearchParams(window.location.search).get("view");
+    const supported:Tab[]=["games","current","predictions","models","selection","rankings","compare","bracket","research","history","method"];
+    if(requested && supported.includes(requested as Tab))setTab(requested as Tab);
+  },[]);
+  function changeTab(next:Tab){
+    setTab(next);
+    const url=new URL(window.location.href);
+    url.searchParams.set("view",next);
+    window.history.replaceState(null,"",url.toString());
+  }
+  function openTeam(teamId:string){
+    const url=new URL(window.location.href);
+    url.searchParams.set("view","games");
+    url.searchParams.set("team",teamId);
+    url.searchParams.delete("game");
+    window.history.pushState(null,"",url.toString());
+    setTab("games");
+  }
   // SSR markup may be visible before React attaches navigation handlers.
   // A deterministic hydration signal lets browser tests avoid lost clicks.
   const [hydrated,setHydrated] = useState(false);
@@ -143,20 +163,20 @@ export default function Dashboard() {
     <main data-hydrated={hydrated?"yes":"no"}>
       <div className="site-shell">
         <header className="site-header">
-          <button className="brand" onClick={() => setTab("games")} aria-label="March Forecast home">
+          <button className="brand" onClick={() => changeTab("games")} aria-label="March Forecast home">
             <span className="brand-mark">M<span>F</span></span>
             <span className="brand-title">MARCH<span>FORECAST</span></span>
           </button>
           <nav aria-label="Main navigation" className="desktop-nav">
-            {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
-              <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => setTab(id)}>{label}</button>
+            {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["models", "Model Lab"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
+              <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => changeTab(id)}>{label}</button>
             ))}
           </nav>
           <a className="github-link" href="https://github.com/dokeefe414/March-Madness-Forecasting" target="_blank" rel="noreferrer">VIEW CODE <span aria-hidden="true">↗</span></a>
         </header>
 
         <div className="mobile-nav" aria-label="Page sections">
-          {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
+          {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["models", "Model Lab"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
             <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => setTab(id)}>{label}</button>
           ))}
         </div>
@@ -168,8 +188,8 @@ export default function Dashboard() {
             <h1>THE NUMBERS <span>BEHIND</span> THE MADNESS<span className="headline-period">.</span></h1>
             <p className="hero-copy">Power rankings that move with the season. Head-to-head probabilities you can challenge. Research-backed models you can inspect, historical seasons you can replay, and a verified new-season data pulse.</p>
             <div className="hero-buttons">
-              <button className="button-primary" onClick={() => setTab("current")}>EXPLORE 2027 SEASON <span aria-hidden="true">↗</span></button>
-              <button className="button-outline" onClick={() => setTab("research")}>VIEW THE RESEARCH <span aria-hidden="true">→</span></button>
+              <button className="button-primary" onClick={() => changeTab("current")}>EXPLORE 2027 SEASON <span aria-hidden="true">↗</span></button>
+              <button className="button-outline" onClick={() => changeTab("research")}>VIEW THE RESEARCH <span aria-hidden="true">→</span></button>
             </div>
             <div className="hero-footnote">SEASON {data.season} <span>✳</span> {data.mode === "demo" ? "SYNTHETIC MODEL SCENARIO" : "HISTORICAL RESULTS SNAPSHOT"} <span>✳</span> NO PAYWALLS</div>
           </div>
@@ -218,8 +238,9 @@ export default function Dashboard() {
             {loadStatus === "error" && <span className="year-status error">Could not load historical season.</span>}
           </div>
         )}
-        {tab === "games" && <GameCenter onOpenAccuracy={()=>setTab("predictions")}/>}
-        {tab === "current" && <LiveSeason/>}
+        {tab === "games" && <GameCenter onOpenAccuracy={()=>changeTab("predictions")} onOpenModels={()=>changeTab("models")}/>}
+        {tab === "models" && <ModelLab onOpenGames={()=>changeTab("games")} onOpenAccuracy={()=>changeTab("predictions")}/>}
+        {tab === "current" && <LiveSeason onOpenTeam={openTeam}/>}
         {tab === "selection" && <SelectionLab/>}
         {tab === "predictions" && <ForecastTracker/>}
         {tab === "research" && <ResearchLab/>}
@@ -258,7 +279,7 @@ export default function Dashboard() {
                   <div className="detail-label">ELO TRAJECTORY / RECENT GAMES</div>
                   <Sparkline values={detail.history} large />
                   <div className="detail-facts"><div><span>RECORD</span><strong>{detail.wins}–{detail.losses}</strong></div><div><span>FORM ADJUSTMENT</span><Delta value={detail.trend} /></div></div>
-                  <button className="detail-cta" onClick={() => { setTeamAId(detail.teamId); setTeamBId(sortedTeams.find((t) => t.teamId !== detail.teamId)?.teamId ?? detail.teamId); setTab("compare"); }}>COMPARE THIS TEAM <span aria-hidden="true">→</span></button>
+                  <button className="detail-cta" onClick={() => { setTeamAId(detail.teamId); setTeamBId(sortedTeams.find((t) => t.teamId !== detail.teamId)?.teamId ?? detail.teamId); changeTab("compare"); }}>COMPARE THIS TEAM <span aria-hidden="true">→</span></button>
                 </aside>
               )}
             </div>

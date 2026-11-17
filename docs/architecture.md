@@ -105,3 +105,33 @@ Morning scheduled fixtures → snapshot.py (freeze selected odds, shadow and Elo
 ```
 
 The HTML/JS site is a **static GitHub Pages build** and does not query a private real-time backend or silently publish new picks when a user clicks. Historical tournament simulations and the provisional 2027 power-watchlist remain distinct from sourced scheduled games and actual archived pretipoff predictions. See [Game Center](game-center.md), [forward scoring](forward-performance.md), and [state-space equations](state-space.md).
+
+
+## v0.9 source trust, model experiments and direct game audit
+
+```text
+Source NCAA scores + ESPN season membership → live.py 2027 current ratings / games
+  ├── retrain.py         previous-date logistic; requires true frozen forward evidence
+  ├── opponents.py       prior-opponent-Elo adjusted margin surprise, research only
+  └── state_space.py     fixed + adaptive Gaussian skill/innovation/drift watch, research only
+
+ESPN scheduled future fixtures + current as-of reports → gamecenter.py
+  └── upcoming.json → GameCenter.tsx  ← team link from LiveSeason
+                                     ├── recent source game evidence / team trend
+                                     ├── common opponent/season strength
+                                     └── GameAudit.tsx (immutable snapshot probability history)
+
+GitHub Actions 09:07/16:07 ET → snapshot.py
+  → freeze selected & shadow odds at least 15min before scheduled tipoff
+  → ESPN independent completed FINAL status + NCAA identical result & Eastern date
+  → immutable snapshots/settlements → performance.py first-pick unique-game scores
+                                     → audit.py integrity check
+                                     → index.json → ForwardScorecard / ModelLab
+
+GitHub Actions 10:17/17:17 ET → Pages rebuild → current/archive-health.json
+GitHub Actions 11:35/18:35 ET → monitor-archive.yml stale/absent/no-pick failure
+```
+
+The website is not a live scoring daemon. It reads public, versioned, source-backed artifacts. No outside user-specific infrastructure or manually entered previous game is required, but GitHub Actions may be late or the ESPN/NCAA-derived feeds may temporarily disagree. The model lab explicitly separates prospective first-pick Brier from retrospective date-frozen research cohorts.
+
+[Source and integrity methodology](v09-model-validation.md) · [Recovery runbook](v09-forecast-operations.md).

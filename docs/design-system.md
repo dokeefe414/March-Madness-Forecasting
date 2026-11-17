@@ -72,3 +72,14 @@ The default homepage is now **Find a Game**, rather than a nine-tab research-onl
 CSS components are in `web/app/globals.css`: `.gc-*` for game/fixture/related evidence, `.fp-*` for forward accuracy/real misses and calibration, and `.selection-lens` for tournament hypothetical comparisons. The navy-to-green editorial color scheme uses cool-blue against mint for two-sided odds; research comparison panels have a distinct lower-contrast treatment. At <=840px columns stack, with further mobile adjustments at <=600/440px. Keyboard-operable fixture buttons and input labels retain accessible text; reduced-motion preference disables transitions.
 
 When a listed source start time has passed, the game disappears from the default **upcoming** list; the optional user-controlled toggle displays the frozen captured probability with a visible non-live warning. The browser tests use mock source data only in the test runtime; do not add demo fixtures to production JSON.
+
+
+## v0.9 easy access and real-game reports
+
+The navigation adds a directly accessible **Model Lab** beside **Find a Game** and **Accuracy & Picks**. Real game details have a `?view=games&game=<ESPN ID>` shareable link. The existing 2027 team pulse has a one-tap `View upcoming games` action that passes the verified team ID as `?team=<id>`. A tap on a match scrolls to its report on mobile; long team/fixture lists remain filterable without extensive scrolling. `?view=models` opens the lab directly.
+
+The redesigned individual game panel provides team Elo history curves, source-matched opponent-quality explanation, research-only model alternatives, and a separately labelled evidence/audit card. A real archived game can show **an original before-tipoff probability trajectory**, captured times, and later source-confirmed final score with correctness/Brier. No archival data = explicit unavailability, never a fake percentage.
+
+Visual classes `.ml-*` cover the model showdown with paired-score Brier bars and cautious confidence bounds; `.ga-*` covers actual frozen game captures and postgame receipts; `.gc-recent-settled` brings finished results into the main view; `.gc-archive-health` shows the status of the independent archiver. CSS includes responsive layouts at 1130/930/830/700/620px and reduced-motion preferences. The new Playwright test fixtures are generated **only inside browser tests**, not committed as real sports data.
+
+[Full model comparison trust contract](v09-model-validation.md).

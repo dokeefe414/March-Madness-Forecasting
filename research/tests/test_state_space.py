@@ -19,6 +19,10 @@ class StateSpaceTests(unittest.TestCase):
   self.assertEqual(r["gameDays"],2)
   self.assertTrue(0<r["brier"]<1)
   self.assertIn("A",r["strengths"])
+  self.assertIn("A",r["adaptiveStrengths"])
+  self.assertIsNotNone(r["adaptiveBrier"])
+  self.assertIsNotNone(r["recentSevenDatesBrier"]["adaptiveStateSpace"])
+  self.assertEqual(r["driftWatchTeams"],sum(v["driftWatch"] for v in r["adaptiveStrengths"].values()))
   self.assertGreater(r["strengths"]["A"]["standardDeviation"],0)
   self.assertLess(r["strengths"]["A"]["standardDeviation"],150)
  def test_today_scores_do_not_change_prior_day_model(self):
@@ -30,3 +34,16 @@ class StateSpaceTests(unittest.TestCase):
  def test_count_and_provenance_fail_closed(self):
   with self.assertRaisesRegex(ValueError,"count"):
    build_state_space(GAMES,{**rating(GAMES),"regularSeasonGames":4},NOW)
+
+class SustainedDriftTests(unittest.TestCase):
+ def test_repeated_surprise_watches_without_claiming_certainty(self):
+  from datetime import date,timedelta
+  first=date(2026,11,1)
+  games=[{"id":str(i),"date":(first+timedelta(days=i)).isoformat(),
+          "home":"A","away":"B"+str(i),"homeScore":112,"awayScore":55}
+         for i in range(10)]
+  report=build_state_space(games,{**rating(games),"regularSeasonGames":len(games)},NOW)
+  self.assertGreater(report["adaptiveStrengths"]["A"]["driftWatchEpisodes"],0)
+  self.assertEqual(report["adaptiveStrengths"]["A"]["games"],10)
+  self.assertLess(report["adaptiveBrier"],1)
+  self.assertIn("processVariancePerGame",report["assumptions"])

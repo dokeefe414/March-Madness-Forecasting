@@ -27,6 +27,10 @@ OBSERVATION_VARIANCE = 250.0**2
 PROCESS_VARIANCE = 18.0**2
 MARGIN_TO_ELO = 18.0
 HOME_ADVANTAGE = 65.0
+DRIFT_INNOVATION_THRESHOLD = .8
+DRIFT_WINDOW = 3
+DRIFT_REQUIRED = 2
+ADAPTIVE_PROCESS_NOISE_MULTIPLIER = 2.5
 
 @dataclass
 class Latent:
@@ -35,14 +39,19 @@ class Latent:
     changes:list[float]=field(default_factory=list)
     shock_count:int=0
     history:list[float]=field(default_factory=lambda:[1500.])
+    innovation_history:list[float]=field(default_factory=list)
+    drift_watch:bool=False
+    drift_watch_count:int=0
 
-def _posterior(h:Latent,a:Latent,margin:int) -> None:
+def _posterior(h:Latent,a:Latent,margin:int,adaptive:bool=False) -> float:
     # z estimates *neutral* skill gap. The fixed 65-point home court is
     # removed from the observation before measuring forecast innovation.
     z=max(-400.,min(400.,MARGIN_TO_ELO*margin))-HOME_ADVANTAGE
     residual=z-(h.mean-a.mean)
-    hvar=h.variance+PROCESS_VARIANCE
-    avar=a.variance+PROCESS_VARIANCE
+    # The process-noise multiplier is selected from PREVIOUS games only.
+    # A single surprising result never triggers an immediate broad retune.
+    hvar=h.variance+PROCESS_VARIANCE*(ADAPTIVE_PROCESS_NOISE_MULTIPLIER if adaptive and h.drift_watch else 1.)
+    avar=a.variance+PROCESS_VARIANCE*(ADAPTIVE_PROCESS_NOISE_MULTIPLIER if adaptive and a.drift_watch else 1.)
     s=hvar+avar+OBSERVATION_VARIANCE
     if abs(residual)>2.5*math.sqrt(s):
         h.shock_count+=1
@@ -57,6 +66,18 @@ def _posterior(h:Latent,a:Latent,margin:int) -> None:
     a.changes.append(-step_a)
     h.history.append(h.mean)
     a.history.append(a.mean)
+    innovation=residual/math.sqrt(s)
+    for team,value in ((h,innovation),(a,-innovation)):
+        team.innovation_history.append(value)
+        if adaptive:
+            recent=team.innovation_history[-DRIFT_WINDOW:]
+            pos=sum(x>=DRIFT_INNOVATION_THRESHOLD for x in recent)
+            neg=sum(x<=-DRIFT_INNOVATION_THRESHOLD for x in recent)
+            was=team.drift_watch
+            team.drift_watch=(pos>=DRIFT_REQUIRED or neg>=DRIFT_REQUIRED)
+            if team.drift_watch and not was:
+                team.drift_watch_count+=1
+    return innovation
 
 def build_state_space(games:list[dict],ratings:dict,now:datetime|None=None) -> dict:
     now=now or datetime.now(timezone.utc)
@@ -76,11 +97,12 @@ def build_state_space(games:list[dict],ratings:dict,now:datetime|None=None) -> d
             raise ValueError("Cannot learn from a game later than the source snapshot")
         grouped[day].append(game)
     states:dict[str,Latent]={}
+    adaptive_states:dict[str,Latent]={}
     elo:dict[str,TeamState]={}
-    diffs=[]
+    evaluated=[]
     total=0
-    state_brier=elo_brier=0.
-    state_right=elo_right=0.
+    state_brier=elo_brier=adaptive_brier=0.
+    state_right=elo_right=adaptive_right=0.
     for day in sorted(grouped):
         batch=sorted(grouped[day],key=lambda g:g["id"])
         # Every prediction uses frozen pre-day means and variances.
@@ -88,14 +110,21 @@ def build_state_space(games:list[dict],ratings:dict,now:datetime|None=None) -> d
             home,away=g["home"],g["away"]
             for name in (home,away):
                 states.setdefault(name,Latent())
+                adaptive_states.setdefault(name,Latent())
                 elo.setdefault(name,TeamState(team_id=len(elo)+1,name=name))
             p=matchup_probability(states[home].mean,states[away].mean,HOME_ADVANTAGE)
             ep=matchup_probability(elo[home].rating,elo[away].rating,HOME_ADVANTAGE)
+            ap=matchup_probability(adaptive_states[home].mean,adaptive_states[away].mean,
+                                   HOME_ADVANTAGE)
             y=int(g["homeScore"]>g["awayScore"])
             state_brier+=(p-y)**2
             elo_brier+=(ep-y)**2
+            adaptive_brier+=(ap-y)**2
+            evaluated.append({"date":day,"elo":(ep-y)**2,"fixed":(p-y)**2,
+                              "adaptive":(ap-y)**2})
             state_right+=int((p>.5 and y==1) or (p<.5 and y==0)) if p!=.5 else .5
             elo_right+=int((ep>.5 and y==1) or (ep<.5 and y==0)) if ep!=.5 else .5
+            adaptive_right+=int((ap>.5 and y==1) or (ap<.5 and y==0)) if ap!=.5 else .5
             total+=1
         # Never use within-day results to score any other same-day game.
         for g in batch:
@@ -106,6 +135,8 @@ def build_state_space(games:list[dict],ratings:dict,now:datetime|None=None) -> d
             elo[h].rating+=change
             elo[a].rating-=change
             _posterior(states[h],states[a],g["homeScore"]-g["awayScore"])
+            _posterior(adaptive_states[h],adaptive_states[a],
+                       g["homeScore"]-g["awayScore"],adaptive=True)
     output={}
     for name,state in sorted(states.items()):
         increments=state.changes[-5:]
@@ -116,6 +147,25 @@ def build_state_space(games:list[dict],ratings:dict,now:datetime|None=None) -> d
                       "shockFlags":state.shock_count,
                       "history":[round(v,2) for v in state.history[-12:]],
                       "games":len(state.changes)}
+    adaptive_output={}
+    for name,state in sorted(adaptive_states.items()):
+        adaptive_output[name]={
+            "mean":round(state.mean,3),
+            "standardDeviation":round(math.sqrt(state.variance),3),
+            "trend":round(sum(state.changes[-5:])/len(state.changes[-5:]),3) if state.changes else 0.,
+            "driftWatch":state.drift_watch,
+            "driftWatchEpisodes":state.drift_watch_count,
+            "recentStandardizedInnovations":[round(v,3) for v in state.innovation_history[-6:]],
+            "shockFlags":state.shock_count,
+            "games":len(state.changes),
+            "history":[round(v,2) for v in state.history[-12:]],
+            "adaptation":("2.5× variance allowed for next update after two same-sign significant innovations"
+                          if state.drift_watch else "baseline process noise"),
+        }
+    days=sorted(set(x["date"] for x in evaluated))
+    recent=[x for x in evaluated if x["date"] in days[-7:]]
+    def brier(rows:list[dict],label:str)->float|None:
+        return round(sum(x[label] for x in rows)/len(rows),6) if rows else None
     return {"schemaVersion":1,"mode":"research-only","type":"causal-gaussian-latent-skill",
             "season":2027,"ratingRetrievedAtUtc":ratings.get("retrievedAtUtc"),
             "asOfDateExclusive":cutoff,"trainedThroughDate":max(grouped) if grouped else None,
@@ -124,14 +174,27 @@ def build_state_space(games:list[dict],ratings:dict,now:datetime|None=None) -> d
             "eloSameDayBrier":round(elo_brier/total,6) if total else None,
             "accuracy":round(state_right/total,6) if total else None,
             "eloSameDayAccuracy":round(elo_right/total,6) if total else None,
+            "adaptiveBrier":round(adaptive_brier/total,6) if total else None,
+            "adaptiveAccuracy":round(adaptive_right/total,6) if total else None,
+            "recentSevenDatesBrier":{"elo":brier(recent,"elo"),
+                                    "fixedStateSpace":brier(recent,"fixed"),
+                                    "adaptiveStateSpace":brier(recent,"adaptive"),
+                                    "games":len(recent)},
+            "driftWatchTeams":sum(v["driftWatch"] for v in adaptive_output.values()),
             "strengths":output,
+            "adaptiveStrengths":adaptive_output,
             "assumptions":{"initialVariance":INITIAL_VARIANCE,"observationVariance":OBSERVATION_VARIANCE,
                            "processVariancePerGame":PROCESS_VARIANCE,"eloPerMarginPoint":MARGIN_TO_ELO,
-                           "homeCourtElo":HOME_ADVANTAGE},
+                           "homeCourtElo":HOME_ADVANTAGE,
+                           "driftInnovationThreshold":DRIFT_INNOVATION_THRESHOLD,
+                           "driftWindowGames":DRIFT_WINDOW,"minimumSameSignInnovations":DRIFT_REQUIRED,
+                           "adaptiveProcessVarianceMultiplier":ADAPTIVE_PROCESS_NOISE_MULTIPLIER},
             "warnings":["Causal retrospective game-date evaluation, not real pretipoff publication.",
                        "Gaussian score-margin observation and variance are fixed heuristic assumptions.",
                        "Elo and state-space baseline share same frozen-date source outcomes; exact tipoff order is unavailable.",
-                       "Experimental probabilities are not promoted to the operational forecast without additional verification."]}
+                       "Experimental probabilities are not promoted to the operational forecast without additional verification.",
+                       "Drift watch is a heuristic alert from sustained innovations, NOT independently confirmed roster, injury or regime change.",
+                       "Process variance adapts only AFTER earlier-game innovations; no single missed prediction forces a recalibration."]}
 
 def main() -> None:
     parser=argparse.ArgumentParser(description=__doc__)

@@ -7,7 +7,7 @@ import OnlineLearning from "./OnlineLearning";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const pct = (n: number) => (n * 100).toFixed(1) + "%";
 
-export default function LiveSeason() {
+export default function LiveSeason({onOpenTeam}:{onOpenTeam?:(teamId:string)=>void}) {
   const [data, setData] = useState<RatingsDataset | null>(null);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -74,6 +74,9 @@ export default function LiveSeason() {
             <div><span>RECENT VOLATILITY</span><strong>{selected.volatility?.toFixed(1)??"—"}</strong></div></div>
           <div className="live-efficiency"><span className="feature-kicker">POSSESSION-BASED PROFILE</span><div className="efficiency-grid"><div><small>ADJUSTED OFF / 100</small><strong>{selected.adjOff100?.toFixed(1)??"—"}</strong></div><div><small>ADJUSTED DEF / 100</small><strong>{selected.adjDef100?.toFixed(1)??"—"}</strong></div><div><small>ADJ NET / 100</small><strong>{selected.adjNet100?.toFixed(1)??"—"}</strong></div><div><small>PACE (POSSESSIONS)</small><strong>{selected.pacePossessions?.toFixed(1)??"—"}</strong></div></div>
              <small>{selected.possessionGames?selected.possessionGames+" verified box-score team-games · ridge-adjusted opponent strength":"No verified possession box score for this program yet"}</small></div>
+          {onOpenTeam&&<button type="button" className="live-open-games" onClick={()=>onOpenTeam(selected.teamId)}>
+            VIEW {selected.name.toUpperCase()} UPCOMING GAMES AND REAL PREDICTIONS ↗
+          </button>}
           <TeamTrend team={selected.name} ratings={selected.history}/>
           <div className="spotlight-separator"/>
           <label className="feature-kicker" htmlFor="live-opponent">NEUTRAL-COURT MATCHUP VS</label>

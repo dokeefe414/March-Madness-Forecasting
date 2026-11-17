@@ -4,14 +4,15 @@
 
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml)
-![Version](https://img.shields.io/badge/release-v0.8%20Game%20Intelligence-a6ffce)
+[![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml)
+![Version](https://img.shields.io/badge/release-v0.9%20Predictive%20Accuracy-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
 ### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting/)
 
-[Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
@@ -19,7 +20,29 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ---
 
-## What's new in v0.6?
+## v0.9 — Prove every real game forecast, then adapt responsibly
+
+The entry screen is still **Find a Game**. Choose a real source-matched future ESPN matchup, search by **school** or select a team directly from **2027 Pulse**, and see:
+
+- The **actual home/away win percentage** and which model supplied the headline forecast.
+- Why earlier opponents matter: a team's own sequence of sourced results, pregame Elo, recent form, home-court assumption, common opponents, head-to-head history and a **new opponent-strength-adjusted score-margin candidate**.
+- Small season Elo curves for both teams, explicit research-only fixed/adaptive Gaussian probabilities, and whether either latent team is showing **repeated innovation drift-watch** evidence.
+- A **shareable `?view=games&game=<ESPN event ID>` deep link** and quick jumps to the independent model lab and honest accuracy history.
+- After the game finishes and independent source verification passes, the **original archived percentage next to its real final score**, missed/correct status, Brier score and a chart of how its actual earlier public captures evolved.
+
+**The scorecard cannot manufacture accuracy.** `Accuracy & Picks` uses only the earliest legitimate Git-archived before-tipoff forecast for each unique ESPN event and subsequent finalized source result. There is no success rate until such games have settled; `—` is intentional, not 0% or a perfect record. Model Lab shows real paired same-game Brier/accuracy and distinct retrospective date-frozen experiments without mixing cohorts. Research models are not automatically promoted because an isolated high-confidence favorite lost.
+
+**A missed forecast becomes future information, not a revision of history.** On subsequent scheduled builds, previous-date games update Elo, logistic coefficients and independent opponent-aware/adaptive state-space research. The current Eastern game date remains embargoed. The online logistic model needs *both* chronological out-of-time evaluation **and** at least 40 truly archived first-pick paired games with a prospective Brier advantage before taking over new eligible regular-season games. Opponent-aware and adaptive Kalman variants stay research-only until separately validated; no guaranteed performance gain is claimed.
+
+**Reliability upgrade:** a result is settled only if the NCAA-derived score agrees with an *independently completed ESPN `STATUS_FINAL`* for the very same event ID, scheduled Eastern date, and exact home/away scores. A score mismatch, postponement, unfinished event or missing source stays unscored. The separate archive monitor flags a missing/stale/no-pick ledger and the website displays its state instead of implying success.
+
+**Already configured, Eastern local time (EST/EDT):** 1:00 a.m. ratings/model/site refresh; 5:17 a.m. in-season catch-up; 9:07 a.m. and 4:07 p.m. in-season genuine pregame archiving; 10:17 a.m. and 5:17 p.m. website republishing; 11:35 a.m. and 6:35 p.m. archive-health checks. GitHub and sports-source schedules are best effort, not streaming real-time service.
+
+**Quick access:** [Find a real game](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Real winner accuracy](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Compare models](https://dokeefe414.github.io/March-Madness-Forecasting/?view=models) · [Check public archive health](https://dokeefe414.github.io/March-Madness-Forecasting/current/archive-health.json) · [Read the science](docs/v09-model-validation.md) · [Daily runbook and recovery](docs/v09-forecast-operations.md).
+
+---
+
+## Original v0.6 research foundations (preserved)
 
 | Area | New capability | What it does *not* claim |
 | --- | --- | --- |
@@ -169,6 +192,8 @@ research/forecast/
   dynamics.py             causal EWMA, volatility and regime change signal
   retrain.py              in-season logistic retraining and genuine forward promotion gates
   gamecenter.py           source-verified ESPN schedule, matchups, prior-game reasons
+  opponents.py            causal surprise margins relative to prior-date opponent Elo
+  archive_health.py       scheduled archive freshness and missing-data monitor
   performance.py          one-first-pick-per-game accuracy, confidence and miss reports
   state_space.py          causal Gaussian skill, uncertainty and shock experiments
   benchmark.py            eight-method prior-year walk-forward NCAA evaluation
@@ -188,6 +213,8 @@ web/
     OnlineLearning.tsx    live in-season model scorecard, gate and source report
     GameCenter.tsx        default game-first browse/search and why-the-pick report
     ForwardScorecard.tsx  unique-game forward accuracy, model results and misses
+    ModelLab.tsx          forward paired Brier and strictly dated research comparisons
+    GameAudit.tsx         individual-game public probability history and verified final receipt
     SelectionLab.tsx      transparent 2027 power-only watchlist
     ForecastTracker.tsx   public pretipoff audit trail, Brier/accuracy dashboard
     TeamTrend.tsx         keyboard-interactive game-by-game Elo trend SVG

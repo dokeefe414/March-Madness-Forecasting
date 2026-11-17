@@ -63,3 +63,12 @@ The website refreshes on GitHub Actions at **1:00 a.m. America/New_York daily** 
 - `web/e2e/platform.spec.ts`: browser matchup navigation with a hermetic *test-only* fixture, not published fake games; responsive layout and keyboard/accessibility smoke checks.
 - The archiver reuses `forecast.snapshot.forecast_scheduled` as the probability source of truth. Do not duplicate forecast math in the browser for actual scheduled predictions.
 - Next-year migration requires an intentional 2028 data-source, conference, cutoff, online-model and schedule-validation update. No evergreen season rollover is claimed.
+
+
+## v0.9 direct game sharing, team jump and real postgame explanation
+
+The main navigation now exposes **Find a Game**, **Accuracy & Picks**, and **Model Lab** directly, with shareable `?view=games&game=<ESPN event ID>` and `?view=models` links. A source-rated program in **2027 Pulse** has a one-tap **View upcoming games** action, which opens a team-filtered Game Center through `?team=<verified ncaa teamId>`. Selecting a fixture on mobile scrolls directly to its report, avoiding excessive swiping through the game list.
+
+The team-strength panels now render compact per-game Elo curves, last-game changes and the exact prior five outcomes. The displayed opponent-aware margin-adjustment strength signal, fixed versus adaptive state-space odds, and repeated normalized-innovation drift-watch flags are **research comparisons**. Only the specifically labeled operational model determines the main winning percentage. See [model math](v09-model-validation.md).
+
+If the Git-committed pretipoff ledger contains one or more genuine snapshots of that exact ESPN event, the individual game report renders an accessible probability-over-time plot and exact captured times. After a later independently confirmed final, it displays the original frozen percentage, real final score, winner correctness and Brier. Only the earliest settled first-pick contributes to site-wide unique-game accuracy; later snapshots may be displayed for context but cannot inflate the score. Recent verified games also appear in a compact finished-game browser. Without the archive, these panels disclose **no captured history** instead of inventing a past forecast. Source warnings and stale captures are prominently labeled.

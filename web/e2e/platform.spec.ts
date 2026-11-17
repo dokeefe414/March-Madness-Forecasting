@@ -7,7 +7,7 @@ async function section(page: import("@playwright/test").Page, label:string) {
   await button.click();
 }
 
-test("v0.8 game-first workspaces navigate without synthetic predictions",async ({page},testInfo)=>{
+test("v0.9 games, real accuracy, models and historical workspaces navigate",async ({page},testInfo)=>{
   await page.goto("/");
   await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
   await expect(page.getByRole("heading",{name:/Game intelligence/i})).toBeVisible();
@@ -19,6 +19,9 @@ test("v0.8 game-first workspaces navigate without synthetic predictions",async (
   await section(page,"Accuracy & Picks");
   await expect(page.getByRole("heading",{name:/Prediction ledger/i})).toBeVisible();
   await expect(page.getByText(/NO HINDSIGHT/i)).toBeVisible();
+  await section(page,"Model Lab");
+  await expect(page.locator("#model-lab")).toBeVisible();
+  await expect(page.getByRole("heading",{name:/WHICH MODEL EARNS THE PICK/i})).toBeVisible();
   await section(page,"Research");
   await expect(page.getByRole("heading",{name:/Research laboratory/i})).toBeVisible();
   await section(page,"Historical");
@@ -37,7 +40,7 @@ test("v0.8 game-first workspaces navigate without synthetic predictions",async (
 
 test("at supported breakpoints, no viewport-wide horizontal overflow",async ({page},testInfo)=>{
   await page.goto("/");
-  for (const name of ["Find a Game","2027 Pulse","Accuracy & Picks","Field Watch","Research","Historical","Bracket"]) {
+  for (const name of ["Find a Game","2027 Pulse","Accuracy & Picks","Model Lab","Field Watch","Research","Historical","Bracket"]) {
     await section(page,name);
     await page.waitForTimeout(120);
     const size=await page.evaluate(()=>({
@@ -99,4 +102,70 @@ test("game finder supports sourced fixture search, explanations and opponent evi
   await expect(page.getByLabel("Hypothetical team A")).toBeVisible();
   await expect(page.getByLabel("Hypothetical team B")).toBeVisible();
   await page.screenshot({path:"test-results/"+testInfo.project.name+"-game-intelligence.png",fullPage:true});
+});
+
+test("v0.9 model lab has deep link, source-honest unavailable forward evidence and one-click game exit",async ({page})=>{
+  await page.goto("/?view=models");
+  await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+  await expect(page.locator("#model-lab")).toBeVisible();
+  await expect(page.getByRole("heading",{name:/WHICH MODEL EARNS THE PICK/i})).toBeVisible();
+  await expect(page.getByRole("button",{name:/Opponent-aware research/i})).toBeVisible();
+  await page.getByRole("button",{name:/Opponent-aware research/i}).click();
+  await expect(page.locator(".ml-focus")).toContainText("PREVIOUS-date Elo");
+  await page.getByRole("button",{name:/FIND A REAL GAME/i}).click();
+  await expect(page.getByRole("heading",{name:/GAME INTELLIGENCE/i})).toBeVisible();
+});
+
+test("v0.9 real archived event snapshots render before-tipoff timeline and verifiable missed-game receipt",async ({page})=>{
+  const tipoff=new Date(Date.now()+2*24*60*60*1000).toISOString();
+  const fixtureData={schemaVersion:1,
+    generatedAtUtc:new Date(Date.now()-60*60*1000).toISOString(),
+    ratingRetrievedAtUtc:new Date(Date.now()-90*60*1000).toISOString(),
+    coverage:{futureScheduled:1,eligibleForecasts:1,unmatchedOrAmbiguous:0},
+    games:[{
+      eventId:"upcoming-test",scheduledStartUtc:tipoff,scheduledEasternDate:tipoff.slice(0,10),
+      neutralSite:false,status:"ready",home:"Example Home",away:"Example Away",
+      homeTeamId:"h",awayTeamId:"a",homeWinProbability:.7,baselineHomeWinProbability:.68,
+      model:"as-of regular-season Elo",homeProfile:{name:"Example Home",teamId:"h",
+        rating:1550,trend:2,wins:7,losses:3,recentGames:[],ratingHistory:[1500,1550]},
+      awayProfile:{name:"Example Away",teamId:"a",rating:1510,trend:1,wins:6,losses:4,
+        recentGames:[],ratingHistory:[1500,1510]},factors:[],headToHead:[],commonOpponents:[],
+    }]
+  };
+  const first=new Date(Date.now()-36*60*60*1000).toISOString();
+  const second=new Date(Date.now()-12*60*60*1000).toISOString();
+  const index={uniqueGames:{settledUniqueGames:1,forecastedUniqueGames:2,
+      score:{accuracy:0,games:1,brier:.64}},
+    snapshots:[
+      {id:"snap-earliest",generatedAtUtc:first,count:1,
+        predictions:[{eventId:"upcoming-test",homeWinProbability:.60,model:"Elo"}]},
+      {id:"snap-next",generatedAtUtc:second,count:1,
+        predictions:[{eventId:"upcoming-test",homeWinProbability:.70,model:"Elo"}]},
+      {id:"snap-old",generatedAtUtc:"2026-11-06T11:00:00Z",count:1,
+        predictions:[{eventId:"finished-test",homeWinProbability:.8,model:"Elo"}]},
+    ],
+    settlements:[{eventId:"finished-test",predictionKey:"snap-old:finished-test",
+      actualResultDate:"2026-11-07",home:"Example Home",away:"Example Away",
+      homeScore:60,awayScore:72,predictedHome:.8,observedHome:0,brier:.64,
+      winnerCorrect:0,forecastAtUtc:"2026-11-06T11:00:00Z",
+      scheduledStartUtc:"2026-11-07T23:00:00Z",espnFinalVerified:true}]
+  };
+  await page.route("**/current/upcoming.json",r=>r.fulfill({contentType:"application/json",body:JSON.stringify(fixtureData)}));
+  await page.route("**/current/2027.json",r=>r.fulfill({contentType:"application/json",body:JSON.stringify({
+    mode:"current",season:2027,teams:[{name:"Example Home",teamId:"h",rating:1550,wins:7,losses:3},
+      {name:"Example Away",teamId:"a",rating:1510,wins:6,losses:4}]
+  })}));
+  await page.route("**/forecasts/index.json",r=>r.fulfill({contentType:"application/json",body:JSON.stringify(index)}));
+  await page.route("**/current/archive-health.json",r=>r.fulfill({contentType:"application/json",body:JSON.stringify({
+    status:"current",message:"Source-verified archive available",lastArchiveUtc:second})}));
+  await page.goto("/?game=upcoming-test");
+  await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+  await expect(page.getByRole("heading",{name:/GAME INTELLIGENCE/i})).toBeVisible();
+  await expect(page.locator(".ga-history")).toContainText("2 originally published captures");
+  await expect(page.locator(".ga-probability")).toContainText("60.0%");
+  await expect(page.locator(".ga-probability")).toContainText("70.0%");
+  await page.locator(".gc-recent-settled button").first().click();
+  await expect(page.locator(".ga-postgame")).toContainText("MISSED");
+  await expect(page.locator(".ga-postgame")).toContainText("FINAL");
+  await expect(page).toHaveURL(/game=finished-test/);
 });
