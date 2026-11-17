@@ -55,3 +55,13 @@ Three explicit states are exposed for each rated program:
 **Caveat:** The source's season-end group membership indicates subdivision affiliation; it is NOT the NCAA’s own official postseason eligibility determination for probation, transitions, disciplinary sanctions or other restrictions. The 2027 watchlist is still hypothetical until Selection Sunday.
 
 Offline source-specific tests: `research/tests/test_division.py` (confirmed D-I, explicitly other division, unmatched, duplicate source conflict, missing subdivision reference, and refusing unsourced field scenarios).
+
+## Dated NCAA-to-ESPN school aliases (2027 correction)
+
+The first deployed v0.6 production report revealed a provider-identity mismatch: **365 scored schools linked to the NCAA team/conference directory, but zero matched the ESPN-keyed subdivision table by their display names**. SportsDataverse's reference dataset includes a genuine [`mbb_team_aliases.csv` source](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_groups) precisely for such identity-space differences. Its [schema documentation](https://py.sportsdataverse.org/docs/mbb/reference/loaders/team) describes rows with `source="ncaa"`, a source-native NCAA school-name `value`, the validated ESPN `team_id`, the `team_id_source` and the season-specific `valid_from` / `valid_to` bounds.
+
+The revised `forecast.division.parse_ncaa_aliases` **only** accepts provider-authored NCAA school **name** aliases keyed to an ESPN team, scoped to a 2027-valid season window. It rejects ambiguous aliases, provider IDs from other leagues, name abbreviations, and expired/future-only entries. The mapping uses the published ESPN `team_id` to reach the separate, independently sourced **2027 Division I subdivision** membership; it never assumes that NCAA numerical IDs and ESPN numerical IDs are interchangeable and never infers a school from mascot similarity. Exact matching remains the first choice; source-provided aliases add an evidence-backed second route.
+
+A missing/invalid alias file cannot erase verified 2027 scores or possession data: it causes only source-alias coverage to be unavailable, and the original exact-name join remains conservative. The watchlist still needs 32 source-linked D-I conferences and 76 candidates to display even a hypothetical power field.
+
+This can materially improve verified D-I coverage **after a successful new deployment**. No numerical improvement is claimed until the new production logs and `divisionCoverage` actually show it.

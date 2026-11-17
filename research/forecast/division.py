@@ -21,7 +21,55 @@ TEAM_MEMBERSHIP_URL = (
 )
 
 
-def parse_division_members(groups_text: str, members_text: str) -> dict[str, dict]:
+ALIASES_URL = (
+    "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/"
+    "mbb_groups/mbb_team_aliases.csv"
+)
+
+
+def parse_ncaa_aliases(csv_text: str, season: int = 2027) -> dict[str, str]:
+    """Build exact NCAA-name → ESPN team-id links from source-provided aliases.
+
+    Crucially, alias id values are explicitly sourced from the vendor's
+    ESPN-keyed lineage table, not inferred from matching team names to ESPN
+    mascot names. Only named NCAA aliases valid for the requested season
+    are accepted, and ambiguous names never resolve.
+    """
+    reader = csv.DictReader(io.StringIO(csv_text))
+    required = {"league", "team_id", "team_id_source", "source",
+                "name_kind", "value", "valid_from", "valid_to"}
+    if not required.issubset(reader.fieldnames or []):
+        raise ValueError(f"team aliases missing fields: {sorted(required-set(reader.fieldnames or []))}")
+    answers: dict[str, str] = {}
+    ambiguous: set[str] = set()
+    for row in reader:
+        if (str(row["league"]).strip() != "mbb" or
+            str(row["source"]).strip().casefold() != "ncaa" or
+            str(row["team_id_source"]).strip().casefold() != "espn" or
+            str(row["name_kind"]).strip().casefold() != "name"):
+            continue
+        label = canonical(row["value"])
+        espn_id = str(row["team_id"] or "").strip()
+        if not label or not espn_id:
+            continue
+        try:
+            first = int(row["valid_from"]) if str(row["valid_from"] or "").strip() else None
+            last = int(row["valid_to"]) if str(row["valid_to"] or "").strip() else None
+        except ValueError:
+            continue
+        if (first is not None and first > season) or (last is not None and last < season):
+            continue
+        if label in answers and answers[label] != espn_id:
+            ambiguous.add(label)
+        else:
+            answers[label] = espn_id
+    for label in ambiguous:
+        answers.pop(label, None)
+    return answers
+
+
+def parse_division_members(groups_text: str, members_text: str,
+                           alias_csv: str | None = None) -> dict[str, dict]:
     """Return unambiguous 2027 team-name evidence of source D-I membership.
 
     The SportsDataverse reference uses a 2027 ENDING year and league='mbb'.
@@ -71,6 +119,31 @@ def parse_division_members(groups_text: str, members_text: str) -> dict[str, dic
         candidates.pop(key, None)
     if not candidates:
         raise ValueError("group source did not provide 2027 membership rows")
+    if alias_csv is not None:
+        # ESPN season-2027 group names and NCAA season-2027 schedule names
+        # are not necessarily spelled alike. The provider's own NCAA↔ESPN
+        # alias rows create *verified* additional exact NCAA-name keys.
+        indexed: dict[str, dict] = {}
+        duplicate_ids = set()
+        for entry in candidates.values():
+            espn_id = entry["groupTeamId"]
+            if espn_id in indexed and indexed[espn_id] != entry:
+                duplicate_ids.add(espn_id)
+            indexed[espn_id] = entry
+        for espn_id in duplicate_ids:
+            indexed.pop(espn_id, None)
+        for ncaa_label, espn_id in parse_ncaa_aliases(alias_csv).items():
+            member = indexed.get(espn_id)
+            if not member:
+                continue
+            joined = {**member, "joinedBy": "source NCAA-name alias to ESPN member ID"}
+            if ncaa_label in candidates and candidates[ncaa_label]["groupTeamId"] != espn_id:
+                ambiguous.add(ncaa_label)
+                continue
+            if ncaa_label not in candidates:
+                candidates[ncaa_label] = joined
+        for label in ambiguous:
+            candidates.pop(label, None)
     return candidates
 
 

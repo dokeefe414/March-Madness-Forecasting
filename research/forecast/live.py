@@ -24,7 +24,7 @@ from .core import EloEngine, Game
 from .reference import TEAM_URL, parse_directory, annotate_teams
 from .efficiency import BOX_URL, attach_efficiency, NEEDED as BOX_COLUMNS
 from .selection import build_watchlist
-from .division import GROUP_SEASONS_URL, TEAM_MEMBERSHIP_URL, parse_division_members, annotate_division
+from .division import GROUP_SEASONS_URL, TEAM_MEMBERSHIP_URL, ALIASES_URL, parse_division_members, parse_ncaa_aliases, annotate_division
 from .dynamics import regime_features
 
 SOURCE_URL = (
@@ -110,7 +110,8 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
                   url: str = SOURCE_URL, directory_csv: str | None = None,
                   box_csv: str | None = None,
                   group_seasons_csv: str | None = None,
-                  membership_csv: str | None = None) -> dict:
+                  membership_csv: str | None = None,
+                  alias_csv: str | None = None) -> dict:
     """Fit transparent, reset-at-season-start Elo; derive descriptive margins."""
     if not games:
         raise ValueError("no completed 2026–27 games; refusing to publish false live rankings")
@@ -191,7 +192,7 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
     }
     if group_seasons_csv is not None and membership_csv is not None:
         membership_report = annotate_division(
-            rows, parse_division_members(group_seasons_csv, membership_csv))
+            rows, parse_division_members(group_seasons_csv, membership_csv, alias_csv))
     watchlist = build_watchlist(rows, games[-1]["date"])
     return {
         "mode": "current", "season": SEASON, "throughDay": engine.last_day,
@@ -243,7 +244,8 @@ def fetch_csv(url: str = SOURCE_URL) -> str:
 
 
 def validate_supplements(directory_csv: str | None, box_csv: str | None,
-                         group_seasons_csv: str | None, membership_csv: str | None
+                         group_seasons_csv: str | None, membership_csv: str | None,
+                         alias_csv: str | None = None
                          ) -> tuple[dict, list[str]]:
     """Validate independently so one optional-source failure cannot erase the others.
 
@@ -255,6 +257,7 @@ def validate_supplements(directory_csv: str | None, box_csv: str | None,
         "box_csv": box_csv,
         "group_seasons_csv": group_seasons_csv,
         "membership_csv": membership_csv,
+        "alias_csv": alias_csv,
     }
     warnings: list[str] = []
     if directory_csv is not None:
@@ -269,9 +272,16 @@ def validate_supplements(directory_csv: str | None, box_csv: str | None,
         if missing:
             optional["box_csv"] = None
             warnings.append(f"Team-box source headers rejected: {sorted(missing)}")
+    if alias_csv is not None:
+        try:
+            parse_ncaa_aliases(alias_csv)
+        except ValueError as exc:
+            optional["alias_csv"] = None
+            warnings.append(f"Cross-provider team alias source rejected: {exc}")
     if group_seasons_csv is not None and membership_csv is not None:
         try:
-            parse_division_members(group_seasons_csv, membership_csv)
+            parse_division_members(group_seasons_csv, membership_csv,
+                                   optional["alias_csv"])
         except ValueError as exc:
             optional["group_seasons_csv"] = None
             optional["membership_csv"] = None
@@ -290,6 +300,7 @@ def main() -> None:
     parser.add_argument("--box-input", type=Path, help="Offline team box CSV/CSV.gz")
     parser.add_argument("--group-seasons-input", type=Path, help="Offline MBB division group seasons CSV")
     parser.add_argument("--membership-input", type=Path, help="Offline 2027 MBB team membership CSV")
+    parser.add_argument("--alias-input", type=Path, help="Offline NCAA-to-ESPN name alias CSV")
     parser.add_argument("--skip-supplemental", action="store_true", help="For offline baselines only")
     parser.add_argument("--model-report", type=Path, default=Path("web/public/research/benchmark.json"),
                         help="Earlier-season-only calibration report, if generated")
@@ -325,8 +336,9 @@ def main() -> None:
     box_csv = supplemental(args.box_input, BOX_URL, "team box")
     group_seasons_csv = supplemental(args.group_seasons_input, GROUP_SEASONS_URL, "group seasons")
     membership_csv = supplemental(args.membership_input, TEAM_MEMBERSHIP_URL, "2027 membership")
+    alias_csv = supplemental(args.alias_input, ALIASES_URL, "2027 NCAA-to-ESPN name aliases")
     verified, warnings = validate_supplements(
-        directory_csv, box_csv, group_seasons_csv, membership_csv)
+        directory_csv, box_csv, group_seasons_csv, membership_csv, alias_csv)
     for warning in warnings:
         print(f"Optional source validation: {warning}")
     output = build_current(games, url=origin, **verified)

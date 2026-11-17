@@ -90,3 +90,9 @@ py -m forecast.live --input fixture-schedule.csv --directory-input fixture-2027-
 ```
 
 For reproducible source validation, run `py -m unittest discover -s research/tests -v`. Do not commit fixture-generated JSON as a real 2027 current report.
+
+### NCAA-to-ESPN reference alias reconciliation
+
+A fifth **optional** source `mbb_team_aliases.csv` under the `mbb_groups` release supplies season-dated NCAA-name aliases attached to the source's ESPN group-team IDs. This permits a documented identity join where the NCAA score feed says, for example, a school-only name but the group reference uses an ESPN mascot display name. Only `source=ncaa`, `name_kind=name`, `team_id_source=espn` and a valid 2027 year window can contribute. Conflicting aliases are rejected and the fallback is an **unverified** team, not a guessed identity.
+
+Offline flag: `--alias-input fixture-mbb-team-aliases.csv`. The live task fetches the public source automatically unless `--input` is used. Logs report how many scored programs are actually D-I group-linked after this source join.
