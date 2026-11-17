@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from forecast.reference import canonical, parse_directory, annotate_teams
 from forecast.efficiency import attach_efficiency
 from forecast.selection import build_watchlist
-from forecast.live import build_current
+from forecast.live import build_current, validate_supplements
 
 DIRECTORY = """team,conference,id,season
 College A,Big South,101,2027
@@ -65,6 +65,16 @@ class VerifiedSourceTests(unittest.TestCase):
         plain = build_current(GAMES, t)
         self.assertEqual(plain["efficiencyCoverage"]["status"], "unavailable")
         self.assertEqual(plain["identityCoverage"]["status"], "unavailable")
+
+    def test_optional_source_failure_is_isolated(self):
+        sources, warnings = validate_supplements(
+            "not,a,valid,header\\n", BOX, None, None)
+        self.assertIsNone(sources["directory_csv"])
+        self.assertEqual(sources["box_csv"], BOX)
+        self.assertEqual(len(warnings), 1)
+        output = build_current(GAMES, box_csv=sources["box_csv"])
+        self.assertEqual(output["efficiencyCoverage"]["matchedTeamGames"], 4)
+        self.assertEqual(output["identityCoverage"]["status"], "unavailable")
 
     def test_power_watchlist_does_not_create_missing_leagues(self):
         rows = []

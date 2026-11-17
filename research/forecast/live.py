@@ -22,7 +22,7 @@ from urllib.request import Request, urlopen
 
 from .core import EloEngine, Game
 from .reference import TEAM_URL, parse_directory, annotate_teams
-from .efficiency import BOX_URL, attach_efficiency
+from .efficiency import BOX_URL, attach_efficiency, NEEDED as BOX_COLUMNS
 from .selection import build_watchlist
 from .division import GROUP_SEASONS_URL, TEAM_MEMBERSHIP_URL, parse_division_members, annotate_division
 from .dynamics import regime_features
@@ -242,6 +242,47 @@ def fetch_csv(url: str = SOURCE_URL) -> str:
     return raw.decode("utf-8-sig")
 
 
+def validate_supplements(directory_csv: str | None, box_csv: str | None,
+                         group_seasons_csv: str | None, membership_csv: str | None
+                         ) -> tuple[dict, list[str]]:
+    """Validate independently so one optional-source failure cannot erase the others.
+
+    Return selected source contents and descriptive warnings. Pure, hermetic,
+    and safe to run before expensive Elo computation in the publishing job.
+    """
+    optional = {
+        "directory_csv": directory_csv,
+        "box_csv": box_csv,
+        "group_seasons_csv": group_seasons_csv,
+        "membership_csv": membership_csv,
+    }
+    warnings: list[str] = []
+    if directory_csv is not None:
+        try:
+            parse_directory(directory_csv)
+        except ValueError as exc:
+            optional["directory_csv"] = None
+            warnings.append(f"NCAA directory rejected: {exc}")
+    if box_csv is not None:
+        reader = csv.DictReader(io.StringIO(box_csv))
+        missing = BOX_COLUMNS - set(reader.fieldnames or ())
+        if missing:
+            optional["box_csv"] = None
+            warnings.append(f"Team-box source headers rejected: {sorted(missing)}")
+    if group_seasons_csv is not None and membership_csv is not None:
+        try:
+            parse_division_members(group_seasons_csv, membership_csv)
+        except ValueError as exc:
+            optional["group_seasons_csv"] = None
+            optional["membership_csv"] = None
+            warnings.append(f"Division membership rejected: {exc}")
+    elif group_seasons_csv is not None or membership_csv is not None:
+        optional["group_seasons_csv"] = None
+        optional["membership_csv"] = None
+        warnings.append("Division membership requires both group and member files")
+    return optional, warnings
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, help="Offline schedule CSV/CSV.gz fixture (no network)")
@@ -284,16 +325,13 @@ def main() -> None:
     box_csv = supplemental(args.box_input, BOX_URL, "team box")
     group_seasons_csv = supplemental(args.group_seasons_input, GROUP_SEASONS_URL, "group seasons")
     membership_csv = supplemental(args.membership_input, TEAM_MEMBERSHIP_URL, "2027 membership")
-    try:
-        output = build_current(games, url=origin,
-                               directory_csv=directory_csv, box_csv=box_csv,
-                               group_seasons_csv=group_seasons_csv,
-                               membership_csv=membership_csv)
-    except ValueError as exc:
-        # Refuse to label uncertain source identity as verified. Keep real
-        # score-derived Elo available, but expose empty supplemental coverage.
-        print(f"Supplemental crosswalk/box validation failed: {exc}. No inferred identity or efficiency data.")
-        output = build_current(games, url=origin)
+    verified, warnings = validate_supplements(
+        directory_csv, box_csv, group_seasons_csv, membership_csv)
+    for warning in warnings:
+        print(f"Optional source validation: {warning}")
+    output = build_current(games, url=origin, **verified)
+    if warnings:
+        output["supplementalSourceWarnings"] = warnings
     # Historical parameters are an extrapolation scenario, NOT evidence
     # that March-trained calibration is better for November home games.
     if args.model_report.exists():
