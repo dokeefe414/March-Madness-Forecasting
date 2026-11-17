@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 import rawData from "../data/rankings.json";
 import yearIndex from "../data/history-index.json";
-import { matchupProbability, simulateBracket, type RatingsDataset, type Team, type TitleResult } from "../lib/models";
+import { matchupProbability, type RatingsDataset } from "../lib/models";
+import FullBracketLab from "./FullBracketLab";
+import ResearchLab from "./ResearchLab";
+import LiveSeason from "./LiveSeason";
 
 const initialData = rawData as RatingsDataset;
 const initialTeams = [...initialData.teams].sort((a, b) => b.projectedRating - a.projectedRating);
@@ -17,7 +20,7 @@ type TournamentArchive = {
   seeds: Record<string, string>;
   games: Array<{ day?: number; round?: string; winnerId: string; loserId: string; winnerScore: number; loserScore: number }>;
 };
-type Tab = "rankings" | "compare" | "bracket" | "history" | "method";
+type Tab = "current" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
 type Sort = "rank" | "momentum" | "wins";
 
 function percent(value: number): string {
@@ -66,13 +69,12 @@ export default function Dashboard() {
   const [archive, setArchive] = useState<TournamentArchive | null>(null);
   const [archiveStatus, setArchiveStatus] = useState<"idle" | "loading" | "error">("idle");
   const sortedTeams = useMemo(() => [...data.teams].sort((a, b) => b.projectedRating - a.projectedRating), [data]);
-  const [tab, setTab] = useState<Tab>("rankings");
+  const [tab, setTab] = useState<Tab>("current");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>("rank");
   const [detailId, setDetailId] = useState(initialTeams[0]?.teamId ?? "");
   const [teamAId, setTeamAId] = useState(initialTeams[0]?.teamId ?? "");
   const [teamBId, setTeamBId] = useState(initialTeams[1]?.teamId ?? "");
-  const [simulation, setSimulation] = useState<TitleResult[] | null>(null);
 
   const teamA = sortedTeams.find((t) => t.teamId === teamAId) ?? sortedTeams[0];
   const teamB = sortedTeams.find((t) => t.teamId === teamBId) ?? sortedTeams[1];
@@ -86,10 +88,6 @@ export default function Dashboard() {
     return rows;
   }, [search, sort, sortedTeams]);
 
-  const topEight = sortedTeams.slice(0, 8);
-  const bracket = topEight.length === 8
-    ? [topEight[0], topEight[7], topEight[3], topEight[4], topEight[1], topEight[6], topEight[2], topEight[5]]
-    : [];
   const probA = teamA && teamB ? matchupProbability(teamA.projectedRating, teamB.projectedRating) : 0.5;
 
   async function loadYear(year: number) {
@@ -112,7 +110,6 @@ export default function Dashboard() {
       setSort("rank");
       setArchive(null);
       setArchiveStatus("idle");
-      setSimulation(null);
       setLoadStatus("idle");
     } catch (error) {
       console.error(error);
@@ -139,12 +136,12 @@ export default function Dashboard() {
     <main>
       <div className="site-shell">
         <header className="site-header">
-          <button className="brand" onClick={() => setTab("rankings")} aria-label="March Forecast home">
+          <button className="brand" onClick={() => setTab("current")} aria-label="March Forecast home">
             <span className="brand-mark">M<span>F</span></span>
             <span className="brand-title">MARCH<span>FORECAST</span></span>
           </button>
           <nav aria-label="Main navigation" className="desktop-nav">
-            {([["rankings", "Rankings"], ["compare", "Matchups"], ["bracket", "Bracket Lab"], ["history", "Archive"], ["method", "Methodology"]] as [Tab, string][]).map(([id, label]) => (
+            {([["current", "2027 Pulse"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
               <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => setTab(id)}>{label}</button>
             ))}
           </nav>
@@ -152,19 +149,20 @@ export default function Dashboard() {
         </header>
 
         <div className="mobile-nav" aria-label="Page sections">
-          {([["rankings", "Rankings"], ["compare", "Matchups"], ["bracket", "Bracket"], ["history", "Archive"], ["method", "Method"]] as [Tab, string][]).map(([id, label]) => (
+          {([["current", "2027 Pulse"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
             <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => setTab(id)}>{label}</button>
           ))}
         </div>
 
+        {tab === "rankings" && (<>
         <section className="hero">
           <div className="hero-main">
             <div className="eyebrow"><span className="live-dot" /> COLLEGE BASKETBALL INTELLIGENCE <span className="eyebrow-rule" /> RESEARCH PREVIEW</div>
             <h1>THE NUMBERS <span>BEHIND</span> THE MADNESS<span className="headline-period">.</span></h1>
-            <p className="hero-copy">Power rankings that move with the season. Head-to-head probabilities you can challenge. A transparent model built to forecast, not just guess.</p>
+            <p className="hero-copy">Power rankings that move with the season. Head-to-head probabilities you can challenge. Research-backed models you can inspect, historical seasons you can replay, and a verified new-season data pulse.</p>
             <div className="hero-buttons">
-              <button className="button-primary" onClick={() => setTab("rankings")}>EXPLORE RANKINGS <span aria-hidden="true">↗</span></button>
-              <button className="button-outline" onClick={() => setTab("compare")}>COMPARE TEAMS <span aria-hidden="true">→</span></button>
+              <button className="button-primary" onClick={() => setTab("current")}>EXPLORE 2027 SEASON <span aria-hidden="true">↗</span></button>
+              <button className="button-outline" onClick={() => setTab("research")}>VIEW THE RESEARCH <span aria-hidden="true">→</span></button>
             </div>
             <div className="hero-footnote">SEASON {data.season} <span>✳</span> {data.mode === "demo" ? "SYNTHETIC MODEL SCENARIO" : "HISTORICAL RESULTS SNAPSHOT"} <span>✳</span> NO PAYWALLS</div>
           </div>
@@ -200,8 +198,21 @@ export default function Dashboard() {
           <div className="strip-stat"><span>01 / TRACKED TEAMS</span><strong>{data.teams.length.toString().padStart(2, "0")}</strong><small>{data.mode === "demo" ? "Example programs" : "In this snapshot"}</small></div>
           <div className="strip-stat"><span>02 / RATING SYSTEM</span><strong>ELO<span className="strip-accent">+</span></strong><small>Recent form adjustment</small></div>
           <div className="strip-stat"><span>03 / MATCHUP ENGINE</span><strong>H2H</strong><small>Neutral-court probabilities</small></div>
-          <div className="strip-stat"><span>04 / SIMULATOR</span><strong>2K</strong><small>Runs per demo</small></div>
+          <div className="strip-stat"><span>04 / SIMULATOR</span><strong>76</strong><small>2027 field support</small></div>
         </section>
+
+        </>)}
+        {(tab === "compare" || tab === "bracket" || tab === "history") && (
+          <div className="mode-toolbar">
+            <div><span className="feature-kicker">HISTORICAL VIEW / FROZEN NCAA DATA</span><strong>{data.season} season · {data.isComplete ? "complete regular-season cutoff" : "incomplete source cutoff"}</strong></div>
+            <label>CHOOSE SEASON<select value={selectedYear} disabled={loadStatus === "loading"} onChange={e => void loadYear(Number(e.target.value))}>
+              {[...yearIndex.seasons].reverse().map(y => <option key={y.season} value={y.season}>{y.season}{y.isComplete ? "" : " (partial)"}</option>)}
+            </select></label>
+            {loadStatus === "error" && <span className="year-status error">Could not load historical season.</span>}
+          </div>
+        )}
+        {tab === "current" && <LiveSeason/>}
+        {tab === "research" && <ResearchLab/>}
 
         {tab === "rankings" && (
           <section className="content-section" id="rankings">
@@ -271,27 +282,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        {tab === "bracket" && (
-          <section className="content-section" id="bracket">
-            <div className="section-heading"><div><div className="section-kicker">03 — PATH TO THE TITLE</div><h2>Bracket <span>lab</span></h2><p>Explore how matchup probabilities compound across a single-elimination tournament.</p></div></div>
-            <div className="bracket-layout">
-              <div className="bracket-card">
-                <div className="bracket-top"><span>8-TEAM RESEARCH DEMO</span><span>2,000 SIMULATIONS</span></div>
-                <h3>The title is never certain.</h3>
-                <p>We take eight teams in a demonstration bracket and simulate each game using projected Elo ratings. This is not the official NCAA bracket.</p>
-                <div className="fixture-grid">
-                  {bracket.map((team, index) => <div className="fixture-team" key={team.teamId}><span>{index % 2 === 0 ? "MATCH " + (Math.floor(index / 2) + 1) : "vs"}</span><strong>{team.name}</strong><small>#{team.rank}</small></div>)}
-                </div>
-                <button className="button-primary run-button" disabled={bracket.length !== 8} onClick={() => setSimulation(simulateBracket(bracket, 2000))}>RUN 2,000 SIMULATIONS <span aria-hidden="true">↗</span></button>
-              </div>
-              <div className="sim-card">
-                <div className="detail-eyebrow">CHAMPIONSHIP PROBABILITIES</div>
-                {!simulation ? <div className="sim-placeholder"><div className="sim-icon">✳</div><h3>Let the numbers play.</h3><p>Run the simulation to see how often each team wins this sample bracket.</p></div> :
-                  <div className="sim-results">{simulation.map((result, index) => { const team = bracket.find((t) => t.teamId === result.teamId); return <div className="sim-row" key={result.teamId}><div className="sim-label"><span>{(index + 1).toString().padStart(2, "0")}. {team?.name}</span><strong>{percent(result.titleProbability)}</strong></div><div className="sim-track"><div style={{ width: percent(result.titleProbability) }} /></div></div>; })}<p className="method-note">Monte Carlo estimates fluctuate slightly each run. Probabilities are conditional on this fixed sample bracket.</p></div>}
-              </div>
-            </div>
-          </section>
-        )}
+        {tab === "bracket" && <FullBracketLab data={data} />}
 
         {tab === "history" && (
           <section className="content-section" id="history">
@@ -329,18 +320,18 @@ export default function Dashboard() {
 
         {tab === "method" && (
           <section className="content-section" id="method">
-            <div className="section-heading"><div><div className="section-kicker">05 — OPEN METHODOLOGY</div><h2>Show the <span>work</span></h2><p>Every model starts with a measurable baseline. Here is what this first version actually does.</p></div></div>
+            <div className="section-heading"><div><div className="section-kicker">05 — OPEN METHODOLOGY</div><h2>Show the <span>work</span></h2><p>Open-source models, leak-aware evaluation, NCAA-source season updates, and simulation assumptions.</p></div></div>
             <div className="method-grid">
               <div className="method-card"><span>01 / DATA</span><h3>Games, in order.</h3><p>Our Python importer reads historical Kaggle regular-season results and team names. Each season is processed chronologically, with optional day cutoffs.</p></div>
               <div className="method-card"><span>02 / RATINGS</span><h3>Transparent Elo.</h3><p>Teams begin at 1500 each season. Opponent strength, game result, and home court determine rating changes. A bounded recent trend creates a simple forward projection.</p></div>
               <div className="method-card"><span>03 / PROBABILITIES</span><h3>Neutral-court matchups.</h3><p>Projected rating differences become head-to-head probabilities through the standard Elo logistic formula. Repeated simulated games produce bracket probabilities.</p></div>
-              <div className="method-card"><span>04 / VALIDATION</span><h3>Make predictions testable.</h3><p>The research engine calculates pre-game regular-season Brier scores without using the result being predicted. Tournament backtesting and calibration are the next research milestones.</p></div>
+              <div className="method-card"><span>04 / VALIDATION</span><h3>Make predictions testable.</h3><p>The research engine calculates pre-game regular-season Brier scores without using the result being predicted. Held-out-year tournament validation, calibrated probabilities, regularized logistic models and season-block uncertainty are implemented and reported.</p></div>
             </div>
-            <div className="method-warning"><strong>NOT CLAIMED:</strong> This is not yet an ARIMA, Kalman filter, machine-learning ensemble, NCAA Selection Sunday predictor, or verified 2027 tournament forecast. We will introduce those only when there is training, evaluation, and reproducible evidence.</div>
+            <div className="method-warning"><strong>NOT CLAIMED:</strong> This is not a trained ARIMA/Kalman model, official selection forecast, injury-aware model, or verified 2027 bracket prediction. The current-season source and historical tournament backtest use different ID spaces and are not silently joined.</div>
           </section>
         )}
 
-        <footer className="footer"><div className="footer-brand">MARCH<span>FORECAST</span><small>RESEARCH-DRIVEN BASKETBALL ANALYTICS</small></div><div className="footer-right"><span>{data.label}</span><a href="https://github.com/dokeefe414/March-Madness-Forecasting" target="_blank" rel="noreferrer">GITHUB ↗</a></div></footer>
+        <footer className="footer"><div className="footer-brand">MARCH<span>FORECAST</span><small>RESEARCH-DRIVEN BASKETBALL ANALYTICS</small></div><div className="footer-right"><span>REPRODUCIBLE RESEARCH · PROVENANCE FIRST</span><a href="https://github.com/dokeefe414/March-Madness-Forecasting" target="_blank" rel="noreferrer">GITHUB ↗</a></div></footer>
       </div>
     </main>
   );
