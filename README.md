@@ -20,6 +20,20 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ---
 
+## v1.8 — Better historical models, probability reliability and simpler navigation
+
+**The app now has only five primary navigation destinations:** **Find a Game**, **Teams**, **Bracket**, **Accuracy & Picks**, and **Model Lab**. All seven other workspaces remain available under the organized **More** menu (This Season / History & Research); every existing `?view=` deep link still works, with a breadcrumb and Back to Games shortcut. Mobile no longer duplicates multiple rows of competing tab bars.
+
+**New independent historical scoring study:** a source-pinned, regularized signed margin and total-points model evaluates predicted scores and Gaussian 80% interval *coverage* using historical tournament years held out chronologically. Probabilities derived from the score margin are assessed against Elo using Brier, log loss, accuracy and ten-bin calibration. A conservative second-layer ensemble learns weights and a probability scale only from **earlier out-of-time** tournament seasons. The [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) displays year-level results and evidence, not invented accuracy.
+
+**Clearer game explanations:** The [Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) includes a collapsed explanation of why active Elo win probabilities, experimental projected scores, and frozen ensemble challenger probabilities might disagree.
+
+**Critical scientific boundary:** Historical source features are **day-132 pre-tournament ratings**, not date-frozen inputs for each regular-season game. These research scores and intervals are **not** automatically deployed to live 2026–27 predictions. Production Elo, pre-tipoff recording and immutable settlements remain untouched. CI builds and verifies separate, reproducible source-matched historical reports.
+
+See the [v1.8 technical methodology and compact navigation guide](docs/v18-probabilistic-models-and-navigation.md).
+
+---
+
 ## v1.7 — Audited historical training dataset and nested unseen-season research
 
 A new independent research pipeline validates and exports historical NCAA tournament matchups against season-specific *pre-tournament* team ratings, with source commit and SHA-256 proofs, complete-season eligibility, duplicate detection, missing-team exclusions, and deterministic winner-independent feature orientation. **No incomplete historical season is fabricated or used to train a supposedly complete bracket.**
