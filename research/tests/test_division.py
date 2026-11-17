@@ -57,10 +57,10 @@ class DivisionMembershipTests(unittest.TestCase):
         self.assertEqual(links["duke"], "1")
         self.assertNotIn("old team", links)
         self.assertNotIn("future team", links)
-        clash = ALIASES + "mbb,11,espn,ncaa,501,school,name,Duke,2026,2027\\n"
+        clash = ALIASES + "mbb,11,espn,ncaa,501,school,name,Duke,2026,2027\n"
         self.assertNotIn("duke", parse_ncaa_aliases(clash))
         with self.assertRaisesRegex(ValueError, "aliases missing fields"):
-            parse_ncaa_aliases("team_name,team_id\\nDuke,1")
+            parse_ncaa_aliases("team_name,team_id\nDuke,1")
 
     def test_field_gate_excludes_undocumented_division(self):
         teams = [
