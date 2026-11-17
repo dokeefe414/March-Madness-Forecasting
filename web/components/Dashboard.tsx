@@ -184,7 +184,7 @@ export default function Dashboard() {
               <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => changeTab(id)}>{label}</button>
             ))}
           </nav>
-          <a className="github-link" href="https://github.com/dokeefe414/March-Madness-Forecasting" target="_blank" rel="noreferrer">VIEW CODE <span aria-hidden="true">↗</span></a>
+          <a className="github-link" href="https://github.com/dokeefe414/March-Madness-Forecasting26-27" target="_blank" rel="noreferrer">VIEW CODE <span aria-hidden="true">↗</span></a>
         </header>
 
         <div className="v13-mobile-top-actions" role="navigation" aria-label="Quick daily tools">
@@ -381,7 +381,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        <footer className="footer"><div className="footer-brand">MARCH<span>FORECAST</span><small>RESEARCH-DRIVEN BASKETBALL ANALYTICS</small></div><div className="footer-right"><span>REPRODUCIBLE RESEARCH · PROVENANCE FIRST</span><a href="https://github.com/dokeefe414/March-Madness-Forecasting" target="_blank" rel="noreferrer">GITHUB ↗</a></div></footer>
+        <footer className="footer"><div className="footer-brand">MARCH<span>FORECAST</span><small>RESEARCH-DRIVEN BASKETBALL ANALYTICS</small></div><div className="footer-right"><span>REPRODUCIBLE RESEARCH · PROVENANCE FIRST</span><a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27" target="_blank" rel="noreferrer">GITHUB ↗</a></div></footer>
       </div>
     </main>
   );
