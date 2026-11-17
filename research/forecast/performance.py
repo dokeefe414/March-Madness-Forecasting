@@ -144,6 +144,24 @@ def summarize_forward(snapshots: list[dict], settlements: list[dict]) -> dict:
             "dateBlockGain95":interval,
             "claim":"Source-verified first-pick paired comparison; no candidate promotion implied",
         }
+    # Confidence regimes use exactly the same earliest source-verified picks.
+    # Each subgroup is descriptive: these are not independent training sets.
+    confidence_bands={}
+    for label,lower,upper in (("tossUp",.5,.6),("moderate",.6,.75),("strong",.75,1.001)):
+        subset=[r for r in selected if lower<=r["confidence"]<upper]
+        confidence_bands[label]=_stats(subset)
+    # A rolling fixed-size audit is deliberately chronological and uses no
+    # future observations to modify an already-issued forecast.
+    rolling=[]
+    for i in range(len(selected)):
+        if i+1>=25:
+            subset=selected[i-24:i+1]
+            rolling.append({"date":selected[i]["date"],"eventId":selected[i]["eventId"],
+                            **_stats(subset)})
+    # Skill relative to a constant 50% baseline is meaningful only for games
+    # that truly settled. Negative skill is permitted and must be visible.
+    overall_brier=_mean(selected,"brier")
+    brier_skill=(round(1-overall_brier/.25,6) if overall_brier is not None else None)
     return {
         "schemaVersion":1,
         "unit":"one earliest archived pre-tipoff prediction per source ESPN event ID",
@@ -164,6 +182,8 @@ def summarize_forward(snapshots: list[dict], settlements: list[dict]) -> dict:
         "experimentalComparisons":{label:_stats(rows) for label,rows in comparable.items()},
         "pairedModelComparisons":paired_report,
         "calibration":calibration, "trajectory":timeline[-400:],
+        "confidenceBands":confidence_bands, "rolling25":rolling[-400:],
+        "coinFlipBrierSkill":brier_skill,
         "recentMisses":list(reversed(misses[-12:])),
         "warnings":[
             "No winner accuracy is shown until genuine before-tipoff predictions have settled.",
