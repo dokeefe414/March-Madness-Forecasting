@@ -15,7 +15,7 @@ import json
 import math
 import random
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -78,6 +78,16 @@ def _rows(folder:Path,now:datetime)->list[dict]:
         original_key=snap["snapshotId"]+":"+event
         settled=confirmed.get(original_key)
         if settled is None or settled["actualResultDate"]>=cutoff:continue
+        # An externally supplied score or a post-tipoff shadow must never
+        # qualify for retrospective parameter fitting or forward promotion.
+        try:
+            created=datetime.fromisoformat(snap["generatedAtUtc"].replace("Z","+00:00"))
+            rated=datetime.fromisoformat(snap["ratingRetrievedAtUtc"].replace("Z","+00:00"))
+            start=datetime.fromisoformat(pred["scheduledStartUtc"].replace("Z","+00:00"))
+        except (KeyError,TypeError,ValueError):
+            continue
+        if not all(t.tzinfo is not None for t in (created,rated,start)) or rated>created or created+timedelta(minutes=15)>=start:
+            continue
         if settled.get("espnFinalVerified") is not True:continue
         if settled.get("home")!=pred["home"] or settled.get("away")!=pred["away"]:continue
         baseline=_prob(pred.get("baselineHomeWinProbability"))
