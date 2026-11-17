@@ -44,7 +44,7 @@ The committed static season JSON is source-derived and browseable without a paid
 - Historical selector fetches /seasons/<year>.json from the static site's public directory.
 - Archive tab loads /tournaments/<year>.json on demand. Empty result for 2020 is shown.
 - Matchup and eight-team simulation always use the selected historical season's teams; they are NOT 2027 forecasts and the demo bracket is NOT a real NCAA tournament bracket.
-- NEXT_PUBLIC_BASE_PATH supports /March-Madness-Forecasting deployment on GitHub Pages.
+- NEXT_PUBLIC_BASE_PATH supports /March-Madness-Forecasting26-27 deployment on GitHub Pages.
 
 ## Research integrity constraints
 
