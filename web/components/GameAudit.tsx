@@ -75,6 +75,6 @@ export default function GameAudit({eventId,snapshots,settlements,closed=false}:{
      <ProbabilityTimeline data={captures}/>
      {!captures.length&&<p className="ga-empty">No source-verified public-before-tipoff forecast is archived for this event yet. The website's current odds are an indicative snapshot, not retroactive proof of an earlier public pick.</p>}
    </div>
-   {receipt&&first&&!actual?<p className="ga-disclaimer">A more recent archived prediction settled, but the earliest visible capture has no verified settlement. This displayed receipt is **not** counted as an extra first-pick outcome.</p>:null}
+   {receipt&&first&&!actual?<p className="ga-disclaimer">A more recent archived prediction settled, but the earliest visible capture has no verified settlement. This displayed receipt is not counted as an extra first-pick outcome.</p>:null}
  </section>;
 }

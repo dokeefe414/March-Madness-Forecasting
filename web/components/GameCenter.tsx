@@ -249,9 +249,13 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
                   <p>Prepublished Elo: <strong>{percent(selected.baselineHomeWinProbability!)}</strong> home</p>
                   {selected.challengerHomeWinProbability!=null?<p>Shadow-trained logistic: <strong>{percent(selected.challengerHomeWinProbability)}</strong> home</p>:null}
                   {selected.stateSpaceHomeWinProbability!=null?<p>Causal state space: <strong>{percent(selected.stateSpaceHomeWinProbability)}</strong> home</p>:null}
+                  {selected.opponentAdjustedHomeWinProbability!=null?<p>Opponent-aware candidate: <strong>{percent(selected.opponentAdjustedHomeWinProbability)}</strong> home</p>:null}
+                  {selected.adaptiveStateSpaceHomeWinProbability!=null?<p>Adaptive state-space candidate: <strong>{percent(selected.adaptiveStateSpaceHomeWinProbability)}</strong> home</p>:null}
+                  {selected.driftWatch&&<p>Innovation drift watch: <strong>{selected.driftWatch.home?"home team ":""}{selected.driftWatch.away?"away team":""}{!selected.driftWatch.home&&!selected.driftWatch.away?"no persistent alert":""}</strong></p>}
                   <small>The headline percentage uses only the model actually selected for publication.</small>
                 </div>
               </div></div>
+            <GameAudit eventId={selected.eventId} snapshots={ledger?.snapshots||[]} settlements={ledger?.settlements||[]}/>
           </>:selected?<div className="gc-unmatched"><span className="section-kicker">NO VERIFIED ODDS</span><h3>{selected.away} at {selected.home}</h3><p>{selected.reason}</p>
             <p>We show this scheduled fixture but do not invent a NCAA-to-ESPN team join or falsely label a guess as a prediction.</p></div>:
           archivedGame?<div className="gc-postgame-view">
@@ -263,6 +267,17 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
             <p>No future, confidently source-matched fixture is currently available. Try the hypothetical neutral matchup lab below; it does not represent a scheduled game.</p></div>}
         </article>
       </div>
+      {settledGames.length>0&&<section className="gc-recent-settled" aria-label="Recently settled source-backed pregame predictions">
+        <div><span className="section-kicker">ARCHIVED RESULTS / VERIFIED PRETIPOFF PICKS</span>
+          <h3>From prediction <em>to final.</em></h3>
+          <p>Open a completed game to see the original frozen percentage, verified final score, and prediction's correctness.</p></div>
+        <div className="gc-settled-grid">{settledGames.slice(0,8).map(x=><button type="button" key={x.eventId}
+          className={selectedId===x.eventId?"active":""} onClick={()=>choose(x.eventId)}>
+          <small>{x.actualResultDate} · {x.espnFinalVerified?"FINAL VERIFIED":"ARCHIVED SOURCE RESULT"}</small>
+          <strong>{x.away} {x.awayScore} · {x.home} {x.homeScore}</strong>
+          <span>{x.winnerCorrect===1?"CORRECT":x.winnerCorrect===0?"MISSED":"EVEN ODDS"} · {percent(x.predictedHome)} home win forecast</span>
+        </button>)}</div>
+      </section>}
       <div className="gc-whatif"><div><span className="section-kicker">05 / COMPARE ANY PROGRAMS</span><h2>Matchup <span>sandbox.</span></h2>
         <p>Pick any two current teams for an explicitly hypothetical neutral-site comparison. This is not a scheduled game and is never logged as a pregame forecast.</p></div>
         <div className="gc-whatif-controls"><label>TEAM A<select aria-label="Hypothetical team A" value={a} onChange={e=>setA(e.target.value)}>
