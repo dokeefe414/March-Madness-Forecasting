@@ -75,6 +75,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.score_research --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/score-research.json
+      - name: Evaluate original first-pick ensemble evidence, without automatic promotion
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.forward_ensemble --ratings web/public/current/2027.json --ledger web/public/forecasts --out web/public/current/forward-ensemble.json
       - name: Publish verified archive operations and feed provenance
         env:
           PYTHONPATH: research
