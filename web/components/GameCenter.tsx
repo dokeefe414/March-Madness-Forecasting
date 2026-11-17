@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 import type {Team,RatingsDataset} from "../lib/models";
 import {matchupProbability} from "../lib/models";
+import GameAudit, {type ArchivedSnapshot,type ArchivedSettlement} from "./GameAudit";
 
 const basePath=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Past={id:string;date:string;opponent:string;home:boolean;for:number;against:number;outcome:"W"|"L"};
@@ -12,6 +13,9 @@ type Fixture={eventId:string;scheduledStartUtc:string;scheduledEasternDate:strin
   home:string;away:string;homeTeamId?:string;awayTeamId?:string;homeWinProbability:number|null;
   baselineHomeWinProbability?:number;challengerHomeWinProbability?:number|null;
   stateSpaceHomeWinProbability?:number|null;model?:string;status:"ready"|"unmatched";
+  opponentAdjustedHomeWinProbability?:number|null;
+  adaptiveStateSpaceHomeWinProbability?:number|null;
+  driftWatch?:{home:boolean|null;away:boolean|null;homeInnovations?:number[];awayInnovations?:number[]};
   modelId?:string|null;reason?:string|null;homeProfile?:Profile;awayProfile?:Profile;
   factors?:Factor[];headToHead?:Array<{date:string;home:string;away:string;homeScore:number;awayScore:number}>;
   commonOpponents?:Array<{opponent:string;homeResultDate:string;awayResultDate:string;homeMargin:number;awayMargin:number}>};
@@ -21,7 +25,7 @@ type Schedule={schemaVersion:number;generatedAtUtc:string;ratingRetrievedAtUtc:s
 type Forward={score:{games:number;accuracy:number|null;brier:number|null};
   settledUniqueGames:number;forecastedUniqueGames:number;
   shadowComparison?:{pairedGames:number;eloBrier:number|null;challengerBrier:number|null}};
-type Ledger={uniqueGames?:Forward};
+type Ledger={uniqueGames?:Forward;snapshots?:ArchivedSnapshot[];settlements?:ArchivedSettlement[]};
 const percent=(v:number)=>(v*100).toFixed(1)+"%";
 const when=(v:string)=>new Date(v).toLocaleString("en-US",{timeZone:"America/New_York",
   weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})+" ET";
@@ -53,6 +57,9 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
   const [schedule,setSchedule]=useState<Schedule|null>(null);
   const [ratings,setRatings]=useState<RatingsDataset|null>(null);
   const [forward,setForward]=useState<Forward|null>(null);
+  const [ledger,setLedger]=useState<Ledger|null>(null);
+  const [archiveHealth,setArchiveHealth]=useState<{status:string;message:string;lastArchiveUtc:string|null}|null>(null);
+  const [copied,setCopied]=useState(false);
   const [problem,setProblem]=useState("");
   const [search,setSearch]=useState("");
   const [day,setDay]=useState("all");
@@ -68,17 +75,21 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
       fetch(basePath+"/current/upcoming.json").then(r=>{if(!r.ok)throw new Error("Upcoming-game snapshot is not published.");return r.json() as Promise<Schedule>}),
       fetch(basePath+"/current/2027.json").then(r=>{if(!r.ok)throw new Error("Current NCAA-source ratings unavailable.");return r.json() as Promise<RatingsDataset>}),
       fetch(basePath+"/forecasts/index.json").then(r=>r.ok?r.json():null).catch(()=>null) as Promise<Ledger|null>,
-    ]).then(([s,r,l])=>{
+      fetch(basePath+"/current/archive-health.json").then(r=>r.ok?r.json():null).catch(()=>null),
+    ]).then(([s,r,l,h])=>{
       if(!alive)return;
       if(s.schemaVersion!==1||!Array.isArray(s.games)||r.mode!=="current"||r.season!==2027)
         throw new Error("Scheduled game/ratings source validation failed.");
-      setSchedule(s);setRatings(r);setForward(l?.uniqueGames||null);
+      setSchedule(s);setRatings(r);setForward(l?.uniqueGames||null);setLedger(l);
+      setArchiveHealth(h);
       setA(r.teams[0]?.teamId||"");setB(r.teams[1]?.teamId||"");
       const params=new URLSearchParams(window.location.search);
       const team=params.get("team");
       if(team&&r.teams.some(t=>t.teamId===team))setTeamFilter(team);
       const link=params.get("game");
-      const initial=s.games.find(g=>g.eventId===link)?.eventId||s.games.find(g=>g.status==="ready")?.eventId||s.games[0]?.eventId||"";
+      const archivedIds=new Set((l?.settlements||[]).map(x=>x.eventId));
+      const initial=(s.games.find(g=>g.eventId===link)||archivedIds.has(link||""))?
+        (link||""):s.games.find(g=>g.status==="ready")?.eventId||s.games[0]?.eventId||"";
       setSelectedId(initial);
       setNow(Date.now());
     }).catch((e:Error)=>{if(alive)setProblem(e.message)});
@@ -93,7 +104,17 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
     [eligible,search,day,showAll,now,teamFilter]);
   // Never display an expired source capture as a currently upcoming pick.
   // Started games remain inspectable only when the user explicitly enables it.
-  const selected=rows.find(x=>x.eventId===selectedId)||rows[0];
+  const settledGames=useMemo(()=>{
+    const unique=new Map<string,ArchivedSettlement>();
+    for(const r of ledger?.settlements||[]){
+      if(!unique.has(r.eventId))unique.set(r.eventId,r);
+    }
+    return [...unique.values()].sort((a,b)=>b.actualResultDate.localeCompare(a.actualResultDate))
+      .slice(0,12);
+  },[ledger]);
+  const archivedGame=settledGames.find(x=>x.eventId===selectedId);
+  const selected=rows.find(x=>x.eventId===selectedId)||
+                 (archivedGame?undefined:rows[0]);
   const alreadyStarted=Boolean(selected&&now&&new Date(selected.scheduledStartUtc).getTime()<=now);
   const canCompare=ratings?.teams?.length && a&&b&&a!==b;
   const left=ratings?.teams.find(t=>t.teamId===a);
@@ -103,10 +124,21 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
     setSelectedId(id);
     const url=new URL(window.location.href);url.searchParams.set("game",id);
     window.history.replaceState(null,"",url.toString());
+    setCopied(false);
     // On mobile, move directly from the fixture card to its detailed model
     // analysis instead of making the user scroll through the full fixture list.
     document.getElementById("gc-match-detail")?.scrollIntoView({behavior:"smooth",block:"start"});
   };
+  async function copyGameLink(){
+    if(!selected&&!archivedGame)return;
+    const url=new URL(window.location.href);
+    url.searchParams.set("view","games");
+    url.searchParams.set("game",selected?.eventId||archivedGame!.eventId);
+    try{
+      await navigator.clipboard.writeText(url.toString());
+      setCopied(true);
+    }catch{setCopied(false);}
+  }
   const total=eligible.length;
   return <section className="content-section gc" id="games">
     <div className="gc-hero">
@@ -121,6 +153,7 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
         {onOpenModels&&<button className="gc-accuracy-cta gc-model-cta" onClick={onOpenModels}>COMPARE THE MODELS ↗</button>}
         {onOpenAccuracy?<button className="gc-accuracy-cta" onClick={onOpenAccuracy}>OPEN ACCURACY & PICKS ↗</button>:
           <a href="#gc-accuracy-notes">HOW THIS IS MEASURED ↓</a>}
+        <p className="gc-archive-health">ARCHIVE {archiveHealth?.status?.toUpperCase()||"UNVERIFIED"} · {archiveHealth?.message||"Public archive status has not been verified."}</p>
       </aside>
     </div>
     <div className="gc-intro"><div><span className="section-kicker">01 / THE VERIFIED SCHEDULE</span><h2>Pick a <span>game.</span></h2>
@@ -158,6 +191,10 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
           <>
             {alreadyStarted&&<div className="gc-warning" role="status">HISTORICAL CAPTURE ONLY · The listed tipoff time has passed since the source refresh. This frozen percentage is not a live in-game forecast.</div>}
             <div className="gc-detail-cap"><span>MODEL MATCHUP REPORT / ESPN {selected.eventId}</span><span>{when(selected.scheduledStartUtc)}</span></div>
+            <div className="gc-quick-actions">
+              <button type="button" onClick={copyGameLink}>{copied?"LINK COPIED ✓":"COPY GAME ANALYSIS LINK ↗"}</button>
+              {onOpenModels&&<button type="button" onClick={onOpenModels}>COMPARE FORECASTING MODELS ↗</button>}
+            </div>
             <div className="gc-matchup-title"><div><small>ROAD</small><h3>{selected.away}</h3><span>{selected.awayProfile.wins}–{selected.awayProfile.losses}</span></div>
               <div className="gc-vs">VS</div><div><small>{selected.neutralSite?"NEUTRAL":"HOME"}</small><h3>{selected.home}</h3><span>{selected.homeProfile.wins}–{selected.homeProfile.losses}</span></div></div>
             <div className="gc-odds-head"><div><small>AWAY WIN PROBABILITY</small><strong>{percent(1-selected.homeWinProbability)}</strong></div>
@@ -190,6 +227,11 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
               </div></div>
           </>:selected?<div className="gc-unmatched"><span className="section-kicker">NO VERIFIED ODDS</span><h3>{selected.away} at {selected.home}</h3><p>{selected.reason}</p>
             <p>We show this scheduled fixture but do not invent a NCAA-to-ESPN team join or falsely label a guess as a prediction.</p></div>:
+          archivedGame?<div className="gc-postgame-view">
+             <div className="gc-detail-cap"><span>VERIFIED ARCHIVED RESULT / ESPN {archivedGame.eventId}</span><span>{archivedGame.actualResultDate}</span></div>
+             <button type="button" className="gc-back" onClick={()=>setSelectedId(rows[0]?.eventId||"")}>← BACK TO UPCOMING GAMES</button>
+             <GameAudit eventId={archivedGame.eventId} snapshots={ledger?.snapshots||[]} settlements={ledger?.settlements||[]} closed/>
+          </div>:
           <div className="gc-unmatched"><span className="section-kicker">SOURCE HAS NO CURRENT GAME</span><h3>More games incoming.</h3>
             <p>No future, confidently source-matched fixture is currently available. Try the hypothetical neutral matchup lab below; it does not represent a scheduled game.</p></div>}
         </article>
