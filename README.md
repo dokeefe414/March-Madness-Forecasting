@@ -105,7 +105,7 @@ The downloader verifies pinned Git blob SHAs before using data. See [data contra
 
 ## Publishing and 2027 data updates
 
-The Pages workflow is configured to rebuild both generated reports on **main pushes**, **manual dispatch**, and **best-effort daily at 14:22 UTC in November–April**. The current data source is the SportsDataverse [`ncaa_mbb_schedule_2027.csv.gz` release](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_schedule), derived from NCAA statistics. Strict validation rejects conflicting contests, invalid results, future dates and games after Selection Sunday. An unreachable or invalid upstream file **fails deployment instead of generating fictitious scores**; the previous successful deployed site remains published.
+The Pages workflow is configured to rebuild both generated reports on **main pushes**, **manual dispatch**, and **best-effort daily at 14:22 UTC in November–April**. The current data source is the SportsDataverse [`ncaa_mbb_schedule_2027.csv.gz` release](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_schedule), derived from NCAA statistics. Strict validation rejects conflicting contests, negative scores, future dates and games after Selection Sunday; scoreboards with missing, zero or tied scores are excluded as not confirmed finals. An unreachable or invalid upstream file **fails deployment instead of generating fictitious scores**; the previous successful deployed site remains published.
 
 Two reports are **generated at deployment, not committed as stale daily data**:
 

@@ -77,10 +77,15 @@ def final_games(csv_text: str, as_of: date | None = None) -> list[dict]:
             home_score, away_score = int(row["home_score"]), int(row["away_score"])
         except (TypeError, ValueError):
             continue  # future/scheduled games are not results
-        if home_score == away_score == 0:
+        # The upstream NCAA schedule includes partially populated scoreboards
+        # (including 0-x and tied scores) for games that are not confirmed
+        # finals. An NCAA basketball game has no tied final. Skip these rather
+        # than manufacturing a completed result; malformed negative scores
+        # still fail rather than being treated as missing data.
+        if home_score < 0 or away_score < 0:
+            raise ValueError(f"negative score in contest {row['contest_id']}")
+        if home_score == 0 or away_score == 0 or home_score == away_score:
             continue
-        if home_score < 1 or away_score < 1 or home_score == away_score:
-            raise ValueError(f"invalid final score in contest {row['contest_id']}")
         game_id = str(row["contest_id"] or "").strip()
         if not game_id:
             raise ValueError("missing NCAA contest_id")

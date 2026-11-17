@@ -56,9 +56,10 @@ class LiveSeasonTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "conflicting duplicate"):
             final_games(CSV + "100,2026-11-02,College A,College B,84,69,2027\n",
                         date(2026, 11, 16))
-        with self.assertRaisesRegex(ValueError, "invalid final"):
-            final_games(CSV + "105,2026-11-09,College A,College B,90,90,2027\n",
-                        date(2026, 11, 16))
+        self.assertEqual(len(final_games(CSV + "105,2026-11-09,College A,College B,90,90,2027\n", date(2026, 11, 16))), 2)
+        self.assertEqual(len(final_games(CSV + "106,2026-11-09,College A,College B,0,63,2027\n", date(2026, 11, 16))), 2)
+        with self.assertRaisesRegex(ValueError, "negative score"):
+            final_games(CSV + "107,2026-11-09,College A,College B,-1,63,2027\n", date(2026, 11, 16))
 
 
 if __name__ == "__main__":
