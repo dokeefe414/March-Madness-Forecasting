@@ -33,10 +33,14 @@ def build_watchlist(teams: list[dict], as_of: str) -> dict:
         "divisionIConfirmedCandidateCount": sum(t.get("divisionIConfirmed") is True for t in teams),
         "matchedConferences": len(groups),
         "distinctConferenceDisplayNames": len({t["conference"] for t in eligible}),
+        "distinctGroupConferenceNames": len({
+            t["divisionConferenceGroupName"] for t in eligible
+            if t.get("divisionConferenceGroupName")
+        }),
         "groupingKey": "verified 2027 conference group ID, not NCAA display label",
         "limitations": [
             "Conference leader is projected Elo leader, NOT conference standings or tournament champion.",
-            "AQ group identity is 2027 source conference group ID; the NCAA display label is non-authoritative.",
+            "AQ group identity/name use the 2027 source conference group; the separate NCAA directory label may lag realignment.",
             "Power-only strength is NOT NCAA NET, quadrants, official selection criteria or bid probability.",
             "Division I group membership is independently source-linked when available; membership does not guarantee postseason eligibility.",
             "Unknown/reclassifying member eligibility, conference tournament results, and bracket seed positions unavailable.",
@@ -71,7 +75,10 @@ def build_watchlist(teams: list[dict], as_of: str) -> dict:
                       if nominal is not None else None)
         return {
             "teamId": t["teamId"], "name": t["name"],
-            "conference": t["conference"], "conferenceGroupId": t["divisionConferenceGroupId"],
+            "conference": (t.get("divisionConferenceGroupName")
+                           or t["divisionConferenceGroupId"]),
+            "ncaaDirectoryConference": t["conference"],
+            "conferenceGroupId": t["divisionConferenceGroupId"],
             "projectedRating": t["projectedRating"],
             "wins": t["wins"], "losses": t["losses"], "games": games,
             "category": tag,

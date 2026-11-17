@@ -122,7 +122,8 @@ def parse_division_members(groups_text: str, members_text: str,
     if not needed_g.issubset(groups.fieldnames or []):
         raise ValueError(f"group seasons missing {sorted(needed_g-set(groups.fieldnames or []))}")
     division_ids: set[str] = set()
-    for row in groups:
+    group_rows = list(groups)
+    for row in group_rows:
         if (str(row.get("league", "")).strip() == "mbb" and
             str(row.get("season", "")).strip() == "2027" and
             str(row.get("level", "")).strip().casefold() == "subdivision" and
@@ -130,6 +131,18 @@ def parse_division_members(groups_text: str, members_text: str,
             division_ids.add(str(row["group_id"]).strip())
     if not division_ids:
         raise ValueError("2027 Division I subdivision missing from source group seasons")
+    # The group source's own conference label is authoritative for its
+    # source conference ID; another NCAA team directory may carry names
+    # from before a conference realignment.
+    source_conference_names = {
+        str(row.get("group_id", "")).strip(): str(row.get("name", "")).strip()
+        for row in group_rows
+        if str(row.get("league", "")).strip() == "mbb"
+        and str(row.get("season", "")).strip() == "2027"
+        and str(row.get("level", "")).strip().casefold() == "conference"
+        and str(row.get("group_id", "")).strip()
+        and str(row.get("name", "")).strip()
+    }
     members = csv.DictReader(io.StringIO(members_text))
     needed = {"league", "season", "team_name", "team_id", "subdivision_id", "conference_id"}
     if not needed.issubset(members.fieldnames or []):
@@ -149,6 +162,7 @@ def parse_division_members(groups_text: str, members_text: str,
             "divisionIConfirmed": subdivision in division_ids,
             "groupTeamId": str(row["team_id"] or "").strip(),
             "conferenceGroupId": str(row["conference_id"] or "").strip() or None,
+            "conferenceGroupName": source_conference_names.get(str(row["conference_id"] or "").strip()),
             "subdivisionId": subdivision,
         }
         if key in candidates and candidates[key] != info:
@@ -221,6 +235,11 @@ def annotate_division(teams: list[dict], membership: dict[str, dict]) -> dict:
         team["divisionConferenceGroupId"] = (
             match["conferenceGroupId"]
             if match and match["divisionIConfirmed"] and match["conferenceGroupId"]
+            else None
+        )
+        team["divisionConferenceGroupName"] = (
+            match.get("conferenceGroupName")
+            if match and match["divisionIConfirmed"]
             else None
         )
         if matched_id and match:
