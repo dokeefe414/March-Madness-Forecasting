@@ -56,7 +56,7 @@ export function buildHistoricalField(
   if (archive.mainDrawOnly) throw new Error("Partial tournament result archives cannot reconstruct opening-round entrants.");
   if (!archive.seeds || !Object.keys(archive.seeds).length) throw new Error("No sourced tournament seed list is available.");
   const ratingById = new Map(ratings.map((team) => [team.teamId, team]));
-  const regionMap = new Map(REGIONS.map((r) => [r, new Map<number, BracketTeam[]>()]));
+  const regionMap: Map<string, Map<number, BracketTeam[]>> = new Map(REGIONS.map((r) => [r, new Map<number, BracketTeam[]>()]));
   const ids = new Set<string>();
   for (const [teamId, seedLabel] of Object.entries(archive.seeds)) {
     if (ids.has(teamId)) throw new Error("Duplicate team ID.");
