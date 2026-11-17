@@ -105,10 +105,12 @@ class PregameAuditTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "tip-off buffer"):
                 audit_ledger(path)
             snap_file.write_text(json.dumps(saved))
-            with self.assertRaisesRegex(ValueError, "tip-off buffer|newer"):
+            self.assertEqual(
                 settle_snapshots([{**saved, "generatedAtUtc": "2026-11-17T00:55:00Z"}],
                     [{"id":"100","date":"2026-11-16","home":"Duke","away":"North Carolina",
-                      "homeScore":80,"awayScore":70}], set(), NOW + timedelta(days=2))
+                      "homeScore":80,"awayScore":70}], set(), NOW + timedelta(days=2)),
+                [], "a near-tipoff artifact must not settle",
+            )
             final = [{"id":"100","date":"2026-11-16","home":"Duke","away":"North Carolina",
                       "homeScore":80,"awayScore":70}]
             write_ledger(path, {"predictions": []}, final, NOW + timedelta(days=2))
