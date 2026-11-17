@@ -47,6 +47,12 @@ The later scientific-review gate is evaluated on **the actual original archived 
 
 **No automatic promotion:** `promoteAutomatically=false` regardless of observed apparent gains. Future model replacement would additionally require verifying independence from repeated tune/test cycles, sufficient calendar/season breadth, trustworthy data feeds, and accuracy/calibration robustness. This policy intentionally keeps the operational Elo probability unchanged.
 
+## Existing online-logistic challenger: safer global model selection
+
+The older in-season online logistic challenger previously required 40 verified first-picked pairs and a Brier margin of 0.002 for its forward gate. v1.6 increases this to **100 paired independently settled first picks on at least 12 different source dates**, a 0.002 gain, and a positive **95% game-date-block bootstrap lower bound**. These samples are matched with the *original frozen Elo probability* on the very same event. Its earlier separate walk-forward gate continues to apply.
+
+More importantly, the nightly retraining workflow no longer automatically changes the active public policy even if both gates pass. It reports `eligibleForManualReview`, and the model remains a `shadow` until separately examined and approved via an explicit code/release change. This prevents a repeated evaluation campaign from silently deploying a retrospectively selected model.
+
 ## Publication and public UI
 
 - `.github/workflows/archive-pregame.yml` generates an as-of portfolio policy **before** creating new frozen future picks.
