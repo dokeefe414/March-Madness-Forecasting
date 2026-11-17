@@ -95,3 +95,12 @@ Additional details: [model math](../docs/model-zoo-v06.md), [D-I season referenc
 ## v0.7 current-season model fitting
 
 Use `python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json` following a source-fresh `forecast.live --games-out`. The model excludes every current Eastern-date game, fits from earlier day groups, and tests against later days before any game-day updates. It remains in shadow unless paired Elo Brier and game-date bootstrap evidence clears the documented thresholds; eligible real pregame picks keep an immutable model fingerprint. See [online retraining](../docs/online-retraining.md).
+
+
+## v0.8 current game lookup, research challenger and independent forward grading
+
+`forecast.gamecenter` requests source-verifiable ESPN upcoming fixtures and builds real opponent context using NCAA-derived previous-date scored games. `forecast.state_space` fits a research-only Gaussian latent-strength filter, with assumed observation and process noise and independent same-day-frozen retrospective evaluation. `forecast.performance.summarize_forward` computes the truly independent earliest before-tipoff accuracy percentage, by-model Brier/reliability, cumulative accuracy and recent miss labels; `forecast.audit` checks it against immutable archive evidence.
+
+`forecast.retrain --ledger web/public/forecasts` now adds an actual prospective shadow-vs-Elo gate (>=40 distinct settled first picks and >=0.002 mean paired Brier gain) on top of earlier chronological validation before promoting any learned model. This is a **guard**, not a claim of guaranteed accuracy improvement after every loss.
+
+See [Game Center](../docs/game-center.md), [Forward performance](../docs/forward-performance.md), [State-space model](../docs/state-space.md).

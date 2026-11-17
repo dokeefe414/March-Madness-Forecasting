@@ -92,3 +92,10 @@ The current-season page refreshes at the scheduled **1:00 a.m. Eastern** every n
 ## v0.7 model fingerprint and as-of rules
 
 A pregame record now includes the model name and, when eligible, the fitted-model ID and `modelTrainingThroughDate`. Each active model must share exactly the same current source retrieval timestamp as the ratings. Any model whose last training date reaches or passes the scheduled Eastern game date is rejected. The independent audit verifies model training precedes the fixture and that the original probability does not change at settlement. Neutral games and shadow models remain Elo predictions. See [current-season model fitting](online-retraining.md) for retrospective chronological validation vs genuinely archived forward picks.
+
+
+## v0.8 first-pick unique-game win rate and frozen research alternatives
+
+`forecast.snapshot` includes the actual selected winning probability alongside optional frozen `baselineHomeWinProbability`, `challengerHomeWinProbability` (even while the trained model is shadow-only), and `stateSpaceHomeWinProbability` (explicitly research-only). `forecast.audit` verifies all available probabilities are finite in (0,1), still originate from a strictly before-tipoff snapshot, and that the trained-model source date is earlier than the scheduled Eastern fixture date.
+
+The derived `forecasts/index.json` now has **`uniqueGames`**, independently rebuilt from immutable original snapshots/settlements. Only the *earliest* archived prediction for each ESPN event is eligible for distinct-game winner accuracy; if it cannot be settled, a later snapshot cannot be cherry-picked instead. The legacy `scores` still includes every (possibly repeated) archived snapshot. A missing outcome is not a zero or a fabricated win. After a miss, source-confirmed previous-day results are available at the next scheduled retraining; the old pick remains immutable. See [source-scored forward accuracy](forward-performance.md).

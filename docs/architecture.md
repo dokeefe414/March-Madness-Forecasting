@@ -85,3 +85,23 @@ The current-season model is derived from four independent sources: (a) NCAA-sour
 `forecast.snapshot` runs independently of Next.js: current rating snapshot → exact future ESPN events/start timestamps → append-only source-stamped Git records → later NCAA-source final score settlement. A bot commit can update the audit index on main without overwriting prior record files. Frontend `SelectionLab`, `ForecastTracker`, and `TeamTrend` expose source coverage, evidence and interaction separately. The Playwright suite runs desktop/mobile against the real static Next export and uploads failure traces.
 
 Detailed specs: [model zoo](model-zoo-v06.md), [division and conference identity](identity-and-conferences.md), [adjusted efficiency](adjusted-efficiency.md), [field watchlist](selection-watchlist.md), [pregame archive](forecast-audit.md), [browser QA](browser-quality.md).
+
+
+## v0.8 game-first interface, genuine future scoring and research variants
+
+```text
+NCAA-derived scored games → live.py → 2027.json + 2027-games.json
+                                 ├→ retrain.py (past-date logistic + prospective gate)
+                                 └→ state_space.py (causal Gaussian uncertainty)
+ESPN future schedule ───────────────────┬→ gamecenter.py → /current/upcoming.json
+2027 ratings + learned model + states ─┘                 ↓
+                                              GameCenter.tsx (homepage)
+
+Morning scheduled fixtures → snapshot.py (freeze selected odds, shadow and Elo)
+                            → immutable public Git snapshots → later result settlements
+                            → performance.py (earliest prediction for each event)
+                            → audit.py (recompute source provenance and scores)
+                            → /forecasts/index.json → ForwardScorecard + ForecastTracker
+```
+
+The HTML/JS site is a **static GitHub Pages build** and does not query a private real-time backend or silently publish new picks when a user clicks. Historical tournament simulations and the provisional 2027 power-watchlist remain distinct from sourced scheduled games and actual archived pretipoff predictions. See [Game Center](game-center.md), [forward scoring](forward-performance.md), and [state-space equations](state-space.md).

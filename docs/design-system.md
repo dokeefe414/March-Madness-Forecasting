@@ -63,3 +63,12 @@ Responsive breakpoints progressively collapse from multi-column cards to one-col
 For sourced study, the chart and number labels must be independently readable without color. Keyboard focusable SVG points support Enter/Space and `title` values; a full screen-reader and 200%-zoom audit remains a manual review item.
 
 Visual quality CI: [browser-quality.md](browser-quality.md).
+
+
+## v0.8 Game Center and forward scorecard UX
+
+The default homepage is now **Find a Game**, rather than a nine-tab research-only entrance. A hero conveys live-forward accuracy honestly (an em dash if not yet measured), then a searchable, date-filtered fixture list focuses a full-width actual game detail. Odds are displayed two-sided with accessible text and a color-independent probability bar. Explanations distinguish four separate descriptive factors from the true selected model's probability formula. A date, exact opponent, source score and W/L are shown for every related result; shared opponent outcomes and historical meetings cannot be silently fabricated.
+
+CSS components are in `web/app/globals.css`: `.gc-*` for game/fixture/related evidence, `.fp-*` for forward accuracy/real misses and calibration, and `.selection-lens` for tournament hypothetical comparisons. The navy-to-green editorial color scheme uses cool-blue against mint for two-sided odds; research comparison panels have a distinct lower-contrast treatment. At <=840px columns stack, with further mobile adjustments at <=600/440px. Keyboard-operable fixture buttons and input labels retain accessible text; reduced-motion preference disables transitions.
+
+When a listed source start time has passed, the game disappears from the default **upcoming** list; the optional user-controlled toggle displays the frozen captured probability with a visible non-live warning. The browser tests use mock source data only in the test runtime; do not add demo fixtures to production JSON.
