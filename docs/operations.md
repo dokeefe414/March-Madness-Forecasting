@@ -159,3 +159,8 @@ Public reference endpoints: `/current/upcoming.json` and `/current/2027-state-sp
 The primary runbook is [v09-forecast-operations.md](v09-forecast-operations.md). It covers Eastern local workflow schedule, newly required **ESPN completed final + matching NCAA scores** before settling, what happens on delayed or mismatched data, twice-daily website re-publication after archival changes, and a visible GitHub Actions alert when `monitor-archive.yml` finds a stale, absent or zero-pick archive. The website publishes `/current/archive-health.json` and must distinguish genuine source status from a green Pages compilation.
 
 All new artifacts are versioned current 2027-source-generated outputs. `python -m forecast.archive_health --ledger web/public/forecasts --require-recent` is intentionally strict in season; it may fail before the first genuine scheduled archive. Never substitute historical replay accuracy to make it green.
+
+
+## v1.1 operational evidence and recovery
+
+The pregame workflow now runs when its own definition changes on main, in addition to best-effort scheduled archiving and manual dispatch. Once a verified ESPN schedule check and independently sourced ratings are complete, the derived index is committed even if there are zero eligible future picks. Its `archiveHealth.fixtureCoverage` and `verifiedFixtureRun` fields provide a non-fabricated receipt. The monitor recognizes a fully verified clean `no-eligible-fixtures` outcome; it still fails a missing, stale, ambiguous or partial run. Git pushes retry non-forced after a fetch/rebase, with any conflict failing closed. See [v1.1 implementation](v11-season-intelligence.md) for the exact states, review steps and model diagnostics.

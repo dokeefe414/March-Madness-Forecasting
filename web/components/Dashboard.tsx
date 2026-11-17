@@ -162,6 +162,7 @@ export default function Dashboard() {
   return (
     <main data-hydrated={hydrated?"yes":"no"}>
       <div className="site-shell">
+        <a className="skip-content" href="#main-content">SKIP TO CONTENT</a>
         <header className="site-header">
           <button className="brand" onClick={() => changeTab("games")} aria-label="March Forecast home">
             <span className="brand-mark">M<span>F</span></span>
@@ -181,6 +182,7 @@ export default function Dashboard() {
           ))}
         </div>
 
+        <div id="main-content" tabIndex={-1}/>
         {tab === "rankings" && (<>
         <section className="hero">
           <div className="hero-main">
@@ -238,7 +240,7 @@ export default function Dashboard() {
             {loadStatus === "error" && <span className="year-status error">Could not load historical season.</span>}
           </div>
         )}
-        {tab === "games" && <GameCenter onOpenAccuracy={()=>changeTab("predictions")} onOpenModels={()=>changeTab("models")}/>}
+        {tab === "games" && <GameCenter onOpenAccuracy={()=>changeTab("predictions")} onOpenModels={()=>changeTab("models")} onOpenSelection={()=>changeTab("selection")}/>}
         {tab === "models" && <ModelLab onOpenGames={()=>changeTab("games")} onOpenAccuracy={()=>changeTab("predictions")}/>}
         {tab === "current" && <LiveSeason onOpenTeam={openTeam}/>}
         {tab === "selection" && <SelectionLab/>}

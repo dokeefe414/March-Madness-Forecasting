@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { RatingsDataset, Team } from "../lib/models";
 import {matchupProbability} from "../lib/models";
+import RoadToMarch from "./RoadToMarch";
 
 type WatchTeam = {teamId:string; name:string; conference:string; projectedRating:number; wins:number;
  losses:number; games:number; category:string; powerRank:number|null; sampleBand:string;illustrativeSeedRange?:number[]|null;conferenceGroupId?:string};
@@ -84,6 +85,7 @@ export default function SelectionLab(){
         <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_team_ids" target="_blank" rel="noreferrer">CHECK CONFERENCE SOURCE ↗</a></div>
         <div className="coverage-ring"><strong>{confCount}<small>/32</small></strong><span>CONFERENCES</span></div>
       </div> : <>
+        <RoadToMarch teams={watch.teams||[]} asOf={watch.asOfDate}/>
         <div className="watchlist-disclaimer"><span className="status-bullet"/><strong>UNOFFICIAL · POWER-ONLY SCENARIO</strong><span>All 76 entrants below are hypothetical. AQ proxies are Elo leaders, not conference champions; at-large candidates are strength-ranked, not committee selections. Ranking ≠ NCAA seed. Strength-tier ranges are illustrative and uncalibrated.</span></div>
         <div className="watch-filters">
           <div className="watch-segments" role="group" aria-label="Watchlist segment">

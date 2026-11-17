@@ -397,6 +397,8 @@ def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetim
         "archiveHealth": {
             "generatedAtUtc": now.isoformat().replace("+00:00", "Z"),
             "newPredictions": len(snapshot.get("predictions", [])),
+            "fixtureCoverage": snapshot.get("coverage", {}),
+            "verifiedFixtureRun": True,
             "verifiedNewSettlements": len(newly_done),
             "everArchivedPredictions": sum(len(x["predictions"]) for x in all_snapshots),
             "independentFinalVerification": verified_finals is not None,

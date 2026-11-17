@@ -7,6 +7,10 @@ on:
     - cron: "7 9,16 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/archive-pregame.yml"
 permissions:
   contents: write
 concurrency:
@@ -58,5 +62,14 @@ jobs:
             echo "No new verified predictions or settlements to archive."
           else
             git commit -m "Archive pre-tipoff source-verified forecasts and result settlements [skip ci]"
-            git push origin HEAD:main
+            # Retain the immutable snapshot files and never force-push.
+            # A concurrent source/documentation commit can legitimately race this job.
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then exit 0; fi
+              echo "Push raced with main; safely rebasing before retry $attempt"
+              git fetch origin main
+              git rebase origin/main || { git rebase --abort; exit 1; }
+            done
+            echo "Failed to commit archive after three non-force attempts" >&2
+            exit 1
           fi

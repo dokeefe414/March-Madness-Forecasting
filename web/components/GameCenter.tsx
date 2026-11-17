@@ -4,6 +4,7 @@ import type {Team,RatingsDataset} from "../lib/models";
 import {matchupProbability} from "../lib/models";
 import GameAudit, {type ArchivedSnapshot,type ArchivedSettlement} from "./GameAudit";
 import MatchupIntelligence from "./MatchupIntelligence";
+import DailyDesk from "./DailyDesk";
 
 const basePath=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Past={id:string;date:string;opponent:string;home:boolean;for:number;against:number;outcome:"W"|"L"};
@@ -71,7 +72,7 @@ function ProfilePanel({profile,side}:{profile:Profile;side:"HOME"|"AWAY"}){
   </div>;
 }
 
-export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy?:()=>void;onOpenModels?:()=>void}){
+export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}:{onOpenAccuracy?:()=>void;onOpenModels?:()=>void;onOpenSelection?:()=>void}){
   const [schedule,setSchedule]=useState<Schedule|null>(null);
   const [ratings,setRatings]=useState<RatingsDataset|null>(null);
   const [forward,setForward]=useState<Forward|null>(null);
@@ -165,6 +166,10 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
     }catch{setCopied(false);}
   }
   const total=eligible.length;
+  const easternParts=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date(now||Date.now()));
+  const datePart=(name:string)=>easternParts.find(p=>p.type===name)?.value||"";
+  const easternDay=`${datePart("year")}-${datePart("month")}-${datePart("day")}`;
+  const chooseToday=()=>{setDay(easternDay);setShowAll(false);setTeamFilter("");setSearch("");document.getElementById("gc-fixture-browser")?.scrollIntoView({block:"start",behavior:"smooth"});};
   return <section className="content-section gc" id="games">
     <div className="gc-hero">
       <div><span className="gc-overline"><span className="live-dot"/> THE NEXT MATCHUP IS YOURS TO EXPLORE</span>
@@ -181,7 +186,17 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
         <p className="gc-archive-health">ARCHIVE {archiveHealth?.status?.toUpperCase()||"UNVERIFIED"} · {archiveHealth?.message||"Public archive status has not been verified."}</p>
       </aside>
     </div>
-    <div className="gc-intro"><div><span className="section-kicker">01 / THE VERIFIED SCHEDULE</span><h2>Pick a <span>game.</span></h2>
+    <nav className="daily-shortcuts" aria-label="Explore March Forecast">
+      <a href="#daily-desk">TODAY'S GAMES ↓</a>
+      <button type="button" onClick={onOpenAccuracy}>ACCURACY & PICKS ↗</button>
+      <button type="button" onClick={onOpenModels}>MODEL RESEARCH ↗</button>
+      <button type="button" onClick={onOpenSelection}>ROAD TO MARCH ↗</button>
+    </nav>
+    {schedule&&<div id="daily-desk"><DailyDesk games={schedule.games} today={easternDay}
+      health={archiveHealth} generatedAt={schedule.generatedAtUtc}
+      settled={forward?.settledUniqueGames||0} onChoose={(id)=>{setDay("all");setShowAll(true);setTeamFilter("");setSearch("");choose(id);}}
+      onToday={chooseToday}/></div>}
+    <div className="gc-intro" id="gc-fixture-browser"><div><span className="section-kicker">01 / THE VERIFIED SCHEDULE</span><h2>Pick a <span>game.</span></h2>
       <p>Future ESPN scheduled fixtures only. The nightly refresh updates probabilities and team form as source results change.</p></div>
       <span className="gc-source-pill">{schedule?formatTime(schedule.generatedAtUtc):"CHECKING LATEST SOURCE…"}</span></div>
     {!schedule?<div className="premium-empty" role={problem?"alert":"status"}><h3>{problem||"LOADING REAL GAMES…"}</h3>

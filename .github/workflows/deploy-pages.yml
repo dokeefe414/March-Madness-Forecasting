@@ -58,6 +58,14 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.state_space --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-state-space.json
+      - name: Evaluate causal Bayesian and residual-stump challengers
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.challengers --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/challengers.json
+      - name: Summarize prospective first-pick error drift
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.drift --ledger web/public/forecasts/index.json --out web/public/current/drift.json
       - name: Assemble real upcoming ESPN fixtures with matchup reasons and prior-game evidence
         env:
           PYTHONPATH: research

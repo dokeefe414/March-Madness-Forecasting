@@ -135,3 +135,8 @@ GitHub Actions 11:35/18:35 ET → monitor-archive.yml stale/absent/no-pick failu
 The website is not a live scoring daemon. It reads public, versioned, source-backed artifacts. No outside user-specific infrastructure or manually entered previous game is required, but GitHub Actions may be late or the ESPN/NCAA-derived feeds may temporarily disagree. The model lab explicitly separates prospective first-pick Brier from retrospective date-frozen research cohorts.
 
 [Source and integrity methodology](v09-model-validation.md) · [Recovery runbook](v09-forecast-operations.md).
+
+
+## v1.1 additions
+
+`forecast.challengers` evaluates Bayesian-style shrinkage and online residual-stump experiments against causal same-day Elo on identically dated prior games; outputs `current/challengers.json` during static site builds only. `forecast.drift` consumes the earliest-first-pick settled ledger `uniqueGames` to publish `current/drift.json`. The default Game Center displays a sourced daily desk and the Field Watch page displays a provisional top-eight Road to March strength studio; neither changes archived odds or fabricates a future bracket. The archiver emits a durable zero-pick source-coverage receipt when appropriate. See [the methods and caveats](v11-season-intelligence.md).
