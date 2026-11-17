@@ -51,6 +51,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.historical_dataset --web-dir web --manifest web/public/research/historical-data-manifest.json --evaluation web/public/research/historical-evaluation.json
+      - name: Publish historical-only probabilistic score, calibration and ensemble evaluation
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.historical_probabilistic --web-dir web --out web/public/research/historical-probabilistic.json
       - name: Validate and build 2027 NCAA-source results
         env:
           PYTHONPATH: research
