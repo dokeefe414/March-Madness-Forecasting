@@ -169,3 +169,23 @@ test("v0.9 real archived event snapshots render before-tipoff timeline and verif
   await expect(page.locator(".ga-postgame")).toContainText("FINAL");
   await expect(page).toHaveURL(/game=finished-test/);
 });
+
+test("v1.1 daily shortcuts and empty-source navigation remain keyboard accessible",async ({page})=>{
+  await page.goto("/");
+  await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+  await expect(page.getByRole("navigation",{name:"Explore March Forecast"})).toBeVisible();
+  await expect(page.getByRole("link",{name:/TODAY'S GAMES/i})).toBeVisible();
+  await page.getByRole("navigation",{name:"Explore March Forecast"}).getByRole("button",{name:/ROAD TO MARCH/i}).click();
+  await expect(page.getByRole("heading",{name:/Field watchlist/i})).toBeVisible();
+  await section(page,"Find a Game");
+  await expect(page.getByRole("heading",{name:/Game intelligence/i})).toBeVisible();
+  await page.keyboard.press("Tab");
+  await expect(page.locator("body")).toBeVisible();
+});
+test("v1.1 model lab labels new challengers as retrospective, not public picks",async ({page})=>{
+  await page.goto("/?view=models");
+  await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+  await expect(page.getByRole("heading",{name:/Bayesian & residual learning/i})).toBeVisible();
+  await expect(page.getByRole("heading",{name:/Is the model drifting/i})).toBeVisible();
+  await expect(page.getByText(/Strict previous-date replay/i)).toBeVisible();
+});
