@@ -4,11 +4,11 @@ import tempfile
 import unittest
 from datetime import date, datetime, timezone
 from pathlib import Path
-from forecast.live import final_games, build_current
+from forecast.live import final_games, build_current, parse_source_date
 
 CSV = """contest_id,game_date,home,away,home_score,away_score,season
-100,2026-11-02,College A,College B,78,69,2027
-101,2026-11-03,College B,College C,65,70,2027
+100,11/02/2026,College A,College B,78,69,2027
+101,11/03/2026,College B,College C,65,70,2027
 102,2026-11-10,College A,College C,,,2027
 100,2026-11-02,College A,College B,78,69,2027
 103,2027-04-05,College A,College C,84,70,2027
@@ -18,6 +18,10 @@ CSV = """contest_id,game_date,home,away,home_score,away_score,season
 
 class LiveSeasonTests(unittest.TestCase):
     def test_ingest_dedupes_future_and_unplayed(self):
+        self.assertEqual(parse_source_date("11/07/2026"), date(2026,11,7))
+        self.assertEqual(parse_source_date("2026-11-07"), date(2026,11,7))
+        with self.assertRaisesRegex(ValueError, "Unrecognized"):
+            parse_source_date("07-11-2026")
         rows = final_games(CSV, date(2026, 11, 16))
         self.assertEqual([r["id"] for r in rows], ["100", "101"])
         output = build_current(rows, datetime(2026, 11, 16, tzinfo=timezone.utc))

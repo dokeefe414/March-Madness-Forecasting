@@ -35,6 +35,23 @@ MAX_DOWNLOAD_BYTES = 12_000_000
 NEEDED = {"contest_id", "game_date", "home", "away", "home_score", "away_score", "season"}
 
 
+def parse_source_date(raw: str) -> date:
+    """Parse the provider's ISO or U.S. month/day/year published date.
+
+    SportsDataverse's 2027 CSV currently publishes dates like 11/07/2026,
+    while some producer versions use ISO 2026-11-07. Both map to the same
+    date; ambiguous day/month guessing is deliberately prohibited.
+    """
+    token = str(raw or "").strip()[:10]
+    try:
+        return date.fromisoformat(token)
+    except ValueError:
+        try:
+            return datetime.strptime(token, "%m/%d/%Y").date()
+        except ValueError as exc:
+            raise ValueError(f"Unrecognized NCAA game_date {raw!r}") from exc
+
+
 def final_games(csv_text: str, as_of: date | None = None) -> list[dict]:
     """Strict parse: only completed scores, chronological, unique contest IDs.
 
@@ -50,7 +67,7 @@ def final_games(csv_text: str, as_of: date | None = None) -> list[dict]:
     for row in reader:
         if str(row["season"]).strip() != str(SEASON):
             continue
-        game_date = date.fromisoformat(row["game_date"].strip()[:10])
+        game_date = parse_source_date(row["game_date"])
         if game_date < FIRST_DATE or game_date > min(as_of, REGULAR_SEASON_CUTOFF):
             continue
         home, away = str(row["home"] or "").strip(), str(row["away"] or "").strip()
