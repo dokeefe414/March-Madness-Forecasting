@@ -17,3 +17,7 @@ research/outputs/
 # Generated at deploy time, never checked into git as potentially stale fixtures
 web/public/current/2027.json
 web/public/research/benchmark.json
+
+# Browser E2E visual artifacts are CI uploads, not source-controlled screenshots.
+web/test-results/
+web/playwright-report/

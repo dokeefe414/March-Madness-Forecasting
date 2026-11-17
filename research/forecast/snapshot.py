@@ -223,6 +223,10 @@ def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetim
     all_settlements = _existing(settlement_dir)
     done = {r["predictionKey"] for s in all_settlements for r in s["results"]}
     newly_done = settle_snapshots(all_snapshots, finals, done, now)
+    if not snapshot["predictions"] and not newly_done and (folder / "index.json").exists():
+        # Avoid a noisy daily commit when no new source-verified audit evidence
+        # exists. Preserve the previous index time and verified contents.
+        return json.loads((folder / "index.json").read_text(encoding="utf-8"))
     if newly_done:
         _write_json(settlement_dir / (stamp + ".json"), {
             "generatedAtUtc": now.isoformat().replace("+00:00","Z"),
