@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildFieldFromSlots, simulateFullBracket, SEED_ORDER, REGIONS } from "../lib/fullBracket.ts";
+import { readFileSync } from "node:fs";
+import { buildHistoricalField, buildFieldFromSlots, simulateFullBracket, SEED_ORDER, REGIONS } from "../lib/fullBracket.ts";
 
 function makeField(extra: number) {
   let id = 0;
@@ -40,4 +41,29 @@ test("rejects incomplete field and repeated team", () => {
   const duplicate = makeField(0);
   duplicate.regions[0].slots[0].teams[0].teamId = duplicate.regions[1].slots[0].teams[0].teamId;
   assert.throws(() => simulateFullBracket(duplicate, 100), /Each team/);
+});
+
+test("every eligible historical 1985–2025 NCAA archive reconstructs without invented entrants", () => {
+  const index = JSON.parse(readFileSync("data/history-index.json", "utf8"));
+  let checked = 0;
+  const counts = new Map();
+  for (const entry of index.seasons) {
+    const y = entry.season;
+    if (y > 2025 || y === 2020 || !entry.tournamentGames) continue;
+    const archive = JSON.parse(readFileSync("public/tournaments/" + y + ".json", "utf8"));
+    const snapshot = JSON.parse(readFileSync("public/seasons/" + y + ".json", "utf8"));
+    const field = buildHistoricalField(archive, snapshot.teams);
+    assert.ok([64, 65, 68].includes(field.entrants.length), "unexpected real format for " + y);
+    assert.equal(field.regions.length, 4);
+    counts.set(field.entrants.length, (counts.get(field.entrants.length) || 0) + 1);
+    checked++;
+  }
+  assert.equal(checked, 40, "Historical NCAA held tournaments from 1985–2025 excluding canceled 2020");
+  assert.ok(counts.has(64), "Expected original-era tournament fields");
+  assert.ok(counts.has(68), "Expected First Four-era fields");
+});
+test("partial 2026 main draw cannot be mistaken for complete tournament", () => {
+  const archive = JSON.parse(readFileSync("public/tournaments/2026.json", "utf8"));
+  const snapshot = JSON.parse(readFileSync("public/seasons/2026.json", "utf8"));
+  assert.throws(() => buildHistoricalField(archive, snapshot.teams), /Partial tournament/);
 });
