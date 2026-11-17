@@ -949,3 +949,30 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
  .mf-location>span{display:none}
  .mf-location{min-height:38px}
 }
+
+/* v1.8: explain probabilities, score distributions, calibration, and uncertainty */
+.v18-study{background:linear-gradient(150deg,#12343f,#0a222e);border:1px solid #517967;border-radius:16px;padding:clamp(16px,3vw,29px);margin:22px 0;color:#e7fff0}
+.v18-stat-bar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:20px 0}
+.v18-stat-bar>div{min-width:0;background:#0c2d37;border:1px solid #49715e;border-radius:10px;padding:13px}
+.v18-stat-bar small{font-size:9px;font-weight:900;letter-spacing:.35px;color:#b7d8c6;display:block;line-height:1.5}
+.v18-stat-bar strong{display:block;color:#f2fff6;font:900 clamp(26px,3.5vw,41px)/1.2 "Barlow Condensed",Impact,sans-serif;margin-top:7px}
+.v18-gain{padding:14px;background:#153c37;border-left:3px solid #b7f5cc;font-size:12px;line-height:1.7;color:#e4fff1}
+.v18-calibration{border:1px solid #466e63;border-radius:12px;padding:clamp(11px,2vw,19px);margin:19px 0;background:#0e2d36}
+.v18-calibration h4{color:#e3ffe9;font:900 24px "Barlow Condensed",Impact,sans-serif;margin:0 0 6px}
+.v18-calibration p{font-size:11px;color:#bedccd;line-height:1.7}
+.v18-switches{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.v18-switches button{background:#173d40;border:1px solid #5b9079;color:#c5ecdb;border-radius:8px;padding:9px 13px;font-size:11px;font-weight:800}
+.v18-switches button.active,.v18-switches button[aria-pressed=true]{background:#b9ffcf;color:#122e21}
+.v18-calibration-row{display:grid;grid-template-columns:65px minmax(0,1fr) minmax(0,1fr) 66px;gap:8px;align-items:center;margin:9px 0}
+.v18-calibration-row span{font-size:10px;color:#c4e5d3}
+.v18-calibration-track{height:12px;border-radius:7px;background:#09212d;overflow:hidden}
+.v18-calibration-track i{display:block;height:100%;border-radius:7px;background:#a5f4c5}
+.v18-calibration-track.actual i{background:#93c3ff}
+.v18-model-guide{background:#10333a;border:1px solid #4e8874;border-radius:12px;padding:14px;margin:15px 0;color:#d9f8e7}
+.v18-model-guide>summary{cursor:pointer;font-size:12px;line-height:1.6;font-weight:900;color:#e1ffe9}
+.v18-model-guide>summary:focus-visible{outline:3px solid #b5f5c3;outline-offset:4px}
+.v18-model-guide p{font-size:11px;line-height:1.75;color:#c1dfcd}
+.v18-model-guide strong{color:#ecfff3}
+.v18-model-guide button{border:1px solid #80b49b;border-radius:8px;background:#143e35;color:#e0ffe9;font-size:11px;font-weight:900;padding:10px;cursor:pointer}
+@media(max-width:780px){.v18-stat-bar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:410px){.v18-stat-bar{grid-template-columns:1fr}.v18-calibration-row{grid-template-columns:54px minmax(0,1fr) minmax(0,1fr) 45px;gap:5px}.v18-calibration-row span{font-size:9px}}
