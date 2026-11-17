@@ -344,7 +344,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        {tab === "bracket" && <FullBracketLab data={data} />}
+        {tab === "bracket" && <FullBracketLab data={data} onOpenArchive={()=>changeTab("history")}/>}
 
         {tab === "history" && (
           <section className="content-section" id="history">
