@@ -14,6 +14,7 @@ export default function LiveSeason() {
   const [opponentId, setOpponentId] = useState("");
   const [view, setView] = useState<"rankings" | "scores">("rankings");
   const [verifiedOnly,setVerifiedOnly] = useState(false);
+  const [probabilityModel,setProbabilityModel] = useState<"elo"|"calibrated"|"blend">("blend");
   const [conferenceFilter,setConferenceFilter] = useState("all");
   useEffect(() => {
     let ignore = false;
@@ -35,7 +36,13 @@ export default function LiveSeason() {
     [teams,search,verifiedOnly,conferenceFilter]);
   const selected = teams.find(t=>t.teamId === selectedId) || teams[0];
   const opponent = teams.find(t=>t.teamId === opponentId) || teams[1];
-  const probability = selected && opponent && selected.teamId !== opponent.teamId ? matchupProbability(selected.projectedRating, opponent.projectedRating) : null;
+  const comparisonReady = Boolean(selected && opponent && selected.teamId !== opponent.teamId);
+  const eloP = comparisonReady ? matchupProbability(selected.rating,opponent.rating) : null;
+  const calibratedP = comparisonReady && data?.historicalCalibration ?
+    1/(1+Math.pow(10,-(selected.projectedRating-opponent.projectedRating)/(400*data.historicalCalibration.temperature))) : null;
+  const probability = probabilityModel==="elo" || calibratedP===null ? eloP :
+    probabilityModel==="calibrated" ? calibratedP :
+    (1-data!.historicalCalibration!.blendWeight)*eloP!+data!.historicalCalibration!.blendWeight*calibratedP;
   const updated = data?.retrievedAtUtc ? new Date(data.retrievedAtUtc).toLocaleString("en-US",{year:"numeric",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZone:"UTC"})+" UTC" : "Unknown";
   return <section className="content-section current-exp">
     <div className="section-heading"><div><span className="section-kicker">01 / 2026–27 SEASON</span><h2>Current <span>pulse</span></h2><p>Real NCAA-source final scores, independently updated power ratings, and transparent freshness metadata.</p></div><span className="research-pill">SEASON 2027</span></div>
@@ -68,7 +75,15 @@ export default function LiveSeason() {
           <div className="spotlight-separator"/>
           <label className="feature-kicker" htmlFor="live-opponent">NEUTRAL-COURT MATCHUP VS</label>
           <select id="live-opponent" className="live-opponent-select" value={opponent?.teamId} onChange={e=>setOpponentId(e.target.value)}>{teams.map(t=><option key={t.teamId} value={t.teamId}>{t.name}</option>)}</select>
-          {probability !== null && <div className="live-probability"><strong>{pct(probability)}</strong><span>ESTIMATED WIN PROBABILITY</span><div className="prob-bar"><div style={{width:pct(probability)}}/></div><small>{pct(1-probability)} for {opponent.name}</small></div>}
+          <label className="live-model-toggle">MATCHUP MODEL
+            <select value={probabilityModel} onChange={e=>setProbabilityModel(e.target.value as "elo"|"calibrated"|"blend")}>
+              <option value="elo">Uncalibrated regular Elo</option>
+              <option value="calibrated" disabled={!data.historicalCalibration}>Historical-calibrated trend</option>
+              <option value="blend" disabled={!data.historicalCalibration}>Held-out-year ensemble</option>
+            </select>
+          </label>
+          {data.historicalCalibration && <div className="live-model-source">Prior-season calibration: through {data.historicalCalibration.trainedThroughSeason} · temperature {data.historicalCalibration.temperature.toFixed(2)} · ensemble weight {(data.historicalCalibration.blendWeight*100).toFixed(0)}%. Extrapolating historical neutral-tournament calibration to this regular-season matchup has not been validated for 2027.</div>}
+          {probability !== null && <div className="live-probability"><strong>{pct(probability)}</strong><span>{probabilityModel==="elo"||!data.historicalCalibration?"BASE ELO WIN CHANCE":probabilityModel==="calibrated"?"HISTORICAL CALIBRATED SCENARIO":"HISTORICAL ENSEMBLE SCENARIO"}</span><div className="prob-bar"><div style={{width:pct(probability)}}/></div><small>{pct(1-probability)} for {opponent.name}</small></div>}
           {probability===null&&<p className="method-note">Choose another team to compare.</p>}
           <p className="method-note">Live Elo probabilities have not been calibrated on 2027 tournaments. Adjusted offensive/defensive ratings are possession-based **descriptive** team-box estimates, not a validated replacement for Elo probabilities.</p>
         </>}</div>

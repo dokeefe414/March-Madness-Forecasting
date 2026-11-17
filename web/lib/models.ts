@@ -63,6 +63,7 @@ export type RatingsDataset = {
   identityCoverage?: {status?: string; source?:string; ratedTeams?: number; matchedRatedTeams?: number; unmatchedRatedTeams?: number; conferencesRepresented?: number; matchRate?:number; conferenceCounts?:Record<string,number>};
   efficiencyCoverage?: {status?: string; source?:string; matchedTeamGames?: number; teamsWithMetrics?: number; scheduledFinalGames?:number; skippedRows?:number};
   selectionWatchlist?: unknown;
+  historicalCalibration?: {temperature:number;blendWeight:number;trainedThroughSeason:number;source:string;caveat:string};
   pregameDiagnostics?: {evaluatedGames: number; brier: number; accuracy: number; coinFlipBrier: number; method: string; caveat: string};
 };
 

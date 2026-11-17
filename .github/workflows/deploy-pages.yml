@@ -28,14 +28,14 @@ jobs:
         with:
           python-version: "3.12"
       - uses: actions/configure-pages@v5
-      - name: Validate and build 2027 NCAA-source results
-        env:
-          PYTHONPATH: research
-        run: python -m forecast.live --out web/public/current/2027.json
-      - name: Build leakage-aware research visualizations
+      - name: Build historical-only research and model-calibration artifact
         env:
           PYTHONPATH: research
         run: python -m forecast.benchmark --web-dir web --out web/public/research/benchmark.json
+      - name: Validate and build 2027 NCAA-source results
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.live --model-report web/public/research/benchmark.json --out web/public/current/2027.json
       - name: Install frontend dependencies
         working-directory: web
         run: npm install --no-audit --no-fund
