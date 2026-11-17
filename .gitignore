@@ -21,3 +21,8 @@ web/public/research/benchmark.json
 # Browser E2E visual artifacts are CI uploads, not source-controlled screenshots.
 web/test-results/
 web/playwright-report/
+
+# Temporary 2027 score and adaptive-model training artifacts rebuilt at source refresh.
+web/public/current/2027-games.json
+web/public/current/2027-online-model.json
+web/public/current/refresh-status.json

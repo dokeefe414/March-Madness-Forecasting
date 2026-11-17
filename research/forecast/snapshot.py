@@ -24,6 +24,7 @@ from zoneinfo import ZoneInfo
 from .core import matchup_probability
 from .reference import canonical
 from .live import SOURCE_URL, final_games, fetch_csv
+from .retrain import validate_for_pick, probability as online_probability
 
 ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard"
 LOCAL = ZoneInfo("America/New_York")
@@ -78,7 +79,7 @@ def _one_team(side: dict, name_index: dict[str, list[dict]]) -> dict | None:
 
 
 def forecast_scheduled(scoreboards: list[dict], ratings: dict,
-                       generated_at: datetime) -> dict:
+                       generated_at: datetime, online_model: dict | None = None) -> dict:
     """Strict as-of future-start verification and source identity matching."""
     generated_at = generated_at.astimezone(timezone.utc)
     retrieved = parse_time(ratings["retrievedAtUtc"])
@@ -126,7 +127,23 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 counters["duplicateIds"] += 1
                 continue
             neutral = bool(competitions[0].get("neutralSite", False))
+            # The trained home/away correction is not evaluated for neutral
+            # venues. Such games keep the baseline without an extrapolation.
+            selected = (None if neutral else validate_for_pick(
+                online_model, ratings, starts.astimezone(LOCAL).date().isoformat()))
             p = matchup_probability(home["rating"], away["rating"], 0 if neutral else 65)
+            model_name = "as-of regular-season Elo"
+            if selected is not None:
+                # The published 2027 team snapshot carries the SAME causal
+                # projected Elo form and smoothed W/L fields used in training.
+                form_gap = (home.get("trend", 0) - away.get("trend", 0)) / 30.0
+                home_rate = (home["wins"]+1)/(home["wins"]+home["losses"]+2)
+                away_rate = (away["wins"]+1)/(away["wins"]+away["losses"]+2)
+                x = ((home["rating"]+65-away["rating"])/400,
+                     max(-1.0,min(1.0,form_gap)),
+                     home_rate-away_rate, 1.0)
+                p = online_probability(x,selected["modelWeights"])
+                model_name = "chronologically validated in-season logistic"
             unique[event_id] = {
                 "eventId": event_id, "scheduledStartUtc": starts.isoformat().replace("+00:00", "Z"),
                 "scheduledEasternDate": starts.astimezone(LOCAL).date().isoformat(),
@@ -134,7 +151,9 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 "homeTeamId": home["teamId"], "awayTeamId": away["teamId"],
                 "homeWinProbability": round(p, 7),
                 "awayWinProbability": round(1-p, 7),
-                "neutralSite": neutral, "model": "as-of regular-season Elo",
+                "neutralSite": neutral, "model": model_name,
+                "modelId": selected.get("modelId") if selected else None,
+                "modelTrainingThroughDate": selected.get("trainedThroughDate") if selected else None,
                 "match": "exact canonical NCAA name to ESPN team location/display",
             }
     result = sorted(unique.values(), key=lambda p: (p["scheduledStartUtc"], p["eventId"]))
@@ -150,7 +169,7 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
         "limitations": [
             "Missing/ambiguous ESPN ↔ NCAA name matches are excluded, never guessed.",
             "ESPN scheduled start may change; this records its as-of state, not proof of the actual tip-off.",
-            "Probabilities are ordinary 2027 regular-season Elo plus documented home advantage, not a fitted 2027 tournament model.",
+            "Elo is the operational fallback; the in-season logistic correction activates only after earlier-date rolling Brier and date-block confidence gates.",
             "Only forecasts generated before reported start (with 15-minute buffer) are stored.",
         ],
     }
@@ -276,18 +295,24 @@ def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetim
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ratings", type=Path, default=Path("web/public/current/2027.json"))
+    parser.add_argument("--online-model", type=Path, help="Current-source 2027 chronologically retrained model JSON")
     parser.add_argument("--out-dir", type=Path, default=Path("web/public/forecasts"))
     parser.add_argument("--scoreboard-json", type=Path, help="Offline fixture JSON for hermetic runs")
     parser.add_argument("--finals-csv", type=Path, help="Offline results CSV")
     args = parser.parse_args()
     now = datetime.now(timezone.utc)
     ratings = json.loads(args.ratings.read_text(encoding="utf-8"))
+    online_model = json.loads(args.online_model.read_text(encoding="utf-8")) if args.online_model else None
+    if online_model and online_model.get("generatedAtUtc"):
+        if parse_time(online_model["generatedAtUtc"]) > now:
+            raise ValueError("online training artifact is newer than archived forecast")
+
     if args.scoreboard_json:
         scoreboards = [json.loads(args.scoreboard_json.read_text(encoding="utf-8"))]
     else:
         days = [now.astimezone(LOCAL).date() + timedelta(days=i) for i in range(2)]
         scoreboards = [retrieve_fixture(day) for day in days]
-    forecast = forecast_scheduled(scoreboards, ratings, now)
+    forecast = forecast_scheduled(scoreboards, ratings, now, online_model=online_model)
     if args.finals_csv:
         finals_text = args.finals_csv.read_text(encoding="utf-8-sig")
     else:
