@@ -30,9 +30,9 @@ export function estimateScore(home:Team|undefined,away:Team|undefined):ScoreProj
  // a plausible mean tempo, and a plausible offensive/defensive league anchor.
  const haveBox=boxGames>=MIN_GAMES&&adjusted.every(finite)&&rawBox.every(finite);
  const tempo=haveBox?((home.pacePossessions!+away.pacePossessions!)/2):0;
- const sourceAnchor=haveBox?rawBox.reduce((a,b)=>a+(b||0),0)/4:0;
+ const sourceAnchor=haveBox?rawBox.reduce<number>((sum,v)=>sum+(v??0),0)/4:0;
  if(haveBox&&tempo>=50&&tempo<=95&&sourceAnchor>=50&&sourceAnchor<=150
-    &&adjusted.slice(0,4).every(v=>v!>35&&v!<200)){
+    &&adjusted.slice(0,4).every(v=>(v as number)>35&&(v as number)<200)){
    const [homeOff,homeDef,awayOff,awayDef]=adjusted as number[];
    // Multiplicative, symmetric strengths: both offenses and opposing adjusted
    // defensive efficiencies are normalized by the observed-source mean.
