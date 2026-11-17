@@ -44,7 +44,7 @@ The committed static season JSON is source-derived and browseable without a paid
 - Historical selector fetches /seasons/<year>.json from the static site's public directory.
 - Archive tab loads /tournaments/<year>.json on demand. Empty result for 2020 is shown.
 - Matchup and eight-team simulation always use the selected historical season's teams; they are NOT 2027 forecasts and the demo bracket is NOT a real NCAA tournament bracket.
-- NEXT_PUBLIC_BASE_PATH supports /March-Madness-Forecasting deployment on GitHub Pages.
+- NEXT_PUBLIC_BASE_PATH supports /March-Madness-Forecasting26-27 deployment on GitHub Pages.
 
 ## Research integrity constraints
 
@@ -140,3 +140,8 @@ The website is not a live scoring daemon. It reads public, versioned, source-bac
 ## v1.1 additions
 
 `forecast.challengers` evaluates Bayesian-style shrinkage and online residual-stump experiments against causal same-day Elo on identically dated prior games; outputs `current/challengers.json` during static site builds only. `forecast.drift` consumes the earliest-first-pick settled ledger `uniqueGames` to publish `current/drift.json`. The default Game Center displays a sourced daily desk and the Field Watch page displays a provisional top-eight Road to March strength studio; neither changes archived odds or fabricates a future bracket. The archiver emits a durable zero-pick source-coverage receipt when appropriate. See [the methods and caveats](v11-season-intelligence.md).
+
+
+## v1.3 operational and research boundary
+
+`forecast.operations` and `forecast.snapshot.detect_schedule_changes` write **derived read-only source receipts**; they never alter immutable original pick timestamps or settled results. `forecast.advanced_models` fits true depth-two Newton CART boosting trees and approximate Gaussian Bradley–Terry posterior states on prior-date observations, outputting retrospective research-only `current/advanced-models.json`. The Model Lab's `ResearchVisualization` displays independently separated retrospective replay curves, actual first-pick rolling Brier and calibration, and sampled source ratings; no data sample is conflated. `BracketDuel` shares the canonical historical play-in/round resolver with `BracketBuilder`, keeps two local competitor states, and counts only identically reachable matchups. See [the implementation, assumptions and tests](v13-research-tournament-operations.md).

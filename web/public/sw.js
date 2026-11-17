@@ -2,7 +2,7 @@
  * Offline shell is a convenience, never a claim of real-time odds.
  */
 const VERSION="march-forecast-shell-v12";
-const ROOT="/March-Madness-Forecasting/";
+const ROOT="/March-Madness-Forecasting26-27/";
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(VERSION).then(cache=>cache.add(ROOT)).then(()=>self.skipWaiting()));
 });

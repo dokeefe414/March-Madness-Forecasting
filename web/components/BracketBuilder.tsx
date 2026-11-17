@@ -2,13 +2,13 @@
 import {useEffect,useMemo,useState} from "react";
 import type {BracketField,BracketTeam} from "../lib/fullBracket";
 const rounds=["PLAY-IN","ROUND OF 64","ROUND OF 32","SWEET 16","ELITE 8","FINAL FOUR","TITLE"] as const;
-type Match={key:string;a:BracketTeam|null;b:BracketTeam|null};
-type Picks=Record<string,string>;
+export type Match={key:string;a:BracketTeam|null;b:BracketTeam|null};
+export type Picks=Record<string,string>;
 function pair(items:(BracketTeam|null)[],prefix:string):Match[]{
  const results:Match[]=[];for(let i=0;i<items.length;i+=2)results.push({key:prefix+"-"+i/2,a:items[i],b:items[i+1]});
  return results;
 }
-function buildRounds(field:BracketField,picks:Picks):Match[][]{
+export function buildRounds(field:BracketField,picks:Picks):Match[][]{
  const play:Match[]=[];const regionFirst:(BracketTeam|null)[][]=[];
  for(const region of field.regions){
    regionFirst.push(region.slots.map(slot=>{

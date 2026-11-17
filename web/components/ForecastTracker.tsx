@@ -2,6 +2,7 @@
 import { useEffect,useMemo,useState } from "react";
 import ForwardScorecard from "./ForwardScorecard";
 import SettlementHealth from "./SettlementHealth";
+import OperationsCenter from "./OperationsCenter";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 type Pick = {eventId:string;scheduledStartUtc:string;scheduledEasternDate:string;home:string;away:string;homeTeamId:string;awayTeamId:string;homeWinProbability:number;neutralSite:boolean;model:string;modelId?:string|null;modelTrainingThroughDate?:string|null};
 type Snapshot = {id:string;generatedAtUtc:string;count:number;predictions:Pick[]};
@@ -48,11 +49,12 @@ export default function ForecastTracker(){
       <h3>{missing?"NO AUDITED FORECAST ARCHIVE YET":"LOADING SOURCE-TIMESTAMPED PICKS"}</h3>
       <p>{missing||"Reading the committed pre-tipoff prediction ledger…"}</p>
       <p>The scheduled GitHub workflow will populate it once future fixtures can be matched unambiguously. No retroactively generated historical forecasts count as forward predictions.</p>
-      <a className="button-outline" href="https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml" target="_blank" rel="noreferrer">VIEW FORECAST ARCHIVER ↗</a></div>:
+      <a className="button-outline" href="https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/archive-pregame.yml" target="_blank" rel="noreferrer">VIEW FORECAST ARCHIVER ↗</a></div>:
       <>
-        <div className="source-status"><span className="status-bullet"/><div><strong>PUBLIC GITHUB AUDIT TRAIL</strong><span>Latest index <DateDisplay iso={ledger.generatedAtUtc}/> · {ledger.snapshots.length} saved capture runs · exact-time provenance</span></div><a href="https://github.com/dokeefe414/March-Madness-Forecasting/tree/main/web/public/forecasts" target="_blank" rel="noreferrer">VERIFY SOURCE FILES ↗</a></div>
+        <div className="source-status"><span className="status-bullet"/><div><strong>PUBLIC GITHUB AUDIT TRAIL</strong><span>Latest index <DateDisplay iso={ledger.generatedAtUtc}/> · {ledger.snapshots.length} saved capture runs · exact-time provenance</span></div><a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27/tree/main/web/public/forecasts" target="_blank" rel="noreferrer">VERIFY SOURCE FILES ↗</a></div>
         <ForwardScorecard report={ledger.uniqueGames}/>
         <SettlementHealth/>
+        <OperationsCenter/>
         <div className="mini-metrics"><div><small>PRE-TIPOFF PICKS</small><strong>{all.length}</strong><span>Latest archived runs shown</span></div>
           <div><small>SETTLED PICKS</small><strong>{scores?.settledPredictions||0}</strong><span>Against NCAA final scores</span></div>
           <div><small>OUT-OF-SAMPLE BRIER</small><strong>{scores?.brier!=null?scores.brier.toFixed(4):"—"}</strong><span>50/50 reference 0.2500</span></div>
@@ -72,7 +74,7 @@ export default function ForecastTracker(){
           {p.result && <div className="pick-result"><strong>FINAL {p.result.awayScore}–{p.result.homeScore}</strong><span>Forecast Brier {p.result.brier.toFixed(4)} · {p.result.winnerCorrect===1?"CORRECT PICK":p.result.winnerCorrect===.5?"EVEN-ODDS PICK":"MISSED PICK"}</span></div>}
         </article>)}
         {!visible.length&&<div className="premium-empty"><h3>NO QUALIFYING MATCHUPS</h3><p>There are no source-matched predictions for this filter. We will not backfill them after games start.</p></div>}</div>
-        <p className="source-note">Scheduled fixture source: ESPN public scoreboard; results: SportsDataverse NCAA-source finals; identity join: exact normalized NCAA name only. An ESPN scheduled start is not proof of actual tip-off if a game was rescheduled. Settlements require same Eastern date, same home/away names, and a single confirmed result. Multiple pregame snapshots of a game count as distinct forecasts and are not independent games. <a href="https://github.com/dokeefe414/March-Madness-Forecasting/blob/main/docs/forecast-audit.md" target="_blank" rel="noreferrer">Read audit policy ↗</a></p>
+        <p className="source-note">Scheduled fixture source: ESPN public scoreboard; results: SportsDataverse NCAA-source finals; identity join: exact normalized NCAA name only. An ESPN scheduled start is not proof of actual tip-off if a game was rescheduled. Settlements require same Eastern date, same home/away names, and a single confirmed result. Multiple pregame snapshots of a game count as distinct forecasts and are not independent games. <a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27/blob/main/docs/forecast-audit.md" target="_blank" rel="noreferrer">Read audit policy ↗</a></p>
       </>}
   </section>;
 }

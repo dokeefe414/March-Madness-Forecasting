@@ -10,7 +10,7 @@ These are **snapshot entries**, not necessarily independent games; the report se
 
 The archive job now revisits up to 12 earliest unresolved Eastern game dates from a rolling 45-day window, plus recent final dates; this avoids permanently abandoning a late result after only 10 days while limiting ESPN requests. No speculative score is inserted. Previously settled snapshot keys are excluded. If the source is unavailable, it remains unresolved and the verified audit policy stays in force.
 
-**Operations:** compare the `current/settlement-health.json` status with [GitHub archive workflows](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml), inspect the source's listed start and actual rescheduling, and check NCAA vs ESPN outcomes. Do not delete a missing original snapshot or manually create a retroactive settlement.
+**Operations:** compare the `current/settlement-health.json` status with [GitHub archive workflows](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/archive-pregame.yml), inspect the source's listed start and actual rescheduling, and check NCAA vs ESPN outcomes. Do not delete a missing original snapshot or manually create a retroactive settlement.
 
 ## 2. Team intelligence
 `?view=teams` loads the generated, source-linked `current/2027.json`, `current/2027-games.json`, and `current/upcoming.json`. The user's search selects one actual current-season team and displays current Elo, wins/losses, form, a time-series rating curve, average opponent Elo, source-backed offensive/defensive efficiency, recent scored contests and scheduled upcoming matchups where the same verified source team ID is available.
@@ -23,7 +23,7 @@ The Model Lab adds a table of **genuinely settled, paired first-pick** challenge
 Calibration bins compare original confidence vs observed favorite success. Historical prior-date Bayesian shrinkage, residual stumps, Kalman variants, opponent-aware Elo, and logistic research cannot automatically become the active deployed model without the existing forward validation and promotion gates.
 
 ## 4. Historical bracket pick'em
-The [Bracket Lab](https://dokeefe414.github.io/March-Madness-Forecasting/?view=bracket) now includes `BracketBuilder` after a complete, sourced historical seed field successfully loads. It respects verified 64/65/68-team and future explicit 76-entrant slot structures, including opening-round player selections. Users choose winners at each stage. A later match waits for both predecessor picks, eliminating invented participants.
+The [Bracket Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=bracket) now includes `BracketBuilder` after a complete, sourced historical seed field successfully loads. It respects verified 64/65/68-team and future explicit 76-entrant slot structures, including opening-round player selections. Users choose winners at each stage. A later match waits for both predecessor picks, eliminating invented participants.
 
 Selections are locally persisted in browser storage per year. **Copy Scenario Link** encodes only valid picks into a URL query; recipients can explore that same hypothetical outcome without login. Each new click invalidates a previously selected downstream champion in the UI unless the selection is still reachable. Reset clears local picks. No shared cloud persistence is implied.
 

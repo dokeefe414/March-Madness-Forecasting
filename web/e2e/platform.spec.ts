@@ -233,3 +233,53 @@ test("v1.2 installable manifest and settlement diagnostic shell load",async ({pa
  const json=await manifest.json();
  expect(json.name).toMatch(/March Forecast/);
 });
+
+test("v1.3 two independent bracket players can disagree on identical matchups",async ({page})=>{
+ await page.goto("/?view=bracket");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const duel=page.getByRole("region",{name:"Two-player bracket competition"});
+ await expect(duel.getByRole("heading",{name:/TWO PLAYERS/i})).toBeVisible({timeout:20000});
+ await duel.getByRole("group",{name:"Duel round"}).getByRole("button",{name:"ROUND OF 64"}).click();
+ // A historical play-in seed can leave one entrant pending in some first-round
+ // matches. Pick an actual two-entrant fixture rather than clicking a disabled
+ // legitimate "winner pending" placeholder.
+ const game=duel.locator(".v13-duel-match").filter({has:page.locator("button:last-of-type:not([disabled])")}).first();
+ await expect(game.getByRole("button")).toHaveCount(2);
+ await expect(game.getByRole("button").last()).toBeEnabled();
+ await game.getByRole("button").first().click();
+ await duel.getByRole("group",{name:"Active bracket competitor"}).getByRole("button",{name:"PLAYER B"}).click();
+ await game.getByRole("button").last().click();
+ await expect(duel.getByRole("heading",{name:/HEAD-TO-HEAD DIFFERENCES/i})).toBeVisible();
+ await expect(duel.getByText(/A: .* B:/)).toBeVisible();
+});
+test("v1.3 operations checklist exposes verifiable source evidence",async ({page})=>{
+ await page.route("**/current/operations.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+  state:"review",archiveStatus:"current",checkedAtUtc:"2026-11-17T17:30:00Z",lastSuccessfulCaptureUtc:"2026-11-17T15:08:46Z",
+  captureAgeHours:2.4,checkedSourceEvents:175,unmatchedSourceEvents:33,uniqueArchivedEvents:142,
+  repeatSnapshots:0,uniqueSettledEvents:0,delayedSnapshotEntries:1,sourceWarnings:[],
+  checks:[{name:"Verified-final backlog",state:"review",detail:"1 source final awaiting independent validation"}],
+  delayedExamples:[{eventId:"123",home:"Duke",away:"UNC",hoursSinceListedStart:53}]
+ })}));
+ await page.goto("/?view=predictions");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const panel=page.getByRole("region",{name:"Public forecast operations and source quality"});
+ await expect(panel.getByRole("heading",{name:/Can we trust the feed/i})).toBeVisible({timeout:15000});
+ await expect(panel.getByText(/ARCHIVE REVIEW/i)).toBeVisible();
+ await expect(panel.getByText("Verified-final backlog")).toBeVisible();
+});
+test("v1.3 Model Lab differentiates fitted research from prospectively verified picks",async ({page})=>{
+ await page.route("**/current/advanced-models.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+  mode:"research-only",retrievedAtUtc:"2026-11-17T15:00:00Z",evaluatedGames:80,
+  methods:{elo:{games:80,brier:.228,accuracy:.56,logLoss:.67},
+   bayesianGaussian:{games:80,brier:.221,accuracy:.58,logLoss:.65},
+   gradientBoostedTrees:{games:80,brier:.23,accuracy:.54,logLoss:.68}},
+  perDate:[{date:"2026-11-13",games:20,eloBrier:.22,bayesianBrier:.21,gradientBoostedBrier:.23},
+           {date:"2026-11-14",games:20,eloBrier:.23,bayesianBrier:.22,gradientBoostedBrier:.24}]
+ })}));
+ await page.goto("/?view=models");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const panel=page.getByRole("region",{name:"Interactive prediction research visualizations"});
+ await expect(panel.getByRole("heading",{name:/Explore the evidence/i})).toBeVisible({timeout:15000});
+ await expect(panel.getByText("Gradient-boosted CART")).toBeVisible();
+ await expect(panel.getByText(/No truly settled first picks|Only earliest archived pregame predictions/i)).toBeVisible();
+});

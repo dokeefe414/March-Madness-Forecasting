@@ -76,16 +76,25 @@ export default function Dashboard() {
   const sortedTeams = useMemo(() => [...data.teams].sort((a, b) => b.projectedRating - a.projectedRating), [data]);
   const [tab, setTab] = useState<Tab>("games");
   useEffect(()=>{
-    const requested=new URLSearchParams(window.location.search).get("view");
     const supported:Tab[]=["games","teams","current","predictions","models","selection","rankings","compare","bracket","research","history","method"];
-    if(requested && supported.includes(requested as Tab))setTab(requested as Tab);
+    const sync=()=>{
+      const requested=new URLSearchParams(window.location.search).get("view");
+      setTab(requested&&supported.includes(requested as Tab)?requested as Tab:"games");
+    };
+    sync();
+    window.addEventListener("popstate",sync);
+    return()=>window.removeEventListener("popstate",sync);
   },[]);
   function changeTab(next:Tab){
+    if(next===tab)return;
     setTab(next);
     window.scrollTo({top:0,behavior:"instant"});
     const url=new URL(window.location.href);
     url.searchParams.set("view",next);
-    window.history.replaceState(null,"",url.toString());
+    // Clear stale detail-specific selections when leaving that workspace.
+    if(next!=="games")url.searchParams.delete("game");
+    if(next!=="teams"&&next!=="games")url.searchParams.delete("team");
+    window.history.pushState(null,"",url.toString());
   }
   function openTeam(teamId:string){
     const url=new URL(window.location.href);
@@ -175,9 +184,14 @@ export default function Dashboard() {
               <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => changeTab(id)}>{label}</button>
             ))}
           </nav>
-          <a className="github-link" href="https://github.com/dokeefe414/March-Madness-Forecasting" target="_blank" rel="noreferrer">VIEW CODE <span aria-hidden="true">↗</span></a>
+          <a className="github-link" href="https://github.com/dokeefe414/March-Madness-Forecasting26-27" target="_blank" rel="noreferrer">VIEW CODE <span aria-hidden="true">↗</span></a>
         </header>
 
+        <div className="v13-mobile-top-actions" role="navigation" aria-label="Quick daily tools">
+          {([["games","GAMES"],["teams","TEAMS"],["predictions","ACCURACY"],["bracket","BRACKETS"]] as [Tab,string][]).map(([id,label])=>
+            <button type="button" key={id} aria-current={tab===id?"page":undefined} className={tab===id?"selected":""}
+              onClick={()=>changeTab(id)}>{label}</button>)}
+        </div>
         <div className="mobile-nav" aria-label="Page sections">
           {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["models", "Model Lab"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
             <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => changeTab(id)}>{label}</button>
@@ -367,7 +381,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        <footer className="footer"><div className="footer-brand">MARCH<span>FORECAST</span><small>RESEARCH-DRIVEN BASKETBALL ANALYTICS</small></div><div className="footer-right"><span>REPRODUCIBLE RESEARCH · PROVENANCE FIRST</span><a href="https://github.com/dokeefe414/March-Madness-Forecasting" target="_blank" rel="noreferrer">GITHUB ↗</a></div></footer>
+        <footer className="footer"><div className="footer-brand">MARCH<span>FORECAST</span><small>RESEARCH-DRIVEN BASKETBALL ANALYTICS</small></div><div className="footer-right"><span>REPRODUCIBLE RESEARCH · PROVENANCE FIRST</span><a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27" target="_blank" rel="noreferrer">GITHUB ↗</a></div></footer>
       </div>
     </main>
   );

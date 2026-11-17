@@ -2,14 +2,14 @@
   "name": "March Forecast — College Basketball Intelligence",
   "short_name": "March Forecast",
   "description": "Source-verified college basketball projections and tournament experiments",
-  "start_url": "/March-Madness-Forecasting/?view=games",
-  "scope": "/March-Madness-Forecasting/",
+  "start_url": "/March-Madness-Forecasting26-27/?view=games",
+  "scope": "/March-Madness-Forecasting26-27/",
   "display": "standalone",
   "background_color": "#0b2530",
   "theme_color": "#0b2530",
   "icons": [
     {
-      "src": "/March-Madness-Forecasting/icon.svg",
+      "src": "/March-Madness-Forecasting26-27/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

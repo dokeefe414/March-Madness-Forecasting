@@ -2,17 +2,17 @@
 
 **Know the numbers. Question the models. Forecast the madness.**
 
-[![CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml)
-[![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml)
-[![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v1.2%20Team%20%26%20Forecast%20Intelligence-a6ffce)
+[![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
+[![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
+[![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
+![Version](https://img.shields.io/badge/release-v1.3%20Research%20%26%20Brackets-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
-### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting/)
+### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting26-27/)
 
-[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
@@ -20,9 +20,23 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ---
 
+## v1.3 — Forecast reliability, learned research challengers and two-player brackets
+
+**Start here:** [Live Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Operations & immutable picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Scientific Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [Two-player historical bracket duel](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=bracket) · [Team Intel](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=teams).
+
+- **Source-first operational transparency:** source-capture freshness, ESPN coverage, repeated immutable snapshots, pending independently verified finals, and observed changed scheduled start times appear in an accessible Operations Center. Re-scheduled/canceled statuses are never guessed; the original first-pick evidence remains immutable.
+- **Substantial new ML research:** actual fitted, previous-date **12-tree depth-two gradient-boosted CART**, with explicit fixed regularization and refits; plus a sequential **approximate Gaussian Bayesian Bradley–Terry** team-strength filter. Both are scored against Elo on identical date-frozen retrospective games, and neither can silently become a live model.
+- **Head-to-head bracket competition:** independent Player A and Player B picks in the same verified historical seeded bracket, per-round matchup comparison, Elo-favorite reference decisions, local device saving, and optional shareable duel link. No online account or invented 2027 official bracket is involved.
+- **Visual research workbench:** date-frozen model error curves, actual archived first-pick rolling error, calibration confidence versus wins, and interactive team Elo-strength trajectories with distinct evidence labels.
+- **Mobile/polish:** quick large-tap Games/Teams/Accuracy/Brackets shortcuts, deep links and working browser back/forward, responsive source evidence cards, preserved PWA support and keyboard navigation.
+
+**Read the mathematical definitions, limitations, operations recovery procedures and verification:** [v1.3 research + tournament operations guide](docs/v13-research-tournament-operations.md). CI tests code; real-world predictive improvement must be earned on independent future-game predictions and verified finals, not inferred from historical backtests.
+
+---
+
 ## v1.2 — Verified results, team intelligence, model evidence and bracket building
 
-**Go straight to what matters:** [Today's games](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Team intelligence](https://dokeefe414.github.io/March-Madness-Forecasting/?view=teams) · [Real prediction accuracy](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Fair model comparisons](https://dokeefe414.github.io/March-Madness-Forecasting/?view=models) · [Build a historical bracket](https://dokeefe414.github.io/March-Madness-Forecasting/?view=bracket).
+**Go straight to what matters:** [Today's games](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Team intelligence](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=teams) · [Real prediction accuracy](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Fair model comparisons](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [Build a historical bracket](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=bracket).
 
 - **Settlement investigation:** public source-derived backlog separates future, recently started, independently unresolved and 48h+ delayed archived games. The pregame recorder now retries the oldest unresolved fixture dates up to 45 days back with a bounded ESPN budget. It never invents scores or counts prospective picks before a matching, independently verified final.
 - **Teams workspace:** searchable, shareable 2026–27 team pages combine actual NCAA results, Elo trajectories, sourced efficiency/pace, recent opponents, and upcoming verified fixtures. Missing source metrics remain blank.
@@ -36,7 +50,7 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ## v1.1 — Daily basketball intelligence and verified forecast operations
 
-**Live website:** [Open daily forecast desk](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Real scored picks](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Causal research and drift](https://dokeefe414.github.io/March-Madness-Forecasting/?view=models) · [Road to March](https://dokeefe414.github.io/March-Madness-Forecasting/?view=selection).
+**Live website:** [Open daily forecast desk](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real scored picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Causal research and drift](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [Road to March](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=selection).
 
 - A faster daily front page surfaces today's source-backed future fixtures, strongest favorites, closest model calls, verified archive health and one-tap navigation to detailed matchup receipts.
 - Successful archive runs always publish a dated derived manifest with source coverage, even on legitimately empty schedule days. GitHub Pages also rebuilds after a successful archive workflow to shorten the lag before picks are visible. Git pushes retry safely without a force update; monitors distinguish true empty days from missing/stale/partial evidence.
@@ -55,7 +69,7 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 The underlying predictions and rules remain unchanged unless verified forward results justify a pre-existing gated promotion: no invented 2027 bracket, no results leaked into pregame odds, no fake success rate when zero first-archived forecasts have settled, and no turning descriptive efficiency numbers into coefficients.
 
-**Explore:** [Game evidence](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Prospective performance](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Bracket sensitivity lab](https://dokeefe414.github.io/March-Madness-Forecasting/?view=bracket) · [Full v1.0 methods, tests and runbook](docs/v10-prediction-intelligence.md).
+**Explore:** [Game evidence](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Prospective performance](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Bracket sensitivity lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=bracket) · [Full v1.0 methods, tests and runbook](docs/v10-prediction-intelligence.md).
 
 ---
 
@@ -77,7 +91,7 @@ The entry screen is still **Find a Game**. Choose a real source-matched future E
 
 **Already configured, Eastern local time (EST/EDT):** 1:00 a.m. ratings/model/site refresh; 5:17 a.m. in-season catch-up; 9:07 a.m. and 4:07 p.m. in-season genuine pregame archiving; 10:17 a.m. and 5:17 p.m. website republishing; 11:35 a.m. and 6:35 p.m. archive-health checks. GitHub and sports-source schedules are best effort, not streaming real-time service.
 
-**Quick access:** [Find a real game](https://dokeefe414.github.io/March-Madness-Forecasting/?view=games) · [Real winner accuracy](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) · [Compare models](https://dokeefe414.github.io/March-Madness-Forecasting/?view=models) · [Check public archive health](https://dokeefe414.github.io/March-Madness-Forecasting/current/archive-health.json) · [Read the science](docs/v09-model-validation.md) · [Daily runbook and recovery](docs/v09-forecast-operations.md).
+**Quick access:** [Find a real game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real winner accuracy](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Compare models](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [Check public archive health](https://dokeefe414.github.io/March-Madness-Forecasting26-27/current/archive-health.json) · [Read the science](docs/v09-model-validation.md) · [Daily runbook and recovery](docs/v09-forecast-operations.md).
 
 ---
 
@@ -158,8 +172,8 @@ This separation is intentional: **historical Kaggle numeric IDs**, 2027 NCAA-sou
 Requires **Python 3.11+**, **Node 22**, npm, and Git. From PowerShell in the repository root:
 
 ```powershell
-git clone https://github.com/dokeefe414/March-Madness-Forecasting.git
-cd March-Madness-Forecasting
+git clone https://github.com/dokeefe414/March-Madness-Forecasting26-27.git
+cd March-Madness-Forecasting26-27
 $env:PYTHONPATH="research"
 
 # Offline, deterministic unit suite; no data provider account needed
@@ -205,9 +219,9 @@ These fixtures **never** become real game forecasts. Production ledger archiving
 
 | Workflow | Schedule and purpose |
 | --- | --- |
-| [CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml) | Python scientific/fixture tests, 8-model benchmark artifact, source data integrity, TS bracket tests, TypeScript+build, **Playwright desktop/mobile and critical accessibility checks** |
-| [Pages deploy](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml) | On `main` changes, manual run, **1:00 a.m. Eastern every night** (EST/EDT), and **5:17 a.m. Eastern** Nov–Apr catch-up. Build historical calibration, fetch NCAA 2027 source/box/directory, output static Next site |
-| [Pregame archive](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml) | On main, manual or best-effort daily **9:07 a.m. Eastern** Nov–Apr. Fetch future ESPN fixtures, emit real *pre-start* picks, later settle against NCAA finals, commit append-only public history |
+| [CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml) | Python scientific/fixture tests, 8-model benchmark artifact, source data integrity, TS bracket tests, TypeScript+build, **Playwright desktop/mobile and critical accessibility checks** |
+| [Pages deploy](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml) | On `main` changes, manual run, **1:00 a.m. Eastern every night** (EST/EDT), and **5:17 a.m. Eastern** Nov–Apr catch-up. Build historical calibration, fetch NCAA 2027 source/box/directory, output static Next site |
+| [Pregame archive](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/archive-pregame.yml) | On main, manual or best-effort daily **9:07 a.m. Eastern** Nov–Apr. Fetch future ESPN fixtures, emit real *pre-start* picks, later settle against NCAA finals, commit append-only public history |
 
 Scheduled GitHub Actions may be delayed/omitted. A source outage must not fabricate scores, and an unarchived future fixture is not a historical prediction. The Pages site's last successful build remains available if a mandatory source fetch fails. **Archiver commits require branch/workflow write permissions**, which may need operator changes if an organization has protected main.
 
@@ -219,7 +233,7 @@ Scheduled GitHub Actions may be delayed/omitted. A source outage must not fabric
 - `web/public/research/benchmark.json`: generated reproducible report, gitignored.
 - `web/out`: static Next.js export used for GitHub Pages; not primary data.
 
-Current hosted address: **https://dokeefe414.github.io/March-Madness-Forecasting/**. A Pages run requires Settings → Pages → Source **GitHub Actions**.
+Current hosted address: **https://dokeefe414.github.io/March-Madness-Forecasting26-27/**. A Pages run requires Settings → Pages → Source **GitHub Actions**.
 
 ## Repository structure
 
@@ -302,7 +316,7 @@ The first complete v0.6 release prioritizes **evidence, trust, usable visuals an
 
 ---
 
-**Built in public. Auditable by design.** Visit the [GitHub issues](https://github.com/dokeefe414/March-Madness-Forecasting/issues) for feature proposals and scientifically reproducible corrections.
+**Built in public. Auditable by design.** Visit the [GitHub issues](https://github.com/dokeefe414/March-Madness-Forecasting26-27/issues) for feature proposals and scientifically reproducible corrections.
 
 ## v0.6 data-quality correction: conference groups vs labels
 
@@ -328,12 +342,12 @@ At each site refresh the pipeline:
 1. Rebuilds the held-out historical research/calibration report from pinned archives.
 2. Fetches the **latest available** NCAA-derived 2027 schedule and final-score subset; recalculates all team **wins, losses, Elo, form, conference/D-I matches, possession-derived statistics where available**, watchlist and matchup probabilities.
 3. Refuses to publish if required source fetch, score validation or computed model/accounting checks fail. `forecast.freshness` audits source UTC retrieval, accepted-game win/loss totals, unique team IDs, pregame diagnostic counts and latest result date.
-4. Produces a machine-readable [refresh status](https://dokeefe414.github.io/March-Madness-Forecasting/current/refresh-status.json) showing source time, newest included game, program/game counts and source lag; `source-may-be-delayed` is a visible warning, not a fabricated result.
+4. Produces a machine-readable [refresh status](https://dokeefe414.github.io/March-Madness-Forecasting26-27/current/refresh-status.json) showing source time, newest included game, program/game counts and source lag; `source-may-be-delayed` is a visible warning, not a fabricated result.
 5. Rechecks the append-only pregame audit, validates historical files and builds/deploys the static site. If deployment fails, the previous successful GitHub Pages version stays available.
 
 **Important:** A 1:00 a.m. refresh is **not** a live real-time scoreboard, and some late-night games may still be underway. The public schedule does not supply a guaranteed authoritative final-status field for every published row; games with missing, zero or tied scores are excluded, but a positive in-progress score may require confirmation. The delayed 5:17 a.m. pass reduces the risk of missed late scores; the system must not claim more certainty than its provider supports. After **Selection Sunday March 14, 2027**, this model deliberately stops including postseason results in the regular-season forecast snapshot to avoid leakage. The next NCAA season needs an explicit version/source/cutoff migration.
 
-Monitor the [daily deployment workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml) and [pregame archive workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml). See [operations](docs/operations.md) and [current source runbook](docs/current-season.md).
+Monitor the [daily deployment workflow](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml) and [pregame archive workflow](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/archive-pregame.yml). See [operations](docs/operations.md) and [current source runbook](docs/current-season.md).
 
 
 ## v0.7 — Automatic 2027 time-series-informed outcome retraining
@@ -344,7 +358,7 @@ This is different from a cosmetic time-series chart: the model's coefficients ar
 
 **Conservative automatic promotion:** new coefficients train every refresh, but the model stays in **shadow mode** and genuine archived picks remain Elo until it has at least 120 validation games over 12 dates, beats Elo by 0.002 Brier on the exact same games, and has positive lower day-block confidence bound. If it clears that bar, it becomes eligible for future non-neutral pregame forecasts, with original model/version receipts stored immutably. A future failure of the gate returns new picks to Elo; old picks are never rewritten.
 
-See the site's **Current Pulse → Automated Model Lab** section, [public 2027 learned-model report](https://dokeefe414.github.io/March-Madness-Forecasting/current/2027-online-model.json), and [methodology/validation instructions](docs/online-retraining.md). This is an in-season regular-game model, **not** an automatically retrained NCAA bracket or committee prediction engine.
+See the site's **Current Pulse → Automated Model Lab** section, [public 2027 learned-model report](https://dokeefe414.github.io/March-Madness-Forecasting26-27/current/2027-online-model.json), and [methodology/validation instructions](docs/online-retraining.md). This is an in-season regular-game model, **not** an automatically retrained NCAA bracket or committee prediction engine.
 
 
 ## v0.8 — Game Intelligence: choose any supported real game and see why

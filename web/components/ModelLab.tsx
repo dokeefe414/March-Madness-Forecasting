@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
 import ModelEvidence from "./ModelEvidence";
+import ResearchVisualization from "./ResearchVisualization";
 
 const base=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Paired={pairedGames:number;pairedDates:number;baselineEloBrier:number|null;
@@ -78,7 +79,7 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
  const sourceMatch=opponent?.retrievedAtUtc&&state?.ratingRetrievedAtUtc ?
     opponent.retrievedAtUtc===state.ratingRetrievedAtUtc : null;
  return <section className="content-section ml" id="model-lab">
-   <div className="ml-hero"><div><span className="section-kicker">MODEL LAB 0.9 / PROVE IT ON THE NEXT GAME</span>
+   <div className="ml-hero"><div><span className="section-kicker">MODEL LAB 1.3 / PROVE IT ON THE NEXT GAME</span>
       <h1>WHICH MODEL <em>EARNS THE PICK?</em></h1>
       <p>Five forecasting approaches, one transparent standard: compare against Elo on the same games, never relabel historical replay as public pretipoff accuracy, and never chase a loss with hindsight.</p>
       <div className="ml-hero-ctas">
@@ -185,6 +186,7 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
       <p className="ml-footer">{drift?.status==="review"?"Review recommended; no automatic retuning.":"Review begins only after 50 actual independently settled first picks."} An error increase is descriptive, not automatically statistical evidence of distribution shift.</p>
    </section>
    <ModelEvidence/>
+   <ResearchVisualization/>
    <div className="ml-recent">
      <div><span className="section-kicker">04 / THE MOST RECENT OPPONENT EXPERIMENT</span>
        <h3>Game-day <em>performance.</em></h3>
@@ -197,7 +199,7 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
          <span>{r.date.slice(5)}</span></div>;
      }):<p>No previous-date sample has been published yet.</p>}</div>
    </div>
-   <p className="ml-footer">Every candidate's forward result depends on the independent before-tipoff archive and later final-status verification. A lower historical Brier does not guarantee improvement on tomorrow's games. The date-ordered logistic gate and separate public forward gate can reject or demote a model automatically. <a href="https://github.com/dokeefe414/March-Madness-Forecasting/blob/main/docs/v09-model-validation.md" target="_blank" rel="noreferrer">READ THE SOURCE AND MATH ↗</a></p>
+   <p className="ml-footer">Every candidate's forward result depends on the independent before-tipoff archive and later final-status verification. A lower historical Brier does not guarantee improvement on tomorrow's games. The date-ordered logistic gate and separate public forward gate can reject or demote a model automatically. <a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27/blob/main/docs/v09-model-validation.md" target="_blank" rel="noreferrer">READ THE SOURCE AND MATH ↗</a></p>
    </>}
  </section>;
 }
