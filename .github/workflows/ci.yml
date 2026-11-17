@@ -79,3 +79,32 @@ jobs:
             web/test-results
             web/playwright-report
           if-no-files-found: warn
+
+  pages-history:
+    name: Historical tournament loading at production Pages prefix
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    env:
+      # Exercise the exact public project subpath, not only the local '/' page.
+      NEXT_PUBLIC_BASE_PATH: /March-Madness-Forecasting26-27
+      E2E_PAGES_BASE: /March-Madness-Forecasting26-27
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Verify historical seasons, tournament JSON and real field limitations
+        run: npx playwright test e2e/historical-pages.spec.ts
+      - name: Preserve source-backed historical browser failure traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-historical-browser-checks
+          path: |
+            web/test-results
+            web/playwright-report
+          if-no-files-found: warn
