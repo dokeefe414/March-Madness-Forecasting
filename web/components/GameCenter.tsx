@@ -1,0 +1,189 @@
+"use client";
+import {useEffect,useMemo,useState} from "react";
+import type {Team,RatingsDataset} from "../lib/models";
+import {matchupProbability} from "../lib/models";
+
+const basePath=process.env.NEXT_PUBLIC_BASE_PATH||"";
+type Past={id:string;date:string;opponent:string;home:boolean;for:number;against:number;outcome:"W"|"L"};
+type Profile={name:string;teamId:string;rating:number;trend:number;adaptiveRating?:number;volatility?:number;
+  wins:number;losses:number;conference?:string;opponentAverageElo?:number;recentGames:Past[];ratingHistory:number[]};
+type Factor={title:string;value:number;detail:string};
+type Fixture={eventId:string;scheduledStartUtc:string;scheduledEasternDate:string;neutralSite:boolean;
+  home:string;away:string;homeTeamId?:string;awayTeamId?:string;homeWinProbability:number|null;
+  baselineHomeWinProbability?:number;challengerHomeWinProbability?:number|null;
+  stateSpaceHomeWinProbability?:number|null;model?:string;status:"ready"|"unmatched";
+  modelId?:string|null;reason?:string|null;homeProfile?:Profile;awayProfile?:Profile;
+  factors?:Factor[];headToHead?:Array<{date:string;home:string;away:string;homeScore:number;awayScore:number}>;
+  commonOpponents?:Array<{opponent:string;homeResultDate:string;awayResultDate:string;homeMargin:number;awayMargin:number}>};
+type Schedule={schemaVersion:number;generatedAtUtc:string;ratingRetrievedAtUtc:string;
+  lastIncludedGameDate:string;coverage:{futureScheduled:number;eligibleForecasts:number;unmatchedOrAmbiguous:number};
+  sourceWarnings?:string[];scheduleSourceAvailable?:boolean;games:Fixture[]};
+type Forward={score:{games:number;accuracy:number|null;brier:number|null};
+  settledUniqueGames:number;forecastedUniqueGames:number;
+  shadowComparison?:{pairedGames:number;eloBrier:number|null;challengerBrier:number|null}};
+type Ledger={uniqueGames?:Forward};
+const percent=(v:number)=>(v*100).toFixed(1)+"%";
+const when=(v:string)=>new Date(v).toLocaleString("en-US",{timeZone:"America/New_York",
+  weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})+" ET";
+const plus=(v:number)=> (v>0?"+":"")+v.toFixed(1);
+function Marker({tag}:{tag:string}){return <span className="gc-tag">{tag}</span>;}
+
+function GameReceipt({game}:{game:Past}){
+  return <div className="gc-result"><span className={game.outcome==="W"?"gc-win":"gc-loss"}>{game.outcome}</span>
+    <div><strong>{game.opponent}</strong><small>{game.date}</small></div>
+    <b>{game.for}–{game.against}</b></div>;
+}
+function ProfilePanel({profile,side}:{profile:Profile;side:"HOME"|"AWAY"}){
+  return <div className="gc-profile"><div className="gc-profile-heading"><small>{side} / RATING INPUTS</small>
+    <h4>{profile.name}</h4><span>{profile.conference||"Conference unverified"}</span></div>
+    <div className="gc-profile-stats">
+      <div><small>RECORD</small><strong>{profile.wins}–{profile.losses}</strong></div>
+      <div><small>ELO</small><strong>{profile.rating.toFixed(0)}</strong></div>
+      <div><small>RECENT FORM</small><strong>{plus(profile.trend)}</strong></div>
+      <div><small>AVG OPP ELO</small><strong>{profile.opponentAverageElo?.toFixed(0)??"—"}</strong></div>
+    </div>
+    <p className="gc-eyebrow">LATEST VERIFIED PRIOR-DATE RESULTS</p>
+    <div className="gc-results">{profile.recentGames.length?
+      profile.recentGames.map(g=><GameReceipt key={g.id} game={g}/>):
+      <p className="gc-empty">No earlier source games for this program.</p>}</div>
+  </div>;
+}
+
+export default function GameCenter(){
+  const [schedule,setSchedule]=useState<Schedule|null>(null);
+  const [ratings,setRatings]=useState<RatingsDataset|null>(null);
+  const [forward,setForward]=useState<Forward|null>(null);
+  const [problem,setProblem]=useState("");
+  const [search,setSearch]=useState("");
+  const [day,setDay]=useState("all");
+  const [selectedId,setSelectedId]=useState("");
+  const [showAll,setShowAll]=useState(false);
+  const [a,setA]=useState("");
+  const [b,setB]=useState("");
+  const [now,setNow]=useState(0);
+  useEffect(()=>{
+    let alive=true;
+    Promise.all([
+      fetch(basePath+"/current/upcoming.json").then(r=>{if(!r.ok)throw new Error("Upcoming-game snapshot is not published.");return r.json() as Promise<Schedule>}),
+      fetch(basePath+"/current/2027.json").then(r=>{if(!r.ok)throw new Error("Current NCAA-source ratings unavailable.");return r.json() as Promise<RatingsDataset>}),
+      fetch(basePath+"/forecasts/index.json").then(r=>r.ok?r.json():null).catch(()=>null) as Promise<Ledger|null>,
+    ]).then(([s,r,l])=>{
+      if(!alive)return;
+      if(s.schemaVersion!==1||!Array.isArray(s.games)||r.mode!=="current"||r.season!==2027)
+        throw new Error("Scheduled game/ratings source validation failed.");
+      setSchedule(s);setRatings(r);setForward(l?.uniqueGames||null);
+      setA(r.teams[0]?.teamId||"");setB(r.teams[1]?.teamId||"");
+      const link=new URLSearchParams(window.location.search).get("game");
+      const initial=s.games.find(g=>g.eventId===link)?.eventId||s.games.find(g=>g.status==="ready")?.eventId||s.games[0]?.eventId||"";
+      setSelectedId(initial);
+      setNow(Date.now());
+    }).catch((e:Error)=>{if(alive)setProblem(e.message)});
+    return()=>{alive=false};
+  },[]);
+  const eligible=useMemo(()=>schedule?.games||[],[schedule]);
+  const availableDays=useMemo(()=>[...new Set(eligible.map(x=>x.scheduledEasternDate))].sort(),[eligible]);
+  const rows=useMemo(()=>eligible.filter(x=>(day==="all"||x.scheduledEasternDate===day) &&
+      (showAll||!now||new Date(x.scheduledStartUtc).getTime()>now) &&
+      (x.home+" "+x.away).toLowerCase().includes(search.toLowerCase())),
+    [eligible,search,day,showAll,now]);
+  const selected=eligible.find(x=>x.eventId===selectedId)||rows[0];
+  const canCompare=ratings?.teams?.length && a&&b&&a!==b;
+  const left=ratings?.teams.find(t=>t.teamId===a);
+  const right=ratings?.teams.find(t=>t.teamId===b);
+  const demo=canCompare&&left&&right?matchupProbability(left.rating,right.rating):null;
+  const choose=(id:string)=>{
+    setSelectedId(id);
+    const url=new URL(window.location.href);url.searchParams.set("game",id);
+    window.history.replaceState(null,"",url.toString());
+  };
+  const total=eligible.length;
+  return <section className="content-section gc" id="games">
+    <div className="gc-hero">
+      <div><span className="gc-overline"><span className="live-dot"/> THE NEXT MATCHUP IS YOURS TO EXPLORE</span>
+        <h1>GAME <em>INTELLIGENCE.</em></h1>
+        <p>Choose a real scheduled college basketball game. See the pregame win percentage, who the model favors, and the other games that shaped each team's rating.</p>
+        <div className="gc-hero-chips"><Marker tag="REAL ESPN FIXTURES"/><Marker tag="VERIFIED NCAA TEAM LINKS"/><Marker tag="NO INVENTED ODDS"/></div>
+      </div>
+      <aside className="gc-hero-score"><small>REAL FORWARD FORECAST ACCURACY</small><strong>{forward?.score.accuracy!=null?percent(forward.score.accuracy):"—"}</strong>
+        <span>{forward?.settledUniqueGames||0} uniquely settled future games</span>
+        <p>{!forward?.settledUniqueGames?"Not a historical backtest. This percentage starts when real pretipoff predictions have settled.":"Every actual game counts once; repeated snapshots cannot inflate accuracy."}</p>
+        <a href="#gc-accuracy-notes">HOW THIS IS MEASURED ↓</a>
+      </aside>
+    </div>
+    <div className="gc-intro"><div><span className="section-kicker">01 / THE VERIFIED SCHEDULE</span><h2>Pick a <span>game.</span></h2>
+      <p>Future ESPN scheduled fixtures only. The nightly refresh updates probabilities and team form as source results change.</p></div>
+      <span className="gc-source-pill">{schedule?formatTime(schedule.generatedAtUtc):"CHECKING LATEST SOURCE…"}</span></div>
+    {!schedule?<div className="premium-empty" role={problem?"alert":"status"}><h3>{problem||"LOADING REAL GAMES…"}</h3>
+      <p>The site does not manufacture matchups if the schedule is unavailable.</p></div>:<>
+      <div className="gc-toolbar">
+        <label className="gc-search">SEARCH MATCHUP<input aria-label="Search upcoming games" value={search} onChange={e=>setSearch(e.target.value)} placeholder="School, conference, opponent…"/></label>
+        <label className="gc-date">GAME DATE<select aria-label="Filter upcoming games by date" value={day} onChange={e=>setDay(e.target.value)}>
+          <option value="all">All upcoming days</option>{availableDays.map(d=><option key={d} value={d}>{d}</option>)}</select></label>
+        <label className="gc-check"><input type="checkbox" checked={showAll} onChange={e=>setShowAll(e.target.checked)}/> Include started since last refresh</label>
+      </div>
+      {schedule.sourceWarnings?.length?<p className="gc-warning" role="status">ESPN schedule partly unavailable; listed games may be incomplete. No missing schedule is filled in.</p>:null}
+      <div className="gc-stage">
+        <div className="gc-fixtures">
+          <div className="gc-list-header"><strong>{rows.length} GAMES FOUND</strong><span>{schedule.coverage.eligibleForecasts} rated / {schedule.coverage.futureScheduled} future scheduled at capture</span></div>
+          <div className="gc-fixtures-scroll">
+            {rows.map(g=><button key={g.eventId} type="button" className={"gc-fixture"+(g.eventId===selected?.eventId?" gc-selected":"")} onClick={()=>choose(g.eventId)}>
+              <div className="gc-fixture-top"><span>{when(g.scheduledStartUtc)}</span><span>{g.status==="ready"?"PREDICTION READY":"SOURCE MATCH PENDING"}</span></div>
+              <div className="gc-fixture-teams"><div><small>AWAY</small><strong>{g.away}</strong></div><span className="gc-at">@</span><div><small>{g.neutralSite?"NEUTRAL":"HOME"}</small><strong>{g.home}</strong></div></div>
+              <div className="gc-fixture-bottom"><span>{g.model||"No verified rating match"}</span><b>{g.homeWinProbability==null?"—":percent(Math.max(g.homeWinProbability,1-g.homeWinProbability))+" favorite"}</b></div>
+            </button>)}
+            {!rows.length?<div className="gc-list-empty">No qualifying source fixtures in this view. Try another day or explore a hypothetical matchup below.</div>:null}
+          </div>
+        </div>
+        <article className="gc-detail" aria-live="polite">
+          {selected&&selected.status==="ready"&&selected.homeWinProbability!=null&&selected.homeProfile&&selected.awayProfile?
+          <>
+            <div className="gc-detail-cap"><span>MODEL MATCHUP REPORT / ESPN {selected.eventId}</span><span>{when(selected.scheduledStartUtc)}</span></div>
+            <div className="gc-matchup-title"><div><small>ROAD</small><h3>{selected.away}</h3><span>{selected.awayProfile.wins}–{selected.awayProfile.losses}</span></div>
+              <div className="gc-vs">VS</div><div><small>{selected.neutralSite?"NEUTRAL":"HOME"}</small><h3>{selected.home}</h3><span>{selected.homeProfile.wins}–{selected.homeProfile.losses}</span></div></div>
+            <div className="gc-odds-head"><div><small>AWAY WIN PROBABILITY</small><strong>{percent(1-selected.homeWinProbability)}</strong></div>
+              <span>PREDICTED WIN SHARE</span>
+              <div><small>HOME WIN PROBABILITY</small><strong>{percent(selected.homeWinProbability)}</strong></div></div>
+            <div className="gc-odds-bar" role="img" aria-label={selected.away+" "+percent(1-selected.homeWinProbability)+", "+selected.home+" "+percent(selected.homeWinProbability)}>
+              <div style={{width:percent(1-selected.homeWinProbability)}}/></div>
+            <p className="gc-model-name">{selected.model} · {selected.neutralSite?"No home advantage (neutral venue)":"65 Elo-point home adjustment"} · <strong>{selected.homeWinProbability>.5?selected.home:selected.away} favored</strong></p>
+            <div className="gc-explain-head"><span className="section-kicker">02 / WHY THE MODEL THINKS THIS</span><h3>Explain the <em>percentage.</em></h3>
+              <p>The same team ratings are built from results against other opponents. Factors below are evidence, not four separate probability coefficients.</p></div>
+            <div className="gc-factors">{(selected.factors||[]).map(f=><div key={f.title}><small>{f.title}</small>
+              <strong>{plus(f.value)}</strong><p>{f.detail}</p></div>)}</div>
+            <div className="gc-profiles"><ProfilePanel profile={selected.awayProfile} side="AWAY"/><ProfilePanel profile={selected.homeProfile} side="HOME"/></div>
+            <div className="gc-evidence"><div><span className="section-kicker">03 / THE OTHER GAMES</span><h3>Shared opponents.</h3>
+                <p>When both teams previously played the same opponent, compare their actual margins. These games also contribute to Elo through each program's sequence of results.</p>
+                {(selected.commonOpponents||[]).length?<div className="gc-common-list">{selected.commonOpponents!.map(x=><div key={x.opponent}>
+                  <strong>{x.opponent}</strong><span>{selected.home}: {x.homeMargin>0?"+":""}{x.homeMargin} ({x.homeResultDate})</span>
+                  <span>{selected.away}: {x.awayMargin>0?"+":""}{x.awayMargin} ({x.awayResultDate})</span>
+                </div>)}</div>:<p className="gc-empty">No shared, earlier-date opponents in the currently published scores.</p>}</div>
+              <div><span className="section-kicker">04 / PREVIOUS MEETINGS</span><h3>Head to head.</h3>
+                {(selected.headToHead||[]).length?<div className="gc-common-list">{selected.headToHead!.map(x=><div key={x.date+x.home}>
+                  <strong>{x.date}</strong><span>{x.away} {x.awayScore} · {x.home} {x.homeScore}</span></div>)}</div>:
+                  <p className="gc-empty">No earlier season matchup appears in the accepted results.</p>}
+                <div className="gc-research"><small>RESEARCH COMPARISONS · NOT ACTIVE PICKS</small>
+                  <p>Prepublished Elo: <strong>{percent(selected.baselineHomeWinProbability!)}</strong> home</p>
+                  {selected.challengerHomeWinProbability!=null?<p>Shadow-trained logistic: <strong>{percent(selected.challengerHomeWinProbability)}</strong> home</p>:null}
+                  {selected.stateSpaceHomeWinProbability!=null?<p>Causal state space: <strong>{percent(selected.stateSpaceHomeWinProbability)}</strong> home</p>:null}
+                  <small>The headline percentage uses only the model actually selected for publication.</small>
+                </div>
+              </div></div>
+          </>:selected?<div className="gc-unmatched"><span className="section-kicker">NO VERIFIED ODDS</span><h3>{selected.away} at {selected.home}</h3><p>{selected.reason}</p>
+            <p>We show this scheduled fixture but do not invent a NCAA-to-ESPN team join or falsely label a guess as a prediction.</p></div>:
+          <div className="gc-unmatched"><span className="section-kicker">SOURCE HAS NO CURRENT GAME</span><h3>More games incoming.</h3>
+            <p>No future, confidently source-matched fixture is currently available. Try the hypothetical neutral matchup lab below; it does not represent a scheduled game.</p></div>}
+        </article>
+      </div>
+      <div className="gc-whatif"><div><span className="section-kicker">05 / COMPARE ANY PROGRAMS</span><h2>Matchup <span>sandbox.</span></h2>
+        <p>Pick any two current teams for an explicitly hypothetical neutral-site comparison. This is not a scheduled game and is never logged as a pregame forecast.</p></div>
+        <div className="gc-whatif-controls"><label>TEAM A<select aria-label="Hypothetical team A" value={a} onChange={e=>setA(e.target.value)}>
+          {(ratings?.teams||[]).map(t=><option key={t.teamId} value={t.teamId}>{t.name}</option>)}</select></label>
+          <label>TEAM B<select aria-label="Hypothetical team B" value={b} onChange={e=>setB(e.target.value)}>
+          {(ratings?.teams||[]).map(t=><option key={t.teamId} value={t.teamId}>{t.name}</option>)}</select></label>
+          <div><small>NEUTRAL-COURT ELO SCENARIO</small><strong>{demo!=null?percent(demo):"Choose distinct teams"}</strong><span>{left?.name||"Team A"} win chance</span></div></div>
+      </div>
+      <p className="source-note" id="gc-accuracy-notes">Fixture dates/status: ESPN public schedule; verified current team ratings and prior scores: NCAA-derived SportsDataverse data. Published probabilities are computed from information available at source retrieval, not from future results. Site content updates on GitHub Actions' scheduled refreshes; this is not an instantaneous live odds service. Forward accuracy uses each event's earliest archived before-tipoff forecast and becomes meaningful only when real settled events exist. A miss is recorded and used in later chronological retraining rather than changing a probability after the outcome.</p>
+    </>}
+  </section>;
+}
+function formatTime(iso:string){return "CAPTURED "+new Date(iso).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZone:"America/New_York"})+" ET";}
