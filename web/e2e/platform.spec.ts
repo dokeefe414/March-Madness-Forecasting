@@ -393,3 +393,24 @@ test("scoring research evidence does not pretend it is a live pregame record",as
  await expect(section).toContainText("8.10");
  await expect(section).toContainText("not timestamped prospective first-pick evidence");
 });
+
+test("v1.6 independent portfolio evidence never claims retrospective recombination is a real pregame win",async ({page})=>{
+ await page.route("**/current/forward-ensemble.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+  schemaVersion:1,season:2027,mode:"shadow",sourceRetrievedAtUtc:"2026-11-17T18:00:00Z",
+  pairedSettledGames:75,pairedSettledDates:8,trainingGames:55,trainingDates:6,
+  untouchedHoldoutGames:20,untouchedHoldoutDates:2,
+  weight:.25,eloHoldoutBrier:.22,ensembleHoldoutBrier:.21,holdoutBrierGain:.01,
+  dateBlockBrierGain95:null,archivedPortfolioGames:0,archivedPortfolioDates:0,
+  archivedPortfolioEloBrier:null,archivedPortfolioBrier:null,archivedPortfolioBrierGain:null,
+  archivedPortfolioDateBlockGain95:null,prospectiveGatePassed:false,
+  scientificReviewEligible:false,promoteAutomatically:false,policy:"No automatic promotion",
+ })}));
+ await page.goto("/?view=models");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const panel=page.getByRole("region",{name:"Prospective ensemble holdout and promotion evidence"});
+ await expect(panel.getByRole("heading",{name:/DOES THE ENSEMBLE WIN/i})).toBeVisible();
+ await expect(panel.getByText("ACTUALLY PUBLISHED BEFORE TIPOFF")).toBeVisible();
+ await expect(panel).toContainText("SHADOW RESEARCH — ELO REMAINS ACTIVE");
+ await expect(panel).toContainText("RETROSPECTIVE RECOMBINATION");
+ await expect(panel).toContainText("The retrospective recombination above is not the prospective performance");
+});
