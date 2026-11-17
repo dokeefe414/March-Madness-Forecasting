@@ -99,7 +99,8 @@ class VerifiedSourceTests(unittest.TestCase):
         self.assertFalse(result["official"])
         # Two distinct source league IDs can share one external display name;
         # never collapse 32 verified groups into 31 AQs.
-        rows[0]["conference"] = "League 1"
+        for team in rows[:3]:
+            team["conference"] = "League 1"
         still_ready = build_watchlist(rows, "2026-11-15")
         self.assertEqual(still_ready["matchedConferences"], 32)
         self.assertEqual(still_ready["distinctConferenceDisplayNames"], 31)
