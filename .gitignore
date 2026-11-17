@@ -13,3 +13,7 @@ coverage/
 research/data/raw/
 research/data/processed/
 research/outputs/
+
+# Generated at deploy time, never checked into git as potentially stale fixtures
+web/public/current/2027.json
+web/public/research/benchmark.json
