@@ -49,10 +49,10 @@ def summarize_forward(snapshots: list[dict], settlements: list[dict]) -> dict:
                          "home":pred["home"],"away":pred["away"],
                          "model":pred["model"],"probability":round(p,7),
                          "observedHome":y,"confidence":round(confidence,7),
-                         "scheduledStartUtc":pred["scheduledStartUtc"],
+                         "scheduledStartUtc":pred.get("scheduledStartUtc"),
                          "forecastAtUtc":snap["generatedAtUtc"],
-                         "homeScore":int(row["homeScore"]),
-                         "awayScore":int(row["awayScore"]),
+                         "homeScore":int(row["homeScore"]) if row.get("homeScore") is not None else None,
+                         "awayScore":int(row["awayScore"]) if row.get("awayScore") is not None else None,
                          **scored,
                          "elo":(float(pred["baselineHomeWinProbability"])
                                 if pred.get("baselineHomeWinProbability") is not None else None),
