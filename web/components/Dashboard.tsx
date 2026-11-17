@@ -11,6 +11,7 @@ import GameCenter from "./GameCenter";
 import ModelLab from "./ModelLab";
 import SelectionLab from "./SelectionLab";
 import ForecastTracker from "./ForecastTracker";
+import TeamIntelligence from "./TeamIntelligence";
 
 const initialData = rawData as RatingsDataset;
 const initialTeams = [...initialData.teams].sort((a, b) => b.projectedRating - a.projectedRating);
@@ -24,7 +25,7 @@ type TournamentArchive = {
   seeds: Record<string, string>;
   games: Array<{ day?: number; round?: string; winnerId: string; loserId: string; winnerScore: number; loserScore: number }>;
 };
-type Tab = "games" | "models" | "current" | "selection" | "predictions" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
+type Tab = "games" | "teams" | "models" | "current" | "selection" | "predictions" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
 type Sort = "rank" | "momentum" | "wins";
 
 function percent(value: number): string {
@@ -76,7 +77,7 @@ export default function Dashboard() {
   const [tab, setTab] = useState<Tab>("games");
   useEffect(()=>{
     const requested=new URLSearchParams(window.location.search).get("view");
-    const supported:Tab[]=["games","current","predictions","models","selection","rankings","compare","bracket","research","history","method"];
+    const supported:Tab[]=["games","teams","current","predictions","models","selection","rankings","compare","bracket","research","history","method"];
     if(requested && supported.includes(requested as Tab))setTab(requested as Tab);
   },[]);
   function changeTab(next:Tab){
@@ -169,7 +170,7 @@ export default function Dashboard() {
             <span className="brand-title">MARCH<span>FORECAST</span></span>
           </button>
           <nav aria-label="Main navigation" className="desktop-nav">
-            {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["models", "Model Lab"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
+            {([["games", "Find a Game"], ["teams", "Teams"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["models", "Model Lab"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
               <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => changeTab(id)}>{label}</button>
             ))}
           </nav>
@@ -241,6 +242,7 @@ export default function Dashboard() {
           </div>
         )}
         {tab === "games" && <GameCenter onOpenAccuracy={()=>changeTab("predictions")} onOpenModels={()=>changeTab("models")} onOpenSelection={()=>changeTab("selection")}/>}
+        {tab === "teams" && <TeamIntelligence/>}
         {tab === "models" && <ModelLab onOpenGames={()=>changeTab("games")} onOpenAccuracy={()=>changeTab("predictions")}/>}
         {tab === "current" && <LiveSeason onOpenTeam={openTeam}/>}
         {tab === "selection" && <SelectionLab/>}
