@@ -18,6 +18,7 @@ export type Team = {
   conference?: string | null;
   conferenceVerified?: boolean;
   divisionIConfirmed?: boolean | null;
+  divisionConferenceGroupId?: string | null;
   ncaaSourceTeamId?: string | null;
   offRating100?: number;
   defRating100?: number;

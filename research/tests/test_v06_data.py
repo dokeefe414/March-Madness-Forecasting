@@ -84,15 +84,26 @@ class VerifiedSourceTests(unittest.TestCase):
                 rows.append({
                     "teamId": f"t{rank}", "name": f"Team {rank}",
                     "conference": f"League {ci}", "conferenceVerified": True, "divisionIConfirmed": True,
+                    "divisionConferenceGroupId": f"source-group-{ci}",
                     "projectedRating": 1800 - rank, "wins": 10, "losses": j,
                 })
         result = build_watchlist(rows, "2026-11-15")
         self.assertEqual(result["status"], "ready")
+        self.assertEqual(result["matchedConferences"], 32)
+        self.assertEqual(result["distinctConferenceDisplayNames"], 32)
+        self.assertEqual(result["groupingKey"], "verified 2027 conference group ID, not NCAA display label")
         self.assertEqual(len(result["teams"]), 76)
         self.assertEqual(sum(x["category"] == "conference-proxy" for x in result["teams"]), 32)
         self.assertEqual(sum(x["category"] == "power-only-at-large" for x in result["teams"]), 44)
         self.assertEqual(len({t["teamId"] for t in result["teams"]}), 76)
         self.assertFalse(result["official"])
+        # Two distinct source league IDs can share one external display name;
+        # never collapse 32 verified groups into 31 AQs.
+        rows[0]["conference"] = "League 1"
+        still_ready = build_watchlist(rows, "2026-11-15")
+        self.assertEqual(still_ready["matchedConferences"], 32)
+        self.assertEqual(still_ready["distinctConferenceDisplayNames"], 31)
+        self.assertEqual(len(still_ready["teams"]), 76)
         no_league = rows[:-3]
         broken = build_watchlist(no_league, "2026-11-15")
         self.assertEqual(broken["status"], "insufficient-coverage")
