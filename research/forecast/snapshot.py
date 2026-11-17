@@ -25,6 +25,7 @@ from .core import matchup_probability
 from .reference import canonical
 from .live import SOURCE_URL, final_games, fetch_csv
 from .retrain import validate_for_pick, probability as online_probability
+from .forward_ensemble import candidate as ensemble_candidate, validate_for_fixture as validate_ensemble
 from .performance import summarize_forward
 
 ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard"
@@ -95,7 +96,8 @@ def _one_team(side: dict, name_index: dict[str, list[dict]],
 def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                        generated_at: datetime, online_model: dict | None = None,
                        state_space: dict | None = None,
-                       opponent_model: dict | None = None) -> dict:
+                       opponent_model: dict | None = None,
+                       ensemble_model: dict | None = None) -> dict:
     """Strict as-of future-start verification and source identity matching."""
     generated_at = generated_at.astimezone(timezone.utc)
     retrieved = parse_time(ratings["retrievedAtUtc"])
@@ -204,6 +206,17 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                     opponent_probability=matchup_probability(
                         skill[home["name"]]["opponentAdjustedElo"],
                         skill[away["name"]]["opponentAdjustedElo"],65)
+            ensemble_result=None
+            if ensemble_model is not None:
+                weight=validate_ensemble(ensemble_model,ratings,future_eastern_day)
+                if weight is not None:
+                    ensemble_result=ensemble_candidate({
+                        "baselineHomeWinProbability":baseline,
+                        "challengerHomeWinProbability":challenger,
+                        "stateSpaceHomeWinProbability":state_probability,
+                        "opponentAdjustedHomeWinProbability":opponent_probability,
+                        "adaptiveStateSpaceHomeWinProbability":adaptive_probability,
+                    },weight)
             p=challenger if selected else baseline
             model_name=("chronologically validated in-season logistic"
                         if selected else "as-of regular-season Elo")
@@ -220,6 +233,9 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 "stateSpaceHomeWinProbability":round(state_probability,7) if state_probability is not None else None,
                 "opponentAdjustedHomeWinProbability":round(opponent_probability,7) if opponent_probability is not None else None,
                 "adaptiveStateSpaceHomeWinProbability":round(adaptive_probability,7) if adaptive_probability is not None else None,
+                "ensembleHomeWinProbability":(ensemble_result["homeWinProbability"] if ensemble_result else None),
+                "ensembleComponentCount":(ensemble_result["componentCount"] if ensemble_result else None),
+                "ensembleResearchWeight":(ensemble_result["weight"] if ensemble_result else None),
                 "modelId": selected.get("modelId") if selected else None,
                 "modelTrainingThroughDate": selected.get("trainedThroughDate") if selected else None,
                 "match": "exact canonical NCAA name to ESPN team location/display",
@@ -469,6 +485,7 @@ def main() -> None:
     parser.add_argument("--online-model", type=Path, help="Current-source 2027 chronologically retrained model JSON")
     parser.add_argument("--state-space", type=Path, help="Optional same-source causal experimental team-state report")
     parser.add_argument("--opponent-model", type=Path, help="Optional same-source opponent-adjusted research report")
+    parser.add_argument("--ensemble-model", type=Path, help="Previous-settlement trained, source-paired ensemble shadow metadata")
     parser.add_argument("--out-dir", type=Path, default=Path("web/public/forecasts"))
     parser.add_argument("--scoreboard-json", type=Path, help="Offline fixture JSON for hermetic runs")
     parser.add_argument("--finals-csv", type=Path, help="Offline results CSV")
@@ -478,6 +495,7 @@ def main() -> None:
     online_model = json.loads(args.online_model.read_text(encoding="utf-8")) if args.online_model else None
     state_space = json.loads(args.state_space.read_text(encoding="utf-8")) if args.state_space else None
     opponent_model = json.loads(args.opponent_model.read_text(encoding="utf-8")) if args.opponent_model else None
+    ensemble_model = json.loads(args.ensemble_model.read_text(encoding="utf-8")) if args.ensemble_model else None
     if online_model and online_model.get("generatedAtUtc"):
         if parse_time(online_model["generatedAtUtc"]) > now:
             raise ValueError("online training artifact is newer than archived forecast")
@@ -520,7 +538,8 @@ def main() -> None:
             raise RuntimeError("All scheduled ESPN fixture checks failed; no false archive created")
         schedule_changes = detect_schedule_changes(all_old, list(by_date.values()))
     forecast = forecast_scheduled(scoreboards, ratings, now, online_model=online_model,
-                                  state_space=state_space, opponent_model=opponent_model)
+                                  state_space=state_space, opponent_model=opponent_model,
+                                  ensemble_model=ensemble_model)
     if args.finals_csv:
         finals_text = args.finals_csv.read_text(encoding="utf-8-sig")
     else:

@@ -20,6 +20,18 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ---
 
+## v1.6 — Original pregame-frozen ensemble, source-verified comparison and rigorous promotion gates
+
+**New forward-first challenger:** the public site now tests a *conservative shadow ensemble* of previously fitted current-season logistic, state-space, opponent-aware and adaptive strength models with Elo. The scheduled pre-tipoff recorder archives the ensemble probability, component count and weight alongside the original active pick. It **never rewrites earlier forecasts or automatically declares the ensemble more accurate**.
+
+**Fairer comparisons:** the Model Lab distinguishes an earlier-date historical recombination of already frozen research signals from a **real prospective score of the exact originally archived ensemble probability**, using ESPN/NCAA independently verified final results on the identical first-picked fixtures. To be eligible for scientific review, a challenger requires a positive out-of-time date-block uncertainty result *and* at least 100 independently settled original portfolio predictions across 12 dates showing a Brier advantage over Elo. Missing source outcomes mean no claim, not a zero loss or perfect score.
+
+**Safeguards:** date-scoped model training, source-capture timestamps, existing 15-minute before-listed-tipoff buffer, finite probability checks, source-provenance agreement, immutable unique-first-pick scoring, and no production model promotion without explicit review. The established Elo winner forecast continues to be the public default while evidence accumulates.
+
+Read the [v1.6 forward ensemble mathematical and operations guide](docs/v16-forward-ensemble.md), use the [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models), or inspect the original [forecast archive](web/public/forecasts).
+
+---
+
 ## v1.5 — Stronger basketball scoring models and honest out-of-time evidence
 
 **What improved:** the [Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) now prefers source-verified **opponent-adjusted points per 100 possessions and real pace** for projected scores, margins and totals when the NCAA-derived box-score pipeline has enough verified games for both teams. Insufficient/partial data is explicitly labeled and falls back to the previously verified simple scoring-average calculation without inventing possessions. These are descriptive score estimates, not a betting line or an independently calibrated margin distribution.

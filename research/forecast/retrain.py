@@ -117,15 +117,23 @@ def score_archived_forward(root: Path | None) -> dict:
     compare=summary["shadowComparison"]
     paired=compare["pairedGames"]
     gain=compare["challengerBrierGain"]
-    # Never train/adjust coefficients by the result of the one game we missed.
-    allowed=paired>=40 and gain is not None and gain>=.002
+    # A 40-game winning run is too noisy to justify replacing the model.
+    # Require the *first* source-verified Elo and challenger probabilities on
+    # the SAME events, a meaningful number of independent game dates and a
+    # positive date-block bootstrap lower confidence bound.
+    paired_evidence=summary["pairedModelComparisons"]["Online logistic challenger"]
+    days=paired_evidence["pairedDates"]
+    interval=paired_evidence["dateBlockGain95"]
+    allowed=(paired>=100 and days>=12 and gain is not None and gain>=.002
+             and interval is not None and interval[0]>0)
     return {"status":"eligible" if allowed else "insufficient-evidence",
-            "pairedGames":paired,"minPairedGames":40,
+            "pairedGames":paired,"pairedDates":days,"dateBlockGain95":interval,
+            "minPairedGames":100,"minPairedDates":12,
             "eloBrier":compare["eloBrier"],
             "challengerBrier":compare["challengerBrier"],
             "challengerBrierGain":gain,"promote":allowed,
-            "reason":("Earlier live predictions and true source finals justify continued evaluation"
-                      if allowed else "Keep Elo for actual picks until >=40 unique settled, paired pretipoff comparisons show Brier gain >=0.002"),
+            "reason":("Forward evidence permits a manual candidate review; no automatic active selection"
+                      if allowed else "Keep Elo for actual picks until >=100 unique settled paired pretipoff comparisons span >=12 dates, Brier gain >=0.002, and the date-block uncertainty lower bound is positive"),
             "note":"Each ESPN event uses its earliest source-archived forecast. This is forward monitoring, not immediate adjustment after a single miss."}
 
 
@@ -214,7 +222,10 @@ def build_report(games: list[dict], ratings: dict, now: datetime | None = None,
     # The candidate cannot become an operational public pick solely because
     # retrospective replay looks attractive. Require first real publication.
     forward_evidence = forward_evidence or score_archived_forward(None)
-    promoted = chronological_pass and forward_evidence.get("promote") is True
+    eligible_for_manual_review = chronological_pass and forward_evidence.get("promote") is True
+    # Active model approval is a separate code/release decision; no scheduled
+    # backtest or repeated peek at forward results may auto-replace Elo.
+    promoted = False
     model_id = hashlib.sha256(json.dumps({
         "through":max(grouped), "weights":weights, "count":len(examples),
         "sourceRetrieved": ratings["retrievedAtUtc"]
@@ -222,8 +233,10 @@ def build_report(games: list[dict], ratings: dict, now: datetime | None = None,
     return {
         "schemaVersion":SCHEMA,"type":"current-season-chronological-logistic",
         "season":2027,"mode":"active" if promoted else "shadow",
-        "reason":("Chronological and independent real pregame Brier gates passed"
-                  if promoted else "Elo remains operational until retrospective AND real first-pick forward evidence passes both gates"),
+        "reason":("Eligible for manual review; Elo remains operational until separately approved"
+                  if eligible_for_manual_review else "Elo remains operational until retrospective AND real first-pick forward evidence passes both gates"),
+        "eligibleForManualReview":bool(eligible_for_manual_review),
+        "promoteAutomatically":False,
         "chronologicalGatePassed":chronological_pass,
         "forwardValidation":forward_evidence,
         "modelId":model_id,"modelWeights":[round(x,9) for x in weights],

@@ -3,6 +3,7 @@ import {useEffect,useMemo,useState} from "react";
 import ModelEvidence from "./ModelEvidence";
 import ResearchVisualization from "./ResearchVisualization";
 import ScoreResearchEvidence from "./ScoreResearchEvidence";
+import EnsembleEvidence from "./EnsembleEvidence";
 
 const base=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Paired={pairedGames:number;pairedDates:number;baselineEloBrier:number|null;
@@ -189,6 +190,7 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
    <ModelEvidence/>
    <ResearchVisualization/>
    <ScoreResearchEvidence/>
+   <EnsembleEvidence/>
    <div className="ml-recent">
      <div><span className="section-kicker">04 / THE MOST RECENT OPPONENT EXPERIMENT</span>
        <h3>Game-day <em>performance.</em></h3>
