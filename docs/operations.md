@@ -42,9 +42,9 @@ If your machine is offline, omit only `forecast.live`; the frontend explicitly m
 
 ## GitHub Pages deployment fails at configure-pages
 
-The repository must have **Settings → Pages → Build and deployment → Source: GitHub Actions** configured. The failure `Get Pages site failed / Not Found` happens before any app build and is a Pages setting issue, not a Python forecasting error. After setup, use [the deploy workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml) to run a fresh build.
+The repository must have **Settings → Pages → Build and deployment → Source: GitHub Actions** configured. The failure `Get Pages site failed / Not Found` happens before any app build and is a Pages setting issue, not a Python forecasting error. After setup, use [the deploy workflow](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml) to run a fresh build.
 
-Expected URL: `https://dokeefe414.github.io/March-Madness-Forecasting/`. The production build sets `NEXT_PUBLIC_BASE_PATH=/March-Madness-Forecasting` so season/tournament/current/research JSON loads under the correct static prefix.
+Expected URL: `https://dokeefe414.github.io/March-Madness-Forecasting26-27/`. The production build sets `NEXT_PUBLIC_BASE_PATH=/March-Madness-Forecasting26-27` so season/tournament/current/research JSON loads under the correct static prefix.
 
 ## 2027 refresh fails
 
@@ -93,7 +93,7 @@ The third `CI` job now executes Playwright desktop and mobile against the **Next
 
 ### Fixing a failed production release
 
-Inspect the first failure in the [Pages workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml). If the mandatory source, historical calibration generation or production build fails, do not invent data or bypass a cutoff. Fix source parsing using a new hermetic regression test, merge through passing CI, and confirm the next Pages deployment returns success with a current `lastGameDate` and `retrievedAtUtc`. A successful web build alone does not prove the user's website has been deployed.
+Inspect the first failure in the [Pages workflow](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml). If the mandatory source, historical calibration generation or production build fails, do not invent data or bypass a cutoff. Fix source parsing using a new hermetic regression test, merge through passing CI, and confirm the next Pages deployment returns success with a current `lastGameDate` and `retrievedAtUtc`. A successful web build alone does not prove the user's website has been deployed.
 
 The 2027 source convention must be reviewed before the 2028 season; never display a 2027 report as new-season 2028 ratings.
 
@@ -127,7 +127,7 @@ py -m forecast.freshness --input web/public/current/2027.json --out web/public/c
 py -m forecast.audit --dir web/public/forecasts
 ```
 
-If no update appears after the expected time, inspect [deploy runs](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml), the last game date and both UTC timestamps. Try the **Run workflow** control on the Actions page; a scheduled event is not guaranteed to execute on the dot. If `forecast.freshness` rejects a malformed feed, repair the cause with a hermetic regression test rather than bypassing the validation. GitHub disables scheduled actions on inactive public repositories after 60 days; check the Actions tab in the off-season. GitHub Actions also requires that workflow files reside on default `main`.
+If no update appears after the expected time, inspect [deploy runs](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml), the last game date and both UTC timestamps. Try the **Run workflow** control on the Actions page; a scheduled event is not guaranteed to execute on the dot. If `forecast.freshness` rejects a malformed feed, repair the cause with a hermetic regression test rather than bypassing the validation. GitHub disables scheduled actions on inactive public repositories after 60 days; check the Actions tab in the off-season. GitHub Actions also requires that workflow files reside on default `main`.
 
 ## v0.7 in-season model retraining
 
