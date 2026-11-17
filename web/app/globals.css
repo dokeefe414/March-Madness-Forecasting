@@ -883,3 +883,21 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 .v15-error-row i{display:block;height:14px;background:#bbffd4;border-radius:7px}
 .v15-error-row>div:last-child i{background:#98bcf1}
 @media(max-width:650px){.v15-score-head{grid-template-columns:1fr}.v15-error-row{grid-template-columns:1fr 1fr}.v15-error-row span{grid-column:1/-1}}
+
+/* v1.6: independently frozen ensemble proof, no false precision */
+.v16-evidence{background:linear-gradient(135deg,#103344,#0d2634);border:1px solid #4b806d;border-radius:16px;padding:clamp(16px,3vw,29px);margin:23px 0;color:#e9fff2}
+.v16-ensemble-metrics,.v16-prospective-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:19px 0}
+.v16-ensemble-metrics>div,.v16-prospective-grid>div{min-width:0;background:#102d37;border:1px solid #436e5f;border-radius:9px;padding:14px}
+.v16-ensemble-metrics small,.v16-prospective-grid small{display:block;color:#aed7c3;font-size:9px;font-weight:900;letter-spacing:.3px;line-height:1.45}
+.v16-ensemble-metrics strong,.v16-prospective-grid strong{display:block;margin-top:8px;color:#e7ffec;font:900 clamp(27px,3vw,39px)/1.12 "Barlow Condensed",Impact,sans-serif}
+.v16-prospective{background:#092d2a;border:1px solid #6da487;border-radius:11px;padding:clamp(13px,2vw,20px);margin-top:14px}
+.v16-prospective h4,.v16-archive-heading{color:#cfffe0;font:900 25px "Barlow Condensed",Impact,sans-serif;margin:0}
+.v16-prospective-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.v16-prospective p,.v16-comparison p{font-size:11px;line-height:1.65;color:#c8dfcf}
+.v16-prospective p strong{color:#f0fff3}
+.v16-archive-heading{margin-top:23px;margin-bottom:11px}
+.v16-comparison{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.v16-comparison p{margin:0;border:1px solid #3c655e;border-radius:8px;padding:11px}
+.v16-evidence-status{border-left:3px solid #add9b3;background:#143e36;padding:14px;color:#d3ffdf;line-height:1.6;font-size:12px}
+@media(max-width:790px){.v16-ensemble-metrics,.v16-prospective-grid,.v16-comparison{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:460px){.v16-ensemble-metrics,.v16-prospective-grid,.v16-comparison{grid-template-columns:1fr}}
