@@ -36,6 +36,16 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.historical_dataset --web-dir web --manifest research/outputs/historical-data-manifest.json --evaluation research/outputs/historical-evaluation.json --rows research/outputs/historical-training-rows.jsonl
+      - name: Run prior-season probabilistic score model, calibration and ensemble comparison
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.historical_probabilistic --web-dir web --out research/outputs/historical-probabilistic.json
+      - name: Store score uncertainty, calibration and nested ensemble historical evaluation
+        uses: actions/upload-artifact@v4
+        with:
+          name: historical-probabilistic-evaluation
+          path: research/outputs/historical-probabilistic.json
+          if-no-files-found: error
       - name: Store historical source provenance and chronological evaluation artifacts
         uses: actions/upload-artifact@v4
         with:
