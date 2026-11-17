@@ -12,11 +12,12 @@ import json
 import math
 import random
 from .advanced import Features, train_logistic, predict as logistic_predict
+from .boosted import train_boosted
 from dataclasses import dataclass
 from pathlib import Path
 
 TEMPERATURES = (0.5, 0.65, 0.8, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0)
-METHODS = ("coin_flip", "elo", "trend_elo", "calibrated_trend_elo", "logistic")
+METHODS = ("coin_flip", "elo", "trend_elo", "calibrated_trend_elo", "logistic", "boosted")
 
 
 @dataclass(frozen=True)
@@ -199,6 +200,10 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             Features(g.base_difference, g.trend_difference, g.win_pct_difference)
             for g in past
         ])
+        boosted = train_boosted([
+            Features(g.base_difference, g.trend_difference, g.win_pct_difference)
+            for g in past
+        ])
         row: dict[str, list[float]] = {
             "coin_flip": [0.5 for _ in current.games],
             "elo": [probability_of_winner(game.base_difference) for game in current.games],
@@ -209,6 +214,11 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "logistic": [
                 logistic_predict(Features(g.base_difference, g.trend_difference,
                                           g.win_pct_difference), weights)
+                for g in current.games
+            ],
+            "boosted": [
+                boosted.probability(Features(g.base_difference, g.trend_difference,
+                                             g.win_pct_difference))
                 for g in current.games
             ],
         }
@@ -222,10 +232,14 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "omittedGames": current.omitted_games,
             "calibrationTemperature": temperature,
             "logisticWeights": [round(w, 6) for w in weights],
+            "boostedStumps": [{
+                "feature": s.feature, "threshold": s.threshold,
+                "left": round(s.left, 6), "right": round(s.right, 6),
+            } for s in boosted.stumps],
             "models": {method: scores(row[method]) for method in METHODS},
         })
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "type": "historical-actual-matchup-walk-forward",
         "sourceCommit": source_commit,
         "minTrainingSeasons": min_training_seasons,
@@ -243,6 +257,7 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "Incomplete seasons and canceled tournaments are excluded; missing team ratings are counted and skipped.",
             "The baseline Elo parameters were fixed before this evaluation, not independently optimized by year.",
             "Logistic coefficients are fit on historical *earlier-year* tournament outcomes and regular-season-only features.",
+            "Gradient-boosted residual stumps are fit on earlier tournament years only; each paired sample has a symmetric winner/loser orientation.",
             "A 95% season-block bootstrap is descriptive uncertainty, not a future guarantee.",
         ],
     }

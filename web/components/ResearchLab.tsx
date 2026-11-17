@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type Method = "coin_flip" | "elo" | "trend_elo" | "calibrated_trend_elo" | "logistic";
+type Method = "coin_flip" | "elo" | "trend_elo" | "calibrated_trend_elo" | "logistic" | "boosted";
 type Metric = {games: number; brier: number; logLoss: number; accuracy: number};
 type Bin = {lower: number; upper: number; count: number; confidence: number | null; accuracy: number | null};
 type Report = {
@@ -20,7 +20,7 @@ type Report = {
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const methods: Array<[Method, string]> = [
   ["coin_flip", "Coin flip"], ["elo", "Standard Elo"], ["trend_elo", "Form-adjusted Elo"],
-  ["calibrated_trend_elo", "Calibrated Elo"], ["logistic", "Trained logistic"],
+  ["calibrated_trend_elo", "Calibrated Elo"], ["logistic", "Trained logistic"], ["boosted", "Boosted Elo"],
 ];
 const label = (id: Method) => methods.find(([key]) => key === id)?.[1] ?? id;
 const metricDisplay = (value: number, metric: keyof Metric) =>
@@ -108,7 +108,7 @@ export default function ResearchLab() {
               const pct = metric === "accuracy" ? val / baselineBound * 100 : (1 - val / baselineBound) * 100;
               return <button className={method === key ? "research-leader active" : "research-leader"} key={key} onClick={()=>setMethod(key)}>
                 <span className="ranking-index">{String(i+1).padStart(2,"0")}</span>
-                <span className="leader-description"><strong>{name}</strong><small>{key === "logistic" ? "Earlier-year learned coefficients" : key === "coin_flip" ? "No features" : key === "calibrated_trend_elo" ? "Past-year log-loss temperature" : "Fixed formula"}</small><span className="leaderbar"><i style={{width:Math.max(4,Math.min(100,pct))+"%"}}/></span></span>
+                <span className="leader-description"><strong>{name}</strong><small>{key === "boosted" ? "Earlier-year learned residual stumps" : key === "logistic" ? "Earlier-year learned coefficients" : key === "coin_flip" ? "No features" : key === "calibrated_trend_elo" ? "Past-year log-loss temperature" : "Fixed formula"}</small><span className="leaderbar"><i style={{width:Math.max(4,Math.min(100,pct))+"%"}}/></span></span>
                 <strong className="leader-value">{metricDisplay(val, metric)}</strong>
               </button>;
             })}
@@ -128,7 +128,7 @@ export default function ResearchLab() {
       <div className="research-card year-by-year"><div className="research-card-head"><div><small>CHRONOLOGICAL HOLDOUTS</small><h3>Season by season, no peeking.</h3></div><span className="research-pill">{report.firstTestSeason}—{report.lastTestSeason}</span></div>
         <div className="year-table-wrap"><table className="year-table"><thead><tr><th>TEST YEAR</th><th>TRAINED THROUGH</th><th>GAMES</th><th>ELO BRIER</th><th>{label(method).toUpperCase()} BRIER</th><th>Δ VS ELO</th></tr></thead><tbody>{[...report.yearByYear].reverse().map(row => <tr key={row.season}><td><strong>{row.season}</strong></td><td>{row.trainingThrough}</td><td>{row.evaluatedGames}</td><td>{row.models.elo.brier.toFixed(4)}</td><td>{row.models[method]?.brier.toFixed(4) ?? "—"}</td><td className={(row.models[method]?.brier ?? 0) < row.models.elo.brier ? "positive" : "negative"}>{((row.models[method]?.brier ?? 0)-row.models.elo.brier).toFixed(4)}</td></tr>)}</tbody></table></div>
       </div>
-      <p className="source-note">Only completed historical regular seasons are evaluated. The model sees actual historical opponent pairs; it does not predict which teams the committee selected or future bracket paths. Logistic regression uses base Elo, recent adjustment, and in-season win percentage; possession-adjusted offense/defense data is not available in the committed archive. Season-bootstrap intervals are descriptive, not a guarantee of future results. <a target="_blank" rel="noreferrer" href="https://github.com/dokeefe414/March-Madness-Forecasting/blob/main/docs/validation.md">Read full methodology ↗</a></p>
+      <p className="source-note">Only completed historical regular seasons are evaluated. The model sees actual historical opponent pairs; it does not predict which teams the committee selected or future bracket paths. Trained logistic and boosted models use frozen regular-season Elo, recent form and win percentage. Possession-adjusted offense/defense is available only for current-season source-box games, not the historical Kaggle benchmark. Season-bootstrap intervals are descriptive, not a guarantee of future results. <a target="_blank" rel="noreferrer" href="https://github.com/dokeefe414/March-Madness-Forecasting/blob/main/docs/validation.md">Read full methodology ↗</a></p>
     </>}
   </section>;
 }
