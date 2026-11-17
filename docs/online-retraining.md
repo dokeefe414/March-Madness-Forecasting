@@ -27,7 +27,7 @@ Form is computed from the team's existing *causal* Elo history; all features use
 
 1. Refuse the training run when accepted-game counts or retrieval timestamps disagree between the scored-game archive and Elo snapshot.
 2. **Embargo all results dated on or after the current Eastern calendar date**. The schedule feed has dates but no universal trustworthy exact tipoff time or final-status flag. This excludes known current-day results even if their scores are already visible, for conservative as-of evaluation.
-3. Group earlier games by date. Calculate **all** game-day features with the preceding day's Elo team states. Only **after** collecting their predictions and test scores update team ratings, form and records for that day. Do not use within-day tipoff ordering guesses.
+3. Group earlier games by date. Calculate **all** game-day features with the preceding day's Elo team states. Only **after** collecting their predictions and test scores update team ratings, form and records for that day. For the subsequent state's Elo updates use the existing baseline's deterministic winner/loser identity order as a disclosed proxy; it is not actual tipoff time.
 4. After at least 160 preceding games across 10 preceding dates, refit on those earlier-date examples, predict the next full date's games, and record their baseline Elo and trained-model Brier scores. Move forward chronologically and repeat. No held-out date's outcomes are available to the coefficients scoring that date.
 5. On each refresh, train final coefficients using all eligible previous-date games. Publish model weights, source retrieval timestamp, through-date, event sample sizes, last 20 individual evaluation receipts and a reproducible model fingerprint.
 

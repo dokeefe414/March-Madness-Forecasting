@@ -159,8 +159,14 @@ def build_report(games: list[dict], ratings: dict, now: datetime | None = None) 
                                    "trainedBrier":round((candidate-y)**2,8)})
             differences.append((day,diffs))
         examples.extend((x,y) for x,y,_,_ in day_examples)
-        # AFTER all pre-day predictions; there is no within-day result leakage.
-        for g in batch:
+        # AFTER all pre-day predictions. Match EloEngine's deterministic
+        # same-day ordering by winner/loser team identity, not contest ID.
+        # Either ordering is only an approximation without tipoff timestamps.
+        def elo_order(g: dict) -> tuple[str, str, str]:
+            winner = g["home"] if g["homeScore"] > g["awayScore"] else g["away"]
+            loser = g["away"] if winner == g["home"] else g["home"]
+            return (winner.casefold(), loser.casefold(), g["id"])
+        for g in sorted(batch, key=elo_order):
             _update(states,g)
         played_days+=1
     weights = train(examples)
