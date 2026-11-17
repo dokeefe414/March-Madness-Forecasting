@@ -59,7 +59,7 @@ py -m forecast.snapshot --ratings web/public/current/2027.json --scoreboard-json
 ### Audit step by step
 
 1. Locate a card on the Predictions Ledger; inspect its `eventId`, listed start, `generatedAtUtc`, `snapshotId`.
-2. Open the corresponding JSON file in the [public committed snapshots](https://github.com/dokeefe414/March-Madness-Forecasting/tree/main/web/public/forecasts/snapshots) and verify its Git commit history precedes the listed start; account for event delays.
+2. Open the corresponding JSON file in the [public committed snapshots](https://github.com/dokeefe414/March-Madness-Forecasting26-27/tree/main/web/public/forecasts/snapshots) and verify its Git commit history precedes the listed start; account for event delays.
 3. Inspect the original ESPN event ID/status and later NCAA contest ID on the settlement record.
 4. Recalculate `(p_home - observed_home)^2` or log loss locally.
 5. Compare the raw settlement set to the index aggregate. The web index is derived, not primary evidence.
