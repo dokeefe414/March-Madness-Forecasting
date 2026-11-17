@@ -86,7 +86,10 @@ export default function GameCenter(){
       (showAll||!now||new Date(x.scheduledStartUtc).getTime()>now) &&
       (x.home+" "+x.away).toLowerCase().includes(search.toLowerCase())),
     [eligible,search,day,showAll,now]);
-  const selected=eligible.find(x=>x.eventId===selectedId)||rows[0];
+  // Never display an expired source capture as a currently upcoming pick.
+  // Started games remain inspectable only when the user explicitly enables it.
+  const selected=rows.find(x=>x.eventId===selectedId)||rows[0];
+  const alreadyStarted=Boolean(selected&&now&&new Date(selected.scheduledStartUtc).getTime()<=now);
   const canCompare=ratings?.teams?.length && a&&b&&a!==b;
   const left=ratings?.teams.find(t=>t.teamId===a);
   const right=ratings?.teams.find(t=>t.teamId===b);
@@ -137,6 +140,7 @@ export default function GameCenter(){
         <article className="gc-detail" aria-live="polite">
           {selected&&selected.status==="ready"&&selected.homeWinProbability!=null&&selected.homeProfile&&selected.awayProfile?
           <>
+            {alreadyStarted&&<div className="gc-warning" role="status">HISTORICAL CAPTURE ONLY · The listed tipoff time has passed since the source refresh. This frozen percentage is not a live in-game forecast.</div>}
             <div className="gc-detail-cap"><span>MODEL MATCHUP REPORT / ESPN {selected.eventId}</span><span>{when(selected.scheduledStartUtc)}</span></div>
             <div className="gc-matchup-title"><div><small>ROAD</small><h3>{selected.away}</h3><span>{selected.awayProfile.wins}–{selected.awayProfile.losses}</span></div>
               <div className="gc-vs">VS</div><div><small>{selected.neutralSite?"NEUTRAL":"HOME"}</small><h3>{selected.home}</h3><span>{selected.homeProfile.wins}–{selected.homeProfile.losses}</span></div></div>
