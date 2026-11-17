@@ -237,3 +237,132 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 .online-pick-model{color:#a3d5bb;font-weight:800;font-size:10px;letter-spacing:.3px;margin:12px 0 4px}
 @media(max-width:880px){.online-learning-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.online-learning-head{flex-wrap:wrap}.online-learning-bottom{flex-wrap:wrap}}
 @media(max-width:490px){.online-learning{padding:17px 13px}.online-learning-metrics{gap:8px}.online-learning-metrics>div{padding:13px 10px}.online-learning-metrics strong{font-size:28px}.online-learning-metrics small{font-size:8px}}
+
+
+/* =============================================================
+   v0.8 GAME INTELLIGENCE · Accessible courtside editorial console
+   Content-first: five-day real fixtures, one focused probability report,
+   prior-game evidence, forward track record and a separate what-if sandbox.
+   ============================================================= */
+.gc{min-width:0;width:100%;overflow:hidden}
+.gc-hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(265px,.58fr);gap:30px;
+  padding:clamp(24px,4vw,52px);border-radius:20px;border:1px solid #376557;
+  background:radial-gradient(circle at 85% 3%,#265e4a8c,transparent 43%),
+             linear-gradient(119deg,#12343c,#081922 67%,#081e29);
+  box-shadow:0 30px 75px #020b1277;position:relative;isolation:isolate}
+.gc-overline{font-size:10px;letter-spacing:2px;font-weight:900;color:#a1efc2;display:flex;gap:12px;align-items:center}
+.gc-hero h1{font-family:"Barlow Condensed",Impact,sans-serif;font-weight:900;font-size:clamp(55px,8vw,116px);
+  line-height:.84;letter-spacing:-1.8px;margin:22px 0 19px;max-width:730px;color:#edfff4}
+.gc-hero h1 em{font-style:normal;color:#a7ffd0}
+.gc-hero>div>p{max-width:630px;font-size:clamp(12px,1.6vw,16px);line-height:1.7;color:#bed1d2;margin:0 0 22px}
+.gc-hero-chips{display:flex;gap:8px;flex-wrap:wrap}
+.gc-tag{border:1px solid #4b8375;border-radius:999px;background:#153d3a9c;color:#a9d9be;padding:8px 12px;font-size:9px;letter-spacing:.9px;font-weight:800}
+.gc-hero-score{background:#0a252bca;border:1px solid #418171;border-radius:18px;padding:24px 23px;display:flex;flex-direction:column;justify-content:center}
+.gc-hero-score small{font-size:10px;letter-spacing:1.3px;font-weight:900;color:#9dcdbd}
+.gc-hero-score strong{font:900 clamp(55px,6vw,94px)/1 "Barlow Condensed",Impact,sans-serif;color:#b6ffd5;margin:10px 0 7px}
+.gc-hero-score>span{color:#effff0;font-size:12px;font-weight:750}
+.gc-hero-score p{color:#a5bfbe;font-size:11px;line-height:1.7;margin:18px 0}
+.gc-hero-score a{color:#b6ffd5;letter-spacing:1px;font-size:10px;text-underline-offset:4px;font-weight:900}
+.gc-intro{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:32px 0 18px}
+.gc-intro h2,.gc-whatif h2{font:900 clamp(35px,5vw,66px)/.96 "Barlow Condensed",Impact,sans-serif;text-transform:uppercase;margin:7px 0;color:#e8fff4}
+.gc-intro h2 span,.gc-whatif h2 span{color:#9cf9c4}
+.gc-intro p,.gc-whatif p{color:#9dbbbd;line-height:1.6;font-size:12px}
+.gc-source-pill{padding:8px 12px;border:1px solid #345d5c;border-radius:999px;color:#95c7b8;font-weight:900;letter-spacing:.8px;font-size:9px;white-space:nowrap}
+.gc-toolbar{display:flex;gap:11px;align-items:end;padding:14px;background:#0d2731;border:1px solid #2d4b4e;border-radius:14px;margin-bottom:14px;flex-wrap:wrap}
+.gc-search,.gc-date{font-size:9px;color:#a1c3bf;letter-spacing:1px;font-weight:900;display:flex;flex-direction:column;gap:7px;flex:1;min-width:185px}
+.gc-search input,.gc-date select,.gc-whatif-controls select{background:#071d26;color:#f1fff8;border:1px solid #436260;border-radius:8px;padding:12px 13px;min-width:0;width:100%;font:600 13px system-ui,sans-serif;outline-offset:2px}
+.gc-date{flex:0 1 225px}
+.gc-check{display:flex;align-items:center;gap:7px;color:#a5bebd;font-size:10px;max-width:210px;font-weight:750;line-height:1.45}
+.gc-check input{accent-color:#a2fbc4;width:16px;height:16px;flex-shrink:0}
+.gc-warning{padding:11px 14px;border:1px solid #956e38;background:#372c1c;color:#ffd795;font-size:12px;border-radius:9px}
+.gc-stage{display:grid;grid-template-columns:minmax(250px,.73fr) minmax(0,1.54fr);align-items:start;gap:15px}
+.gc-fixtures,.gc-detail{background:#0c2430;border:1px solid #36565a;border-radius:16px;min-width:0;overflow:hidden}
+.gc-fixtures{position:sticky;top:76px}
+.gc-list-header{display:flex;justify-content:space-between;gap:13px;align-items:center;padding:15px;border-bottom:1px solid #315057}
+.gc-list-header strong{color:#c4fcd4;font-size:11px;letter-spacing:1.1px}
+.gc-list-header span{color:#94b5b8;font-size:10px;text-align:right}
+.gc-fixtures-scroll{max-height:790px;overflow-y:auto;scrollbar-color:#42645c transparent}
+.gc-fixture{width:100%;display:block;text-align:left;border:0;border-bottom:1px solid #294a4c;padding:16px 15px;color:#fff;background:transparent;cursor:pointer;transition:background .15s}
+.gc-fixture:hover,.gc-fixture:focus-visible{background:#183e43}
+.gc-fixture.gc-selected{background:linear-gradient(90deg,#214c44,#142e38);box-shadow:inset 4px 0 #a8ffd0}
+.gc-fixture-top,.gc-fixture-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.gc-fixture-top span{font-size:9px;letter-spacing:.4px;color:#93b6b6}
+.gc-fixture-top span:last-child{color:#b2f5c9;font-weight:900;text-align:right}
+.gc-fixture-teams{display:grid;grid-template-columns:minmax(0,1fr) 22px minmax(0,1fr);align-items:center;gap:7px;margin:13px 0}
+.gc-fixture-teams small{display:block;font-size:8px;font-weight:900;letter-spacing:1px;color:#88aaa9}
+.gc-fixture-teams strong{font:800 clamp(16px,1.8vw,24px)/1.1 "Barlow Condensed",Impact,sans-serif;color:#f2fff6;overflow-wrap:anywhere;display:block;margin-top:4px}
+.gc-at{text-align:center;color:#79c6ac;font-size:20px}
+.gc-fixture-bottom span{color:#87adac;font-size:9px;line-height:1.35;max-width:60%}
+.gc-fixture-bottom b{color:#a5ffca;font-size:11px;text-align:right}
+.gc-list-empty{padding:38px 23px;color:#a9c4c4;font-size:13px;line-height:1.7}
+.gc-detail{padding:clamp(16px,2.7vw,30px);box-shadow:0 15px 35px #06152240}
+.gc-detail-cap{display:flex;gap:10px;justify-content:space-between;color:#a3c7c1;font-size:9px;letter-spacing:.8px;font-weight:900}
+.gc-detail-cap span:last-child{text-align:right}
+.gc-matchup-title{display:grid;grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr);gap:8px;align-items:center;margin:32px 0}
+.gc-matchup-title>div:last-child{text-align:right}
+.gc-matchup-title small{font-size:9px;letter-spacing:1.2px;color:#86b4ac}
+.gc-matchup-title h3{font:900 clamp(34px,4vw,66px)/.88 "Barlow Condensed",Impact,sans-serif;text-transform:uppercase;margin:7px 0;color:#f3fff6;overflow-wrap:anywhere}
+.gc-matchup-title>div>span{font-size:12px;color:#9ebebe}
+.gc-vs{text-align:center;font:900 18px "Barlow Condensed",Impact,sans-serif;color:#70cbae}
+.gc-odds-head{display:flex;align-items:end;justify-content:space-between;gap:10px}
+.gc-odds-head>div:last-child{text-align:right}
+.gc-odds-head small{display:block;color:#9cc8bc;font-size:8px;font-weight:900;letter-spacing:.7px}
+.gc-odds-head strong{font:900 clamp(43px,5vw,72px)/1 "Barlow Condensed",Impact,sans-serif;color:#afffd2}
+.gc-odds-head>span{max-width:105px;text-align:center;color:#86a8a8;font-size:9px;font-weight:900;letter-spacing:.7px}
+.gc-odds-bar{height:21px;border-radius:9px;background:linear-gradient(90deg,#84baf8,#557ab1);margin:12px 0 8px;overflow:hidden;border:1px solid #6689a0}
+.gc-odds-bar div{height:100%;background:linear-gradient(90deg,#d8ffb8,#76d9b8);border-right:3px solid #f9ffef}
+.gc-model-name{font-size:10px;line-height:1.6;color:#a7c2be}
+.gc-model-name strong{color:#c1faca}
+.gc-explain-head{margin:31px 0 15px;padding-top:24px;border-top:1px solid #2b514e}
+.gc-explain-head h3,.gc-evidence h3{font:900 clamp(25px,3vw,37px)/.98 "Barlow Condensed",Impact,sans-serif;text-transform:uppercase;margin:7px 0;color:#effff4}
+.gc-explain-head h3 em{font-style:normal;color:#a9ffcf}
+.gc-explain-head p,.gc-evidence p{line-height:1.55;color:#a0bcbd;font-size:11px}
+.gc-factors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.gc-factors>div{padding:14px;background:#102e37;border:1px solid #325a56;border-radius:10px;min-width:0}
+.gc-factors small{display:block;color:#91cbb9;font-size:9px;text-transform:uppercase;letter-spacing:.8px;font-weight:900}
+.gc-factors strong{font:900 32px/1.2 "Barlow Condensed",Impact,sans-serif;color:#c2ffdc}
+.gc-factors p{font-size:10px;line-height:1.5;color:#a5bec0;margin:6px 0 0}
+.gc-profiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:24px}
+.gc-profile{min-width:0;background:#102b34;border:1px solid #315350;border-radius:12px;padding:15px}
+.gc-profile-heading small,.gc-eyebrow{font-size:9px;color:#9ccbbd;letter-spacing:.8px;font-weight:900}
+.gc-profile-heading h4{font:900 27px/1 "Barlow Condensed",Impact,sans-serif;text-transform:uppercase;margin:6px 0;color:#edfff6}
+.gc-profile-heading>span{color:#8fbbba;font-size:10px}
+.gc-profile-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:18px 0}
+.gc-profile-stats div{min-width:0}
+.gc-profile-stats small{font-size:8px;letter-spacing:.7px;display:block;color:#89b2ad}
+.gc-profile-stats strong{color:#d5ffe2;font:900 25px "Barlow Condensed",Impact,sans-serif}
+.gc-results{display:flex;flex-direction:column;gap:5px}
+.gc-result{display:flex;align-items:center;gap:9px;background:#0b232c;border-radius:7px;padding:9px;min-width:0}
+.gc-result>span{font-weight:900;font-size:11px;border-radius:5px;background:#284334;padding:6px;color:#b6ffd5}
+.gc-result>span.gc-loss{background:#4b3130;color:#ffd7c4}
+.gc-result>div{flex:1;min-width:0}
+.gc-result strong{display:block;font-size:11px;color:#edf9f1;overflow-wrap:anywhere}
+.gc-result small{display:block;font-size:9px;color:#94b4b3}
+.gc-result b{font-size:11px;white-space:nowrap;color:#cfe6e3}
+.gc-evidence{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;border-top:1px solid #355455;margin-top:24px;padding-top:24px}
+.gc-common-list{display:flex;flex-direction:column;gap:8px;margin:15px 0}
+.gc-common-list>div{border-radius:8px;padding:12px;background:#102d36;display:flex;flex-direction:column;gap:4px}
+.gc-common-list strong{font-size:12px;color:#dcffdf}
+.gc-common-list span{color:#aec7c8;font-size:10px}
+.gc-empty{font-size:12px;color:#91b0b0;font-style:italic;line-height:1.6;padding:16px;border:1px dashed #385550;border-radius:9px}
+.gc-research{border:1px solid #42665f;padding:14px;background:#12352f;border-radius:9px;margin-top:20px}
+.gc-research>small{font-size:9px;color:#addec1;font-weight:900;letter-spacing:.8px}
+.gc-research p{display:flex;justify-content:space-between;gap:9px;margin:9px 0;color:#c1dad4}
+.gc-research strong{color:#c5ffd3;font-size:14px}
+.gc-unmatched{padding:35px 10px;min-height:250px;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.gc-unmatched h3{font:900 clamp(29px,5vw,53px)/1 "Barlow Condensed",Impact,sans-serif;color:#effff4}
+.gc-unmatched p{color:#aac9c1;font-size:13px;line-height:1.7}
+.gc-whatif{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:30px;margin-top:25px;
+  padding:clamp(20px,3vw,33px);background:linear-gradient(110deg,#123733,#0d202a);
+  border:1px solid #386052;border-radius:16px;align-items:center}
+.gc-whatif-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:11px}
+.gc-whatif-controls label{display:flex;flex-direction:column;gap:7px;font-size:9px;letter-spacing:1px;color:#9ccbbd;font-weight:900;min-width:0}
+.gc-whatif-controls>div{grid-column:1/-1;display:flex;align-items:center;gap:20px;background:#081f2a;border-radius:9px;padding:15px}
+.gc-whatif-controls>div small{font-size:9px;font-weight:900;color:#98c4b7;max-width:170px}
+.gc-whatif-controls>div strong{font:900 42px/1 "Barlow Condensed",Impact,sans-serif;color:#b4ffd4}
+.gc-whatif-controls>div span{font-size:11px;color:#9dc6be}
+.gc>.source-note{margin-top:23px}
+@media(max-width:1150px){.gc-stage{grid-template-columns:minmax(235px,.7fr) minmax(0,1.25fr)}.gc-fixtures{top:18px}.gc-profiles,.gc-evidence{grid-template-columns:1fr}}
+@media(max-width:840px){.gc-hero{grid-template-columns:1fr}.gc-hero-score{max-width:none}.gc-hero-score strong{font-size:65px}.gc-stage,.gc-whatif{grid-template-columns:1fr}.gc-fixtures{position:static}.gc-fixtures-scroll{max-height:400px}.gc-intro{flex-wrap:wrap}.gc-evidence{grid-template-columns:repeat(2,minmax(0,1fr))}.gc-profiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.gc-hero{padding:22px}.gc-hero h1{font-size:62px}.gc-hero-score{padding:20px}.gc-hero-chips{gap:5px}.gc-tag{font-size:8px}.gc-factors,.gc-evidence,.gc-profiles{grid-template-columns:1fr}.gc-matchup-title{grid-template-columns:minmax(0,1fr) 27px minmax(0,1fr)}.gc-matchup-title h3{font-size:35px}.gc-odds-head strong{font-size:49px}.gc-odds-head>span{font-size:7px;max-width:65px}.gc-whatif-controls{grid-template-columns:1fr}.gc-whatif-controls>div{flex-wrap:wrap}.gc-list-header{flex-wrap:wrap}.gc-list-header span{text-align:left}.gc-date{flex:1 1 185px}.gc-hero-score strong{font-size:66px}}
+@media(prefers-reduced-motion:reduce){.gc-fixture{transition:none}}
