@@ -28,11 +28,14 @@ def build_operations(folder:Path,now:datetime|None=None)->dict:
     repeated=sum(max(0,n-1) for n in events.values())
     delays=settlement["counters"]["delayedOver48h"]
     warnings=list(health.get("sourceWarnings") or [])
+    index_path=folder/"index.json"
+    index=json.loads(index_path.read_text(encoding="utf-8")) if index_path.exists() else {}
+    changes=(index.get("archiveHealth") or {}).get("observedScheduleChanges") or []
     # Severity reflects verifiability, not predictive skill; delayed finals
     # alone are a review notice, never an automatic prediction failure.
     status=health["status"]
     state=("degraded" if status in {"stale","source-partial","no-picks-yet","awaiting-first-archive"}
-           else "review" if delays>0 else
+           else "review" if delays>0 or changes else
            "off-season" if status=="off-season" else "operational")
     latest=health.get("lastArchiveUtc")
     return {
@@ -46,6 +49,7 @@ def build_operations(folder:Path,now:datetime|None=None)->dict:
       "uniqueSettledEvents":settlement["settledUniqueGames"],
       "delayedSnapshotEntries":delays,
       "delayedExamples":settlement["oldestDelayed"][:8],
+      "observedScheduleChanges":changes[:12],
       "checks":[
         {"name":"Archived source-capture freshness","state":"review" if state=="off-season" else "pass" if status=="current" else "fail" if state=="degraded" else "pass",
          "detail":health["message"]},
@@ -53,6 +57,8 @@ def build_operations(folder:Path,now:datetime|None=None)->dict:
          "detail":f"{len(warnings)} feed-day warnings in last completed archive; unverified source days never become picks"},
         {"name":"Verified-final backlog","state":"review" if delays else "pass",
          "detail":f"{delays} timestamped snapshot entries older than 48h without independently verified settlement"},
+        {"name":"Rescheduled ESPN start times","state":"review" if changes else "pass",
+         "detail":f"{len(changes)} original archived ESPN event IDs have a different listed start in the fetched source; no archived start is overwritten"},
         {"name":"Repeat captures","state":"review" if repeated else "pass",
          "detail":f"{repeated} additional pregame snapshots for previously captured ESPN event IDs; only first pick counts for unique-game forward accuracy"}
       ],
