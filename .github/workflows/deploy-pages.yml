@@ -71,6 +71,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.advanced_models --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/advanced-models.json
+      - name: Run source-only date-frozen score and margin forecasting benchmark
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.score_research --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/score-research.json
       - name: Publish verified archive operations and feed provenance
         env:
           PYTHONPATH: research
