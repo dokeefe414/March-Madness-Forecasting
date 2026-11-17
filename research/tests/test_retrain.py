@@ -14,7 +14,7 @@ def mock_games(days=34,per_day=10):
             b=(d*3+i*2+13)%48
             games.append({"id":f"{d:03}-{i:02}","date":(first+timedelta(days=d)).isoformat(),
                           "home":f"H{a}","away":f"H{b}",
-                          "homeScore":75+(d+i)%17,"awayScore":65+(d*3+i)%15})
+                          "homeScore":80 if (d+i)%3 else 70,"awayScore":75})
     return games
 def rating(games):
     return {"mode":"current","season":2027,"regularSeasonGames":len(games),
