@@ -152,3 +152,10 @@ At 9:07 a.m. Eastern, the archiver also fits the state-space **research** candid
 Missing/wrong predictions remain frozen. After newly accepted previous-day finals appear, the standard nightly retraining uses them chronologically. Before promoting the learned challenger, require existing date-block thresholds plus **at least 40 genuine earliest-game settled Elo and shadow candidate comparisons** with prospective Brier gain >=0.002. Never force an update after an individual upset or silently edit a previously public pick.
 
 Public reference endpoints: `/current/upcoming.json` and `/current/2027-state-space.json` for sourced schedule and experimental team trajectories, `/current/2027-online-model.json` for model status, and `/forecasts/index.json` for actual pregame accuracy (created only when the archive has run). See [game-center](game-center.md), [forward scoring](forward-performance.md) and [state-space](state-space.md).
+
+
+## v0.9 independent-final archiving and monitor
+
+The primary runbook is [v09-forecast-operations.md](v09-forecast-operations.md). It covers Eastern local workflow schedule, newly required **ESPN completed final + matching NCAA scores** before settling, what happens on delayed or mismatched data, twice-daily website re-publication after archival changes, and a visible GitHub Actions alert when `monitor-archive.yml` finds a stale, absent or zero-pick archive. The website publishes `/current/archive-health.json` and must distinguish genuine source status from a green Pages compilation.
+
+All new artifacts are versioned current 2027-source-generated outputs. `python -m forecast.archive_health --ledger web/public/forecasts --require-recent` is intentionally strict in season; it may fail before the first genuine scheduled archive. Never substitute historical replay accuracy to make it green.

@@ -58,3 +58,12 @@ The earliest archived predictions and their source timestamps permit later compa
 Use `PYTHONPATH=research python -m unittest discover -s research/tests -v` and `PYTHONPATH=research python -m forecast.audit --dir web/public/forecasts` to verify the implementation.
 
 Code: `research/forecast/performance.py`, `research/forecast/audit.py`, `research/forecast/retrain.py`, `research/forecast/snapshot.py`; UI: `web/components/ForwardScorecard.tsx`, `ForecastTracker.tsx`, `OnlineLearning.tsx`.
+
+
+## v0.9 independent result verification and fair multi-model scorecard
+
+A nonzero NCAA-derived score alone is no longer sufficient for future settlements. Every new graded event also requires an ESPN `STATUS_FINAL`, `completed=true`, and **matching actual ESPN event ID, Eastern date, home/away scores**. Mismatches or unfinished games remain pending. The audit compares immutable source records, frozen experimental alternatives and the public index; a completed source status is stronger evidence than a timestamp alone, but two third-party providers cannot guarantee a flawless official event clock.
+
+The first-pick `uniqueGames.pairedModelComparisons` now includes on-the-same-actual-game Elo versus **online logistic**, **opponent-aware**, **fixed state-space**, and **adaptive state-space** challenger Brier, winner rate, paired-game count, independent dates, and date-block descriptive interval after adequate data. This is not a claim of automatic superiority or an excuse to switch models immediately after a miss. The separate **Model Lab** displays these forward pairs and date-frozen retrospective experiments in separate sections with a clear data-cohort warning.
+
+The new public `/current/archive-health.json` and `archiveHealth` index metadata tell users if the independent daily archive actually ran and whether source warnings remain. The `monitor-archive.yml` scheduled health workflow fails on in-season missing, stale or zero-pick archives; this makes silently missing genuine accuracy visible in GitHub Actions even when static Page builds succeed. See [operational runbook](v09-forecast-operations.md).
