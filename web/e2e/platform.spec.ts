@@ -2,6 +2,13 @@ import {expect, test} from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 async function section(page: import("@playwright/test").Page, label:string) {
+  // Primary navigation stays intentionally small; older deep links remain
+  // reachable under the accessible More menu on desktop and mobile.
+  if(["2027 Pulse","Field Watch","Matchups","Historical","Archive","Research","About"].includes(label)){
+    const summary=page.locator(".mf-simple-nav:visible .mf-more summary").first();
+    await expect(summary).toBeVisible();
+    await summary.click();
+  }
   const button=page.locator("button:visible").filter({hasText:new RegExp("^"+label+"$")}).first();
   await expect(button).toBeVisible();
   await button.click();
@@ -444,4 +451,60 @@ test("historical model lab separates source-verified old-season evaluation from 
  await panel.getByText("View year-by-year held-out results and audit exclusions").click();
  await expect(panel).toContainText("2020, 2026");
  await expect(panel).toContainText("2025");
+});
+
+test("v1.8 five primary tabs and More preserve every original deep link",async ({page})=>{
+ await page.goto("/");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const nav=page.locator(".mf-simple-nav:visible").first();
+ await expect(nav).toBeVisible();
+ await expect(nav.locator(":scope > button")).toHaveCount(5);
+ await expect(nav.locator(".mf-more summary")).toBeVisible();
+ await section(page,"Archive");
+ await expect(page).toHaveURL(/view=history/);
+ await expect(page.getByRole("heading",{name:/Tournament archive/i})).toBeVisible();
+ await section(page,"Model Lab");
+ await expect(page).toHaveURL(/view=models/);
+ await section(page,"Research");
+ await expect(page).toHaveURL(/view=research/);
+ await page.goBack();
+ await expect(page).toHaveURL(/view=models/);
+ await expect(page.locator("#model-lab")).toBeVisible();
+ await page.goto("/?view=compare");
+ await expect(page.getByRole("heading",{name:/Matchup lab/i})).toBeVisible();
+ await expect(page.locator(".mf-location")).toContainText("Matchups");
+ await page.locator(".mf-location button").click();
+ await expect(page).toHaveURL(/view=games/);
+});
+test("v1.8 historical probabilistic study displays calibrated models and empirical interval coverage",async ({page})=>{
+ await page.route("**/research/historical-data-manifest.json",r=>r.fulfill({contentType:"application/json",body:JSON.stringify({
+  sourceCommit:"pinned",historicalIndexSha256:"index",includedSeasons:40,
+  includedGames:2585,excludedSeasons:[2020,2026],omittedMissingRatedTeams:0,perSeason:[]})}));
+ const score={games:2270,marginMAE:8.23,totalMAE:14.12,marginRMSE:10.1,totalRMSE:17.8,
+   margin80Coverage:.785,total80Coverage:.814,margin80MeanWidth:32.2,total80MeanWidth:44.1};
+ const m=(brier:number)=>({games:2270,brier,accuracy:.653,logLoss:.65});
+ const bin=(x:number)=>({lower:x/10,upper:(x+1)/10,games:227,averageProbability:.25,realizedFrequency:.27});
+ const cal={ece:.022,bins:Array.from({length:10},(_,i)=>bin(i))};
+ await page.route("**/research/historical-probabilistic.json",r=>r.fulfill({contentType:"application/json",body:JSON.stringify({
+  schemaVersion:1,mode:"historical-research-only",sourceCommit:"pinned",datasetIndexSha256:"index",
+  evaluatedYears:35,heldOutGames:2270,trainingData:"pre-tournament only",
+  metrics:{elo:m(.2225),calibratedElo:m(.2218),scoringProbability:m(.2201),
+           nestedEnsemble:m(.2197),projectedScores:score},
+  calibration:{elo:cal,scoring:cal,ensemble:cal},ensembleBrierGainVsElo:.0028,
+  seasonBlockGain95:[-.002,.006],
+  yearByYear:[{season:2025,trainingThrough:2024,modelWeight:.25,scoreProbabilityScale:1.15,
+    elo:m(.21),scoreProbability:m(.20),ensemble:m(.205),scoreIntervals:score}],
+  policy:{liveForecastsChanged:false,noAutomaticPromotion:true},
+  limitations:[]})}));
+ await page.goto("/?view=models");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const study=page.getByRole("region",{name:"Historical probabilistic scoring and calibration research"});
+ await expect(study).toContainText("MORE THAN");
+ await expect(study).toContainText("2,270");
+ await expect(study).toContainText("78.5%");
+ await expect(study).toContainText("0.2197");
+ await study.getByRole("button",{name:"Score model"}).click();
+ await expect(study.getByText("Expected calibration error:")).toBeVisible();
+ await study.getByText("See yearly forecasts, learned weights, and scoring error").click();
+ await expect(study).toContainText("2025");
 });

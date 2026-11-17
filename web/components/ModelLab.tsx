@@ -5,6 +5,7 @@ import ResearchVisualization from "./ResearchVisualization";
 import ScoreResearchEvidence from "./ScoreResearchEvidence";
 import EnsembleEvidence from "./EnsembleEvidence";
 import HistoricalEvidence from "./HistoricalEvidence";
+import ProbabilisticResearch from "./ProbabilisticResearch";
 
 const base=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Paired={pairedGames:number;pairedDates:number;baselineEloBrier:number|null;
@@ -193,6 +194,7 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
    <ScoreResearchEvidence/>
    <EnsembleEvidence/>
    <HistoricalEvidence/>
+   <ProbabilisticResearch/>
    <div className="ml-recent">
      <div><span className="section-kicker">04 / THE MOST RECENT OPPONENT EXPERIMENT</span>
        <h3>Game-day <em>performance.</em></h3>

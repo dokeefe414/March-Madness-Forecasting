@@ -18,6 +18,7 @@ type Fixture={eventId:string;scheduledStartUtc:string;scheduledEasternDate:strin
   stateSpaceHomeWinProbability?:number|null;model?:string;status:"ready"|"unmatched";
   opponentAdjustedHomeWinProbability?:number|null;
   adaptiveStateSpaceHomeWinProbability?:number|null;
+  ensembleHomeWinProbability?:number|null;ensembleResearchWeight?:number|null;ensembleComponentCount?:number|null;
   driftWatch?:{home:boolean|null;away:boolean|null;homeInnovations?:number[];awayInnovations?:number[]};
   modelId?:string|null;reason?:string|null;homeProfile?:Profile;awayProfile?:Profile;
   factors?:Factor[];headToHead?:Array<{date:string;home:string;away:string;homeScore:number;awayScore:number}>;
@@ -247,6 +248,15 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
             <div className="gc-odds-bar" role="img" aria-label={selected.away+" "+percent(1-selected.homeWinProbability)+", "+selected.home+" "+percent(selected.homeWinProbability)}>
               <div style={{width:percent(1-selected.homeWinProbability)}}/></div>
             <p className="gc-model-name">{selected.model} · {selected.neutralSite?"No home advantage (neutral venue)":"65 Elo-point home adjustment"} · <strong>{selected.homeWinProbability>.5?selected.home:selected.away} favored</strong></p>
+            <details className="v18-model-guide">
+              <summary>What is this prediction based on? How does it differ from the score?</summary>
+              <p><strong>Active game favorite:</strong> The displayed {selected.model||"Elo"} win probability is the model's probability of a win, not its projected score or a sportsbook spread.</p>
+              <p><strong>Projected score:</strong> The points model below estimates scoring rates and pace using available source statistics. It is a separate experimental estimator, so its favorite may disagree with Elo.</p>
+              {selected.ensembleHomeWinProbability!=null&&<p><strong>Experimental ensemble:</strong> {selected.home} {percent(selected.ensembleHomeWinProbability)} vs {selected.away} {percent(1-selected.ensembleHomeWinProbability)}. This frozen research-only probability combines Elo with {selected.ensembleComponentCount||"available"} shadow model signals; it is not the official public favorite.</p>}
+              {selected.challengerHomeWinProbability!=null&&<p><strong>Other model research:</strong> Online challenger gives {selected.home} {percent(selected.challengerHomeWinProbability)}. Models can disagree because they learn from different strengths, time windows or regularization.</p>}
+              <p><strong>Historical accuracy:</strong> The Model Lab evaluates earlier tournament matchups separately from real archived first-pick evidence. A promising historical result does not prove a stronger prediction for this game.</p>
+              {onOpenModels&&<button type="button" onClick={onOpenModels}>COMPARE HISTORICAL MODEL EVIDENCE ↗</button>}
+            </details>
             <div className="gc-explain-head"><span className="section-kicker">02 / WHY THE MODEL THINKS THIS</span><h3>Explain the <em>percentage.</em></h3>
               <p>The same team ratings are built from results against other opponents. Factors below are evidence, not four separate probability coefficients.</p></div>
             <div className="gc-factors">{(selected.factors||[]).map(f=><div key={f.title}><small>{f.title}</small>
