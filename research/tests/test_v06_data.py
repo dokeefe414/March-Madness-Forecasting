@@ -58,7 +58,10 @@ class VerifiedSourceTests(unittest.TestCase):
         self.assertEqual(output["identityCoverage"]["matchedRatedTeams"], 3)
         self.assertEqual(output["efficiencyCoverage"]["matchedTeamGames"], 4)
         self.assertEqual(output["selectionWatchlist"]["status"], "insufficient-coverage")
-        self.assertEqual(output["selectionWatchlist"]["matchedConferences"], 2)
+        # Only conference labels, not verified season-2027 D-I membership,
+        # are supplied in this fixture. The provisional field remains gated.
+        self.assertEqual(output["selectionWatchlist"]["matchedConferences"], 0)
+        self.assertEqual(output["divisionCoverage"]["status"], "unavailable")
         plain = build_current(GAMES, t)
         self.assertEqual(plain["efficiencyCoverage"]["status"], "unavailable")
         self.assertEqual(plain["identityCoverage"]["status"], "unavailable")
