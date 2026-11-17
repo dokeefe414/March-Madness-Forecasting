@@ -1,0 +1,287 @@
+"""Immutable *pre-tipoff* prediction ledger with source timestamps and settlement.
+
+Sources:
+  - Current NCAA-source Elo snapshot generated **before** each event
+  - ESPN public men's college basketball site scoreboard (scheduled event time,
+    event ID, participant names; independent from the result feed)
+  - NCAA-source completed final results used *later*, only for settlement
+
+No browser-side writes: GitHub Actions appends snapshots and separate settlement
+artifacts to the public repository. If a future schedule cannot be verified,
+nothing is published (rather than manufacturing "predictions").
+"""
+from __future__ import annotations
+import argparse
+import hashlib
+import json
+import math
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+from zoneinfo import ZoneInfo
+
+from .core import matchup_probability
+from .reference import canonical
+from .live import SOURCE_URL, final_games, fetch_csv
+
+ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard"
+LOCAL = ZoneInfo("America/New_York")
+BUFFER_MINUTES = 15
+
+
+def parse_time(value: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"Invalid event UTC datetime {value!r}") from exc
+    if parsed.tzinfo is None:
+        raise ValueError("Event start requires explicit timezone")
+    return parsed.astimezone(timezone.utc)
+
+
+def fixture_source(day: date) -> str:
+    return ESPN_BASE + "?" + urlencode({
+        "groups": "50", "limit": "500", "dates": day.strftime("%Y%m%d"),
+    })
+
+
+def retrieve_fixture(day: date) -> dict:
+    request = Request(fixture_source(day),
+                      headers={"User-Agent": "MarchForecastResearch/0.6",
+                               "Accept": "application/json"})
+    with urlopen(request, timeout=30) as response:
+        raw = response.read(3_000_001)
+    if len(raw) > 3_000_000:
+        raise ValueError("ESPN fixture JSON exceeded 3 MB bounded size")
+    result = json.loads(raw)
+    if not isinstance(result, dict) or not isinstance(result.get("events"), list):
+        raise ValueError("ESPN fixture response missing events")
+    return result
+
+
+def _one_team(side: dict, name_index: dict[str, list[dict]]) -> dict | None:
+    team = side.get("team") or {}
+    if not isinstance(team, dict):
+        return None
+    matched: dict[str, dict] = {}
+    for label in ("location", "shortDisplayName", "displayName"):
+        name = canonical(team.get(label))
+        if not name:
+            continue
+        entries = name_index.get(name, [])
+        if len(entries) == 1:
+            matched[entries[0]["teamId"]] = entries[0]
+    # ESPN's location and display names occasionally refer to different
+    # programs: do not pick whichever name appears first.
+    return next(iter(matched.values())) if len(matched) == 1 else None
+
+
+def forecast_scheduled(scoreboards: list[dict], ratings: dict,
+                       generated_at: datetime) -> dict:
+    """Strict as-of future-start verification and source identity matching."""
+    generated_at = generated_at.astimezone(timezone.utc)
+    retrieved = parse_time(ratings["retrievedAtUtc"])
+    if retrieved > generated_at:
+        raise ValueError("rating source snapshot cannot be retrieved in the future")
+    if ratings.get("mode") != "current" or ratings.get("season") != 2027:
+        raise ValueError("wrong season or model mode")
+    name_index: dict[str, list[dict]] = {}
+    for team in ratings["teams"]:
+        name_index.setdefault(canonical(team["name"]), []).append(team)
+    unique: dict[str, dict] = {}
+    counters = {"eventsSeen": 0, "notScheduled": 0, "startedOrTooClose": 0,
+                "unmatchedOrAmbiguous": 0, "duplicateIds": 0}
+    cutoff = generated_at + timedelta(minutes=BUFFER_MINUTES)
+    for scoreboard in scoreboards:
+        if not isinstance(scoreboard, dict) or not isinstance(scoreboard.get("events"), list):
+            raise ValueError("fixture input must include events list")
+        for event in scoreboard["events"]:
+            counters["eventsSeen"] += 1
+            event_id = str(event.get("id", "")).strip()
+            status = ((event.get("status") or {}).get("type") or {})
+            if not event_id or str(status.get("name", "")).upper() != "STATUS_SCHEDULED":
+                counters["notScheduled"] += 1
+                continue
+            if status.get("completed"):
+                counters["notScheduled"] += 1
+                continue
+            starts = parse_time(event["date"])
+            if starts <= cutoff:
+                counters["startedOrTooClose"] += 1
+                continue
+            competitions = event.get("competitions") or []
+            sides = (competitions[0].get("competitors") or []) if competitions else []
+            home_sides = [s for s in sides if s.get("homeAway") == "home"]
+            away_sides = [s for s in sides if s.get("homeAway") == "away"]
+            if len(home_sides) != 1 or len(away_sides) != 1:
+                counters["unmatchedOrAmbiguous"] += 1
+                continue
+            home = _one_team(home_sides[0], name_index)
+            away = _one_team(away_sides[0], name_index)
+            if not home or not away or home["teamId"] == away["teamId"]:
+                counters["unmatchedOrAmbiguous"] += 1
+                continue
+            if event_id in unique:
+                counters["duplicateIds"] += 1
+                continue
+            neutral = bool(competitions[0].get("neutralSite", False))
+            p = matchup_probability(home["rating"], away["rating"], 0 if neutral else 65)
+            unique[event_id] = {
+                "eventId": event_id, "scheduledStartUtc": starts.isoformat().replace("+00:00", "Z"),
+                "scheduledEasternDate": starts.astimezone(LOCAL).date().isoformat(),
+                "home": home["name"], "away": away["name"],
+                "homeTeamId": home["teamId"], "awayTeamId": away["teamId"],
+                "homeWinProbability": round(p, 7),
+                "awayWinProbability": round(1-p, 7),
+                "neutralSite": neutral, "model": "as-of regular-season Elo",
+                "match": "exact canonical NCAA name to ESPN team location/display",
+            }
+    result = sorted(unique.values(), key=lambda p: (p["scheduledStartUtc"], p["eventId"]))
+    return {
+        "schemaVersion": 1, "type": "immutable-pre-tipoff-probability-snapshot",
+        "generatedAtUtc": generated_at.isoformat().replace("+00:00", "Z"),
+        "ratingRetrievedAtUtc": ratings["retrievedAtUtc"],
+        "lastIncludedResultDate": ratings.get("lastGameDate"),
+        "scheduleSource": ESPN_BASE,
+        "ratingSource": ratings.get("sourceUrl", SOURCE_URL),
+        "timeBufferMinutes": BUFFER_MINUTES,
+        "predictions": result, "coverage": {**counters, "published": len(result)},
+        "limitations": [
+            "Missing/ambiguous ESPN ↔ NCAA name matches are excluded, never guessed.",
+            "ESPN scheduled start may change; this records its as-of state, not proof of the actual tip-off.",
+            "Probabilities are ordinary 2027 regular-season Elo plus documented home advantage, not a fitted 2027 tournament model.",
+            "Only forecasts generated before reported start (with 15-minute buffer) are stored.",
+        ],
+    }
+
+
+def settle_snapshots(snapshots: list[dict], final_games: list[dict],
+                     previously_settled: set[str], now: datetime) -> list[dict]:
+    """Settle by exact matchup and Eastern scheduled date; never alter snapshot."""
+    by_key: dict[tuple[str, str, str], list[dict]] = {}
+    for g in final_games:
+        by_key.setdefault((g["date"], canonical(g["home"]), canonical(g["away"])), []).append(g)
+    records = []
+    for snap in snapshots:
+        created = parse_time(snap["generatedAtUtc"])
+        if created >= now:
+            continue
+        for f in snap.get("predictions", []):
+            key = snap["snapshotId"] + ":" + f["eventId"]
+            if key in previously_settled or parse_time(f["scheduledStartUtc"]) >= now:
+                continue
+            candidates = by_key.get((f["scheduledEasternDate"],
+                                     canonical(f["home"]), canonical(f["away"])), [])
+            if len(candidates) != 1:
+                continue
+            game = candidates[0]
+            outcome = int(game["homeScore"] > game["awayScore"])
+            p = float(f["homeWinProbability"])
+            if not (0 < p < 1):
+                continue
+            records.append({
+                "predictionKey": key, "snapshotId": snap["snapshotId"],
+                "eventId": f["eventId"], "forecastAtUtc": snap["generatedAtUtc"],
+                "scheduledStartUtc": f["scheduledStartUtc"],
+                "actualResultDate": game["date"], "ncaaContestId": game["id"],
+                "home": game["home"], "away": game["away"],
+                "homeScore": game["homeScore"], "awayScore": game["awayScore"],
+                "predictedHome": p, "observedHome": outcome,
+                "brier": round((p-outcome)**2, 7),
+                "logLoss": round(-math.log(p if outcome else 1-p), 7),
+                "winnerCorrect": int((p>.5 and outcome==1) or (p<.5 and outcome==0))
+                                 if p != .5 else .5,
+                "settlementPolicy": "exact canonical team pair + Eastern scheduled date",
+            })
+    return records
+
+
+def _existing(path: Path) -> list[dict]:
+    return [json.loads(f.read_text(encoding="utf-8")) for f in sorted(path.glob("*.json"))]
+
+
+def _write_json(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Exclusive creation ensures an immutable snapshot/settlement stays intact.
+    with path.open("x", encoding="utf-8") as stream:
+        json.dump(data, stream, indent=2, sort_keys=True)
+        stream.write("\n")
+
+
+def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetime) -> dict:
+    """Append-only source-based archives; index is a replaceable derived view."""
+    folder = Path(out_dir)
+    snapshot_dir, settlement_dir = folder / "snapshots", folder / "settlements"
+    snapshot_dir.mkdir(parents=True, exist_ok=True)
+    settlement_dir.mkdir(parents=True, exist_ok=True)
+    stamp = now.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    if snapshot["predictions"]:
+        snapshot["snapshotId"] = stamp
+        _write_json(snapshot_dir / (stamp + ".json"), snapshot)
+    all_snapshots = _existing(snapshot_dir)
+    all_settlements = _existing(settlement_dir)
+    done = {r["predictionKey"] for s in all_settlements for r in s["results"]}
+    newly_done = settle_snapshots(all_snapshots, finals, done, now)
+    if newly_done:
+        _write_json(settlement_dir / (stamp + ".json"), {
+            "generatedAtUtc": now.isoformat().replace("+00:00","Z"),
+            "results": newly_done,
+            "note": "Settlements are separate from immutable timestamped prediction artifacts.",
+        })
+    all_settlements += [{
+        "results": newly_done,
+    }]
+    combined = [r for group in all_settlements for r in group["results"]]
+    scores = {
+        "settledPredictions": len(combined),
+        "brier": round(sum(r["brier"] for r in combined) / len(combined), 6) if combined else None,
+        "logLoss": round(sum(r["logLoss"] for r in combined) / len(combined), 6) if combined else None,
+        "winnerAccuracy": round(sum(r["winnerCorrect"] for r in combined) / len(combined), 6) if combined else None,
+    }
+    index = {
+        "schemaVersion": 1, "generatedAtUtc": now.isoformat().replace("+00:00", "Z"),
+        "snapshots": [{
+            "id": s["snapshotId"],
+            "generatedAtUtc": s["generatedAtUtc"],
+            "count": len(s["predictions"]),
+            "predictions": s["predictions"],
+        } for s in all_snapshots[-60:]],
+        "settlements": combined[-600:],
+        "scores": scores,
+        "warning": "Real pre-tipoff, timestamped scheduled-game forecasts only; no backfilled historical predictions.",
+    }
+    _write_index = folder / "index.json"
+    _write_index.write_text(json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return index
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--ratings", type=Path, default=Path("web/public/current/2027.json"))
+    parser.add_argument("--out-dir", type=Path, default=Path("web/public/forecasts"))
+    parser.add_argument("--scoreboard-json", type=Path, help="Offline fixture JSON for hermetic runs")
+    parser.add_argument("--finals-csv", type=Path, help="Offline results CSV")
+    args = parser.parse_args()
+    now = datetime.now(timezone.utc)
+    ratings = json.loads(args.ratings.read_text(encoding="utf-8"))
+    if args.scoreboard_json:
+        scoreboards = [json.loads(args.scoreboard_json.read_text(encoding="utf-8"))]
+    else:
+        days = [now.astimezone(LOCAL).date() + timedelta(days=i) for i in range(2)]
+        scoreboards = [retrieve_fixture(day) for day in days]
+    forecast = forecast_scheduled(scoreboards, ratings, now)
+    if args.finals_csv:
+        finals_text = args.finals_csv.read_text(encoding="utf-8-sig")
+    else:
+        finals_text = fetch_csv()
+    finals = final_games(finals_text, now.date())
+    index = write_ledger(args.out_dir, forecast, finals, now)
+    print(f"Pregame futures: {len(forecast['predictions'])} "
+          f"(unmatched {forecast['coverage']['unmatchedOrAmbiguous']}). "
+          f"Settled archive predictions: {index['scores']['settledPredictions']}. "
+          f"Archive: {args.out_dir}")
+
+
+if __name__ == "__main__":
+    main()
