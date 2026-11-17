@@ -243,7 +243,7 @@ def main() -> None:
     games = final_games(content)
     def read_fixture(path: Path) -> str:
         raw = path.read_bytes()
-        return (gzip.decompress(raw) if raw[:2] == b"\\x1f\\x8b" else raw).decode("utf-8-sig")
+        return (gzip.decompress(raw) if raw[:2] == b"\x5cx1f\x5cx8b" else raw).decode("utf-8-sig")
 
     def supplemental(path: Path | None, source_url: str, label: str) -> str | None:
         if args.skip_supplemental:
