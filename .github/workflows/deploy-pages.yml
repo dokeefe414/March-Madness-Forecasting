@@ -94,7 +94,7 @@ jobs:
       - name: Assemble real upcoming ESPN fixtures with matchup reasons and prior-game evidence
         env:
           PYTHONPATH: research
-        run: python -m forecast.gamecenter --games web/public/current/2027-games.json --ratings web/public/current/2027.json --online-model web/public/current/2027-online-model.json --state-space web/public/current/2027-state-space.json --opponent-model web/public/current/2027-opponents.json --out web/public/current/upcoming.json
+        run: python -m forecast.gamecenter --games web/public/current/2027-games.json --ratings web/public/current/2027.json --online-model web/public/current/2027-online-model.json --state-space web/public/current/2027-state-space.json --opponent-model web/public/current/2027-opponents.json --ensemble-model web/public/current/forward-ensemble.json --out web/public/current/upcoming.json
       - name: Validate accepted-game totals and publish refresh provenance
         env:
           PYTHONPATH: research
