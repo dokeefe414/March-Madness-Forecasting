@@ -41,8 +41,8 @@ export default function OperationsCenter(){
        {report.delayedExamples.map(x=><div key={x.eventId}><span>{x.away} @ {x.home}</span><small>Listed start {x.hoursSinceListedStart.toFixed(1)} hours ago; final remains unverified</small></div>)}
      </details>}
      <div className="v13-ops-actions">
-       <a href="https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml" target="_blank" rel="noreferrer">SEE ARCHIVE RUNS ↗</a>
-       <a href="https://github.com/dokeefe414/March-Madness-Forecasting/tree/main/web/public/forecasts" target="_blank" rel="noreferrer">INSPECT IMMUTABLE EVIDENCE ↗</a>
+       <a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/archive-pregame.yml" target="_blank" rel="noreferrer">SEE ARCHIVE RUNS ↗</a>
+       <a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27/tree/main/web/public/forecasts" target="_blank" rel="noreferrer">INSPECT IMMUTABLE EVIDENCE ↗</a>
      </div>
    </>}
  </section>;
