@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { RatingsDataset, Team } from "../lib/models";
 
 type WatchTeam = {teamId:string; name:string; conference:string; projectedRating:number; wins:number;
- losses:number; games:number; category:string; powerRank:number|null; sampleBand:string};
+ losses:number; games:number; category:string; powerRank:number|null; sampleBand:string;illustrativeSeedRange?:number[]|null};
 type Watchlist = {season:number; asOfDate:string; official:false; status:string; method:string;fieldSize:number;
  automaticSlotCount:number;atLargeSlotCount:number;eligibleCandidateCount:number;matchedConferences:number;
  reason?:string; teams:WatchTeam[];bubble:WatchTeam[];cutlineRating?:number;limitations:string[]};
@@ -76,7 +76,7 @@ export default function SelectionLab(){
         <a href="https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/ncaa_mbb_team_ids" target="_blank" rel="noreferrer">CHECK CONFERENCE SOURCE ↗</a></div>
         <div className="coverage-ring"><strong>{confCount}<small>/32</small></strong><span>CONFERENCES</span></div>
       </div> : <>
-        <div className="watchlist-disclaimer"><span className="status-bullet"/><strong>UNOFFICIAL · POWER-ONLY SCENARIO</strong><span>All 76 entrants below are hypothetical. AQ proxies are Elo leaders, not conference champions; at-large candidates are strength-ranked, not committee selections. Ranking ≠ seed.</span></div>
+        <div className="watchlist-disclaimer"><span className="status-bullet"/><strong>UNOFFICIAL · POWER-ONLY SCENARIO</strong><span>All 76 entrants below are hypothetical. AQ proxies are Elo leaders, not conference champions; at-large candidates are strength-ranked, not committee selections. Ranking ≠ NCAA seed. Strength-tier ranges are illustrative and uncalibrated.</span></div>
         <div className="watch-filters">
           <div className="watch-segments" role="group" aria-label="Watchlist segment">
             {([["all","FULL WATCHLIST"],["conference-proxy","CONFERENCE PROXIES"],["power-only-at-large","AT-LARGE PROXIES"],["bubble","NEAR CUTLINE"]] as [Filter,string][]).map(([id,label])=>
@@ -98,9 +98,9 @@ export default function SelectionLab(){
           <aside className="watch-spotlight">
             {selected ? <><span className="feature-kicker">PROGRAM WATCH / POWER RATING</span><h3>{selected.name}</h3><p className="watch-conference">{selected.conference}</p>
               <div className="watch-rating">{selected.projectedRating.toFixed(0)}<span>MODEL ELO</span></div>
-              <div className="watch-facts"><div><small>POWER POSITION</small><strong>{selected.powerRank||"Outside 76"}</strong></div><div><small>SEASON SAMPLE</small><strong>{selected.games} games</strong></div><div><small>DATA CONFIDENCE</small><strong>{selected.sampleBand}</strong></div></div>
+              <div className="watch-facts"><div><small>POWER POSITION</small><strong>{selected.powerRank||"Outside 76"}</strong></div><div><small>SEASON SAMPLE</small><strong>{selected.games} games</strong></div><div><small>ILLUSTRATIVE SEED TIER</small><strong>{selected.illustrativeSeedRange?selected.illustrativeSeedRange.join("–"):"N/A"}</strong></div><div><small>DATA CONFIDENCE</small><strong>{selected.sampleBand}</strong></div></div>
               <div className="watch-tag">{selected.category.replaceAll("-"," ").toUpperCase()}</div>
-              <p>This is not an NCAA NET ranking, seed or probability of receiving a bid. A team's conference tournament result and committee criteria may change selection dramatically.</p>
+              <p>The seed-tier range above is a wide, rule-based strength scenario, not a statistically calibrated NCAA seed forecast or chance of a bid. A team's conference tournament result and committee criteria may change selection dramatically.</p>
             </> : <div className="premium-empty">Select a program to inspect its model inputs.</div>}
           </aside>
         </div>

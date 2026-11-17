@@ -33,6 +33,7 @@ def build_watchlist(teams: list[dict], as_of: str) -> dict:
             "Power-only strength is NOT NCAA NET, quadrants, official selection criteria or bid probability.",
             "Unknown/reclassifying member eligibility, conference tournament results, and bracket seed positions unavailable.",
             "No participant is officially in 2027 March Madness until Selection Sunday.",
+            "Seed ranges are hand-specified early-sample *strength tiers*, NOT statistically calibrated NCAA seed probabilities.",
         ],
     }
     if len(groups) != AUTOMATIC or len(eligible) < FIELD_SIZE:
@@ -53,12 +54,20 @@ def build_watchlist(teams: list[dict], as_of: str) -> dict:
     chosen.sort(key=lambda pair: order(pair[0]))
     def public(t: dict, tag: str, rank: int | None = None):
         games = int(t["wins"]) + int(t["losses"])
+        # Illustrative strength *range* only, not a committee seed forecast.
+        # 64 direct slots plus 12 opening entrants make exact seeding
+        # unknowable from rating rank alone. Early samples widen the band.
+        nominal = min(16, max(1, math.ceil(rank / 4))) if rank else None
+        spread = 5 if games < 5 else 3 if games < 15 else 2
+        seed_range = ([max(1,nominal-spread), min(16,nominal+spread)]
+                      if nominal is not None else None)
         return {
             "teamId": t["teamId"], "name": t["name"],
             "conference": t["conference"], "projectedRating": t["projectedRating"],
             "wins": t["wins"], "losses": t["losses"], "games": games,
             "category": tag,
             "powerRank": rank,
+            "illustrativeSeedRange": seed_range,
             "sampleBand": "low (<5 games)" if games < 5 else
                           "medium (5–14)" if games < 15 else "higher (15+)",
         }
