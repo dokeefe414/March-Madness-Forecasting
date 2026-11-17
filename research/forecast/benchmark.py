@@ -97,8 +97,10 @@ def load_years(web_dir: Path) -> tuple[list[Year], str]:
             def win_pct(team: dict) -> float:
                 played = int(team.get("wins", 0)) + int(team.get("losses", 0))
                 return float(team.get("wins", 0)) / played if played else 0.5
-            adaptive = (regime_features(winner["history"], winner["rating"])["adaptiveRating"]
-                        - regime_features(loser["history"], loser["rating"])["adaptiveRating"])
+            adaptive = (regime_features(winner.get("history", [winner["rating"]]),
+                                        winner["rating"])["adaptiveRating"]
+                        - regime_features(loser.get("history", [loser["rating"]]),
+                                          loser["rating"])["adaptiveRating"])
             year_games.append(Outcome(base, trend, win_pct(winner) - win_pct(loser), adaptive))
         if year_games:
             years.append(Year(season, tuple(year_games), omitted))
