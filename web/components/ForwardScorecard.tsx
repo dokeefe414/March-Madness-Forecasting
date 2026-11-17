@@ -39,6 +39,24 @@ export default function ForwardScorecard({report}:{report:Forward|null|undefined
                               (125-110*(x.accuracy||0)).toFixed(2)).join(" ")}/>
       </svg><p>Winner selection accuracy is measured on source-settled actual games. Even 50/50 calls contribute only half a correct pick.</p>
     </div>:<p className="fp-empty">No genuine first-archived pretipoff forecasts have settled yet. Accuracy is deliberately unavailable, not 0% or an invented 100%. The historical-date replay score is a different measurement.</p>}
+    {!!count&&<div className="fp-analysis">
+      <div><span className="feature-kicker">WHICH FROZEN MODEL ACTUALLY PICKED THE WINNER?</span>
+        <h4>First-pick model scorecard.</h4>
+        <table className="fp-table"><thead><tr><th scope="col">MODEL</th><th scope="col">GAMES</th><th scope="col">CORRECT</th><th scope="col">BRIER ↓</th></tr></thead>
+          <tbody>{Object.entries(report?.byModel||{}).map(([name,metric])=><tr key={name}>
+            <td>{name}</td><td>{metric.games}</td><td>{metric.accuracy==null?"—":pct(metric.accuracy)}</td><td>{metric.brier?.toFixed(4)??"—"}</td>
+          </tr>)}</tbody></table>
+        <p>These rows are separated by the actual frozen forecasting policy used at capture; a shadow model is not mislabeled as an active prediction.</p>
+      </div>
+      <div><span className="feature-kicker">ARE THE CONFIDENCE LEVELS WELL CALIBRATED?</span><h4>Favorite confidence vs results.</h4>
+        <div className="fp-calib">{report?.calibration.map(bin=><div key={bin.bin} className="fp-calib-row">
+          <span>{bin.bin}</span><div className="fp-calib-bar" aria-label={bin.count+" predictions, realized accuracy "+(bin.realizedAccuracy==null?"unavailable":pct(bin.realizedAccuracy))}>
+            <i style={{width:(bin.predictedConfidence==null?0:bin.predictedConfidence*100).toFixed(1)+"%"}}/>
+            <b style={{width:(bin.realizedAccuracy==null?0:bin.realizedAccuracy*100).toFixed(1)+"%"}}/>
+          </div><small>{bin.count} GAMES</small></div>)}</div>
+        <p><span className="fp-key-a">MODEL CONFIDENCE</span> vs <span className="fp-key-b">REALIZED WIN RATE</span>. Bins with zero games are deliberately blank. Small samples produce noisy percentages.</p>
+      </div>
+    </div>}
     <div className="fp-foot">
       <div><span className="feature-kicker">REVIEW THE MISSES · WITHOUT HINDSIGHT</span>
         <h4>Learning from wrong picks.</h4>

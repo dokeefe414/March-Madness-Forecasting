@@ -416,3 +416,22 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 .selection-lens-result p strong{display:inline;font-size:15px}
 @media(max-width:800px){.selection-lens{grid-template-columns:1fr}}
 @media(max-width:440px){.selection-lens-result{grid-template-columns:1fr}.selection-lens-result .selection-lens-meter{grid-column:1}.selection-lens-result p{grid-column:1}}
+
+/* v0.8: real-time evolving forward performance, actual picked model and reliability */
+.fp-analysis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:25px;padding-top:25px;border-top:1px solid #376159;margin-top:25px}
+.fp-analysis h4{font:900 29px "Barlow Condensed",Impact,sans-serif;text-transform:uppercase;color:#edfff1;margin:6px 0 13px}
+.fp-analysis p{font-size:10px;color:#a3c6bb;line-height:1.6}
+.fp-table{width:100%;border-collapse:collapse;color:#d5f6e3}
+.fp-table th{text-align:left;padding:10px 5px;border-bottom:1px solid #4f7463;color:#92bba8;font-size:9px;letter-spacing:.7px}
+.fp-table td{padding:11px 5px;border-bottom:1px solid #33564d;font-size:11px}
+.fp-table td:first-child{overflow-wrap:anywhere}
+.fp-calib{display:flex;flex-direction:column;gap:10px}
+.fp-calib-row{display:grid;grid-template-columns:58px minmax(0,1fr) 70px;gap:12px;align-items:center}
+.fp-calib-row>span{color:#a9dac0;font-size:11px;font-weight:900}
+.fp-calib-row>small{font-size:9px;color:#9bbaae;text-align:right}
+.fp-calib-bar{position:relative;height:22px;background:#102b32;overflow:hidden;border:1px solid #385b54;border-radius:4px}
+.fp-calib-bar i,.fp-calib-bar b{display:block;position:absolute;left:0;height:8px}
+.fp-calib-bar i{top:2px;background:#a4ffd4}
+.fp-calib-bar b{bottom:2px;background:#8db7f4}
+.fp-key-a{color:#a4ffd4;font-weight:900}.fp-key-b{color:#8db7f4;font-weight:900}
+@media(max-width:930px){.fp-analysis{grid-template-columns:1fr}}
