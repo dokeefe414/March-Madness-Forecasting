@@ -25,6 +25,11 @@ export type Team = {
   adjDef100?: number;
   adjNet100?: number;
   possessionGames?: number;
+  adaptiveRating?: number;
+  volatility?: number;
+  regimeShift?: number;
+  ewmaSlope?: number;
+  sampleStatus?: string;
 };
 
 export type RatingsDataset = {

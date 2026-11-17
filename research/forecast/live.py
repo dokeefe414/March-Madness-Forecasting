@@ -24,6 +24,7 @@ from .core import EloEngine, Game
 from .reference import TEAM_URL, parse_directory, annotate_teams
 from .efficiency import BOX_URL, attach_efficiency
 from .selection import build_watchlist
+from .dynamics import regime_features
 
 SOURCE_URL = (
     "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/"
@@ -156,6 +157,7 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
         row["opponentAverageElo"] = round(
             sum(rating_by_id[i] for i in opponents[internal_id]) / played, 1
         )
+        row.update(regime_features(row["history"], row["rating"]))
     directory_report = {
         "source": TEAM_URL, "status": "unavailable", "matchedRatedTeams": 0,
         "ratedTeams": len(rows), "policy": "No conference match without source crosswalk.",

@@ -13,11 +13,12 @@ import math
 import random
 from .advanced import Features, train_logistic, predict as logistic_predict
 from .boosted import train_boosted
+from .dynamics import regime_features
 from dataclasses import dataclass
 from pathlib import Path
 
 TEMPERATURES = (0.5, 0.65, 0.8, 1.0, 1.25, 1.5, 2.0, 3.0, 4.0)
-METHODS = ("coin_flip", "elo", "trend_elo", "calibrated_trend_elo", "logistic", "boosted")
+METHODS = ("coin_flip", "elo", "trend_elo", "adaptive_form", "calibrated_trend_elo", "logistic", "boosted")
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,7 @@ class Outcome:
     base_difference: float
     trend_difference: float
     win_pct_difference: float = 0.0
+    adaptive_difference: float | None = None
 
 
 @dataclass(frozen=True)
@@ -95,7 +97,9 @@ def load_years(web_dir: Path) -> tuple[list[Year], str]:
             def win_pct(team: dict) -> float:
                 played = int(team.get("wins", 0)) + int(team.get("losses", 0))
                 return float(team.get("wins", 0)) / played if played else 0.5
-            year_games.append(Outcome(base, trend, win_pct(winner) - win_pct(loser)))
+            adaptive = (regime_features(winner["history"], winner["rating"])["adaptiveRating"]
+                        - regime_features(loser["history"], loser["rating"])["adaptiveRating"])
+            year_games.append(Outcome(base, trend, win_pct(winner) - win_pct(loser), adaptive))
         if year_games:
             years.append(Year(season, tuple(year_games), omitted))
     if not years:
@@ -208,6 +212,10 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "coin_flip": [0.5 for _ in current.games],
             "elo": [probability_of_winner(game.base_difference) for game in current.games],
             "trend_elo": [probability_of_winner(game.trend_difference) for game in current.games],
+            "adaptive_form": [
+                probability_of_winner(g.adaptive_difference if g.adaptive_difference is not None
+                                      else g.base_difference) for g in current.games
+            ],
             "calibrated_trend_elo": [
                 probability_of_winner(game.trend_difference, temperature) for game in current.games
             ],
@@ -258,6 +266,7 @@ def evaluate(years: list[Year], source_commit: str, min_training_seasons: int = 
             "The baseline Elo parameters were fixed before this evaluation, not independently optimized by year.",
             "Logistic coefficients are fit on historical *earlier-year* tournament outcomes and regular-season-only features.",
             "Gradient-boosted residual stumps are fit on earlier tournament years only; each paired sample has a symmetric winner/loser orientation.",
+            "Adaptive regime feature uses only same-season prior regular-season Elo history; the model is heuristic and not trained on held-out outcomes.",
             "A 95% season-block bootstrap is descriptive uncertainty, not a future guarantee.",
         ],
     }
