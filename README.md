@@ -20,6 +20,16 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ---
 
+## Verified winners, misses, and an experimental score/spread projection
+
+The [Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) workspace now shows **each correctly predicted or missed winner** as a source-verified first-pick receipt: actual final score, original pre-tipoff favorite and confidence, outcome, model, timestamp and Brier. Filter by **correct**, **missed**, **even-odds**, or all independently settled games. Repeat captures of one ESPN game are never counted as independent successes.
+
+The [Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) now also features an experimental **projected final score, projected spread and combined total**, computed from each team's actual source-recorded scoring/conceding averages. This is a **descriptive neutral-court baseline—not a sportsbook line, a validated betting system, or a calibrated margin model**. It requires five verified previous games per team and never makes up scores for missing data; current Elo win probabilities remain separate.
+
+Pregame archives are *scheduled* for 9:07 a.m. and 4:07 p.m. Eastern in basketball months, followed by website publication when a verified archive workflow succeeds. This is **not a live buzzer-to-website feed**: independently matched NCAA and ESPN finals must be available before the site claims correct or missed results. New games with no before-tipoff prediction are excluded, not backfilled. See [verified results and score projection specification](docs/pick-results-and-score-projection.md).
+
+---
+
 ## v1.3 — Forecast reliability, learned research challengers and two-player brackets
 
 **Start here:** [Live Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Operations & immutable picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Scientific Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [Two-player historical bracket duel](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=bracket) · [Team Intel](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=teams).

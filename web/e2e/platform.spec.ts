@@ -66,6 +66,7 @@ test("game finder supports sourced fixture search, explanations and opponent evi
   const profile=(name:string,id:string,elo:number)=>({
     name,teamId:id,rating:elo,trend:3,wins:7,losses:3,
     conference:"Example conference",opponentAverageElo:1502,
+    pointsForPerGame:id==="ncaa-home"?82:74,pointsAgainstPerGame:id==="ncaa-home"?72:77,
     recentGames:[{id:"old",date:"2027-01-10",opponent:"Example University",
       home:true,for:80,against:71,outcome:"W"}],ratingHistory:[1500,elo]
   });
@@ -82,7 +83,7 @@ test("game finder supports sourced fixture search, explanations and opponent evi
       lastIncludedGameDate:"2027-01-14",
       coverage:{futureScheduled:1,eligibleForecasts:1,unmatchedOrAmbiguous:0},
       games:[{eventId:"test-fixture-1",scheduledStartUtc:fixture,scheduledEasternDate:fixture.slice(0,10),
-        neutralSite:false,home:"Example Home",away:"Example Away",homeWinProbability:.69,
+        neutralSite:false,home:"Example Home",away:"Example Away",homeTeamId:"ncaa-home",awayTeamId:"ncaa-away",homeWinProbability:.69,
         baselineHomeWinProbability:.65,status:"ready",model:"as-of regular-season Elo",
         homeProfile:home,awayProfile:away,
         factors:[{title:"Strength gap",value:30,detail:"Earlier results influence Elo."},
@@ -99,6 +100,9 @@ test("game finder supports sourced fixture search, explanations and opponent evi
   await page.locator(".gc-fixture").first().click();
   await expect(page.locator(".gc-detail")).toContainText("69.0%");
   await expect(page.locator(".gc-detail")).toContainText("Example University");
+  await expect(page.getByRole("region",{name:"Experimental game score and spread projection"})).toContainText("79.5");
+  await expect(page.getByRole("region",{name:"Experimental game score and spread projection"})).toContainText("73.0");
+  await expect(page.getByRole("region",{name:"Experimental game score and spread projection"})).toContainText("−6.5");
   await expect(page.getByLabel("Hypothetical team A")).toBeVisible();
   await expect(page.getByLabel("Hypothetical team B")).toBeVisible();
   await page.screenshot({path:"test-results/"+testInfo.project.name+"-game-intelligence.png",fullPage:true});
@@ -282,4 +286,66 @@ test("v1.3 Model Lab differentiates fitted research from prospectively verified 
  await expect(panel.getByRole("heading",{name:/Explore the evidence/i})).toBeVisible({timeout:15000});
  await expect(panel.getByText("Gradient-boosted CART")).toBeVisible();
  await expect(panel.getByText(/No truly settled first picks|Only earliest archived pregame predictions/i)).toBeVisible();
+});
+
+test("verified first-pick results show correct and missed without counting duplicate captures",async ({page})=>{
+ const first="2026-11-16T13:00:00Z";
+ const after="2026-11-17T17:00:00Z";
+ const rows=[
+  {eventId:"f1",date:"2026-11-17",scheduledStartUtc:"2026-11-17T23:00:00Z",forecastAtUtc:first,
+   home:"Example Home",away:"Example Away",homeScore:68,awayScore:71,predictedHome:.8,observedHome:0,
+   predictedWinner:"Example Home",actualWinner:"Example Away",correct:false,brier:.64,model:"Elo"},
+  {eventId:"f2",date:"2026-11-17",scheduledStartUtc:"2026-11-17T23:00:00Z",forecastAtUtc:first,
+   home:"Example Two",away:"Example Three",homeScore:81,awayScore:75,predictedHome:.7,observedHome:1,
+   predictedWinner:"Example Two",actualWinner:"Example Two",correct:true,brier:.09,model:"Elo"}
+ ];
+ const index={
+   schemaVersion:1,generatedAtUtc:after,
+   snapshots:[{id:"a",generatedAtUtc:first,count:2,predictions:[]},
+              {id:"b",generatedAtUtc:after,count:1,predictions:[]}],
+   settlements:[],scores:{settledPredictions:3,brier:.3,logLoss:.6,winnerAccuracy:.67},
+   uniqueGames:{forecastedUniqueGames:2,settledUniqueGames:2,verifiedOutcomes:rows,
+     score:{games:2,accuracy:.5,brier:.365,logLoss:.6},
+     byModel:{Elo:{games:2,accuracy:.5,brier:.365}},
+     reference:{pairedGames:2,eloBrier:.365,actualModelBrier:.365},
+     shadowComparison:{pairedGames:0,eloBrier:null,challengerBrier:null,challengerBrierGain:null},
+     trajectory:[],calibration:[],recentMisses:[]},
+ };
+ await page.route("**/forecasts/index.json",r=>r.fulfill({contentType:"application/json",body:JSON.stringify(index)}));
+ await page.goto("/?view=predictions");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const outcomes=page.getByRole("region",{name:"Correct and missed original before-tipoff predictions"});
+ await expect(outcomes.locator(".v14-outcome")).toHaveCount(2);
+ await expect(outcomes.getByText("CORRECT FAVORITES")).toBeVisible();
+ await expect(outcomes.locator(".v14-result-metrics")).toContainText("1");
+ await expect(outcomes.locator(".v14-outcome.is-right")).toContainText("Example Two");
+ await expect(outcomes.locator(".v14-outcome.is-wrong")).toContainText("Example Away");
+ await outcomes.getByRole("button",{name:"MISSED"}).click();
+ await expect(outcomes.locator(".v14-outcome")).toHaveCount(1);
+ await expect(outcomes.locator(".v14-outcome")).toContainText("MISSED PICK");
+ await outcomes.getByRole("button",{name:"CORRECT"}).click();
+ await expect(outcomes.locator(".v14-outcome")).toHaveCount(1);
+ await expect(outcomes.locator(".v14-outcome")).toContainText("CORRECT PICK");
+});
+
+test("score predictor declines unavailable per-game points rather than inventing a spread",async ({page})=>{
+ const fixture=new Date(Date.now()+4*86400000).toISOString();
+ const baseTeam=(name:string,teamId:string)=>({
+  teamId,name,rank:1,rating:1500,projectedRating:1500,trend:0,wins:3,losses:1,history:[1500]});
+ const away=baseTeam("Away","a"),home=baseTeam("Home","h");
+ await page.route("**/current/2027.json",r=>r.fulfill({contentType:"application/json",body:JSON.stringify({
+  mode:"current",season:2027,teams:[home,away]})}));
+ await page.route("**/current/upcoming.json",r=>r.fulfill({contentType:"application/json",body:JSON.stringify({
+   schemaVersion:1,coverage:{futureScheduled:1,eligibleForecasts:1,unmatchedOrAmbiguous:0},
+   games:[{eventId:"score-test",scheduledStartUtc:fixture,scheduledEasternDate:fixture.slice(0,10),
+    neutralSite:true,status:"ready",home:"Home",away:"Away",homeTeamId:"h",awayTeamId:"a",
+    homeWinProbability:.55,baselineHomeWinProbability:.55,
+    homeProfile:{...home,conference:"Test",recentGames:[],ratingHistory:[1500]},
+    awayProfile:{...away,conference:"Test",recentGames:[],ratingHistory:[1500]},factors:[]}]
+ })}));
+ await page.goto("/");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const score=page.getByRole("region",{name:"Experimental game score and spread projection"});
+ await expect(score).toContainText("NOT ENOUGH VERIFIED SCORING DATA");
+ await expect(score).not.toContainText("PROJECTED SPREAD");
 });

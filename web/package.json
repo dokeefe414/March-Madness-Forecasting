@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "check:data": "node scripts/check-data.mjs",
     "test:bracket": "node --import tsx --test scripts/test-bracket.mts",
+    "test:score": "node --import tsx --test scripts/test-score-projection.mts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

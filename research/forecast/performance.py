@@ -49,6 +49,10 @@ def summarize_forward(snapshots: list[dict], settlements: list[dict]) -> dict:
                          "home":pred["home"],"away":pred["away"],
                          "model":pred["model"],"probability":round(p,7),
                          "observedHome":y,"confidence":round(confidence,7),
+                         "scheduledStartUtc":pred.get("scheduledStartUtc"),
+                         "forecastAtUtc":snap["generatedAtUtc"],
+                         "homeScore":int(row["homeScore"]) if row.get("homeScore") is not None else None,
+                         "awayScore":int(row["awayScore"]) if row.get("awayScore") is not None else None,
                          **scored,
                          "elo":(float(pred["baselineHomeWinProbability"])
                                 if pred.get("baselineHomeWinProbability") is not None else None),
@@ -184,6 +188,21 @@ def summarize_forward(snapshots: list[dict], settlements: list[dict]) -> dict:
         "calibration":calibration, "trajectory":timeline[-400:],
         "confidenceBands":confidence_bands, "rolling25":rolling[-400:],
         "coinFlipBrierSkill":brier_skill,
+        # The public audit table uses one earliest frozen pretipoff prediction
+        # per ESPN game ID, not an inflated count of duplicate snapshots.
+        # All settled outcomes are returned, without arbitrary top-N truncation.
+        "verifiedOutcomes":[{
+            "eventId":r["eventId"],"date":r["date"],
+            "scheduledStartUtc":r["scheduledStartUtc"],
+            "forecastAtUtc":r["forecastAtUtc"],
+            "home":r["home"],"away":r["away"],
+            "homeScore":r["homeScore"],"awayScore":r["awayScore"],
+            "predictedHome":r["probability"],"observedHome":r["observedHome"],
+            "predictedWinner":r["home"] if r["probability"]>.5 else r["away"] if r["probability"]<.5 else None,
+            "actualWinner":r["home"] if r["observedHome"] else r["away"],
+            "correct":None if r["probability"]==.5 else bool(r["correct"]),
+            "brier":round(r["brier"],7),"model":r["model"],
+          } for r in reversed(selected)],
         "recentMisses":list(reversed(misses[-12:])),
         "warnings":[
             "No winner accuracy is shown until genuine before-tipoff predictions have settled.",

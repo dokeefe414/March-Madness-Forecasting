@@ -52,6 +52,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm run check:data
       - run: npm run test:bracket
+      - run: npm run test:score
       - run: npm run typecheck
       - run: npm run build
 
