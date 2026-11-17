@@ -40,7 +40,7 @@ Scheduled GitHub Actions remain the archive and data source of truth. The static
 - [Archive health](https://dokeefe414.github.io/March-Madness-Forecasting/current/archive-health.json) for a published status that can be **missing**, **stale**, **source-partial** or **current**.
 - [Public forward accuracy](https://dokeefe414.github.io/March-Madness-Forecasting/?view=predictions) for settled forecasts, not historical replay.
 
-A failed/silent archive cannot be repaired by backfilling a pregame percentage after tipoff. See [v0.9 forecast operations](v09-forecast-operations.md) for fail-safe source recovery and immutable archiving steps.
+The scheduled archive-health check now has a de-duplicated GitHub Issues alert: if its evidence-age or audit check fails, it creates one open **Forecast archive health needs attention** issue containing a workflow link and recovery instructions (requires repository Actions issue-write permission). Existing open recovery issues are reused rather than spawning duplicates. An issue is a notification only: it does not assert that any public forecast was valid, nor automatically fabricate missing picks. A failed/silent archive cannot be repaired by backfilling a pregame percentage after tipoff. See [v0.9 forecast operations](v09-forecast-operations.md) for fail-safe source recovery and immutable archiving steps.
 
 ## 5. Regression and reproducibility
 
