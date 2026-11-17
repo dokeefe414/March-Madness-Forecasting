@@ -7,7 +7,7 @@ export default function ScoreProjection({home,away,neutralSite,winProbability}:{
  return <section className="v14-score-projection" aria-label="Experimental game score and spread projection">
    <div className="v13-feature-head"><span className="section-kicker">NEW / POINTS + PROJECTED MARGIN</span>
     <h3>THE SCORE <em>SCENARIO.</em></h3>
-    <p>Estimated final score, a projected point spread and combined total using verified season averages. These are **not** sportsbook odds or independently calibrated pregame predictions.</p></div>
+    <p>Estimated final score, a projected point spread and combined total using verified season averages. These are not sportsbook odds or independently calibrated pregame predictions.</p></div>
    {!score?<div className="v14-empty-result"><strong>NOT ENOUGH VERIFIED SCORING DATA</strong>
     <p>At least five source-recorded games per team and both teams&apos; scored/allowed points per game are required. We won&apos;t fill missing values with invented estimates.</p>
     </div>:<>
