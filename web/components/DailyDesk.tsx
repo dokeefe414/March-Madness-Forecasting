@@ -1,10 +1,10 @@
 "use client";
-import {useMemo} from "react";
 type Fixture={eventId:string;scheduledEasternDate:string;scheduledStartUtc:string;home:string;away:string;status:"ready"|"unmatched";homeWinProbability:number|null};
 type Health={status:string;message:string}|null;
 const percentage=(v:number)=>(100*v).toFixed(1)+"%";
 export default function DailyDesk({games,today,health,generatedAt,settled,onChoose,onToday}:{games:Fixture[];today:string;health:Health;generatedAt:string;settled:number;onChoose:(id:string)=>void;onToday:()=>void}){
- const ordered=useMemo(()=>games.filter(g=>g.status==="ready"&&g.homeWinProbability!=null),[games]);
+ const future=games.filter(g=>Date.parse(g.scheduledStartUtc)>Date.now());
+ const ordered=future.filter(g=>g.status==="ready"&&g.homeWinProbability!=null);
  const todays=ordered.filter(g=>g.scheduledEasternDate===today);
  const favorites=[...ordered].sort((a,b)=>Math.abs((b.homeWinProbability??.5)-.5)-Math.abs((a.homeWinProbability??.5)-.5));
  const upsets=[...ordered].filter(g=>Math.max(g.homeWinProbability??.5,1-(g.homeWinProbability??.5))<=.65)
@@ -25,7 +25,7 @@ export default function DailyDesk({games,today,health,generatedAt,settled,onChoo
       <button type="button" className="daily-today" onClick={onToday}>VIEW TODAY'S FIXTURES ↓</button>
     </div>
     <div className="daily-kpis">
-      <div><small>TODAY'S FUTURE GAMES</small><strong>{games.filter(g=>g.scheduledEasternDate===today).length}</strong><span>At published snapshot</span></div>
+      <div><small>TODAY'S FUTURE GAMES</small><strong>{future.filter(g=>g.scheduledEasternDate===today).length}</strong><span>At published snapshot</span></div>
       <div><small>SOURCE-MATCHED FUTURE</small><strong>{ordered.length}</strong><span>Model estimates available</span></div>
       <div><small>SETTLED FIRST PICKS</small><strong>{settled}</strong><span>Independent final verification</span></div>
       <div><small>ARCHIVE STATUS</small><strong className="daily-health">{health?.status?.replaceAll("-"," ")||"unverified"}</strong><span>{health?.message||"Archive status unavailable"}</span></div>
