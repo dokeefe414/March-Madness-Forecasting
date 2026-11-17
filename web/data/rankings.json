@@ -1,0 +1,330 @@
+{
+  "mode": "demo",
+  "season": 2027,
+  "throughDay": null,
+  "label": "Synthetic 2026–27 season example",
+  "source": "Created for interface demonstrations; not NCAA results",
+  "method": "Illustrative Elo-style ratings and projected form; not fitted to historical data",
+  "teams": [
+    {
+      "rank": 1,
+      "teamId": "DEMO-001",
+      "name": "Northlake",
+      "rating": 1624,
+      "projectedRating": 1636,
+      "trend": 12,
+      "wins": 24,
+      "losses": 2,
+      "history": [
+        1499,
+        1515,
+        1532,
+        1548,
+        1574,
+        1590,
+        1601,
+        1624
+      ]
+    },
+    {
+      "rank": 2,
+      "teamId": "DEMO-002",
+      "name": "Summit State",
+      "rating": 1614,
+      "projectedRating": 1622,
+      "trend": 8,
+      "wins": 22,
+      "losses": 4,
+      "history": [
+        1500,
+        1516,
+        1531,
+        1550,
+        1567,
+        1592,
+        1608,
+        1614
+      ]
+    },
+    {
+      "rank": 3,
+      "teamId": "DEMO-003",
+      "name": "Cedar Valley",
+      "rating": 1596,
+      "projectedRating": 1607,
+      "trend": 11,
+      "wins": 21,
+      "losses": 5,
+      "history": [
+        1500,
+        1524,
+        1530,
+        1541,
+        1568,
+        1579,
+        1589,
+        1596
+      ]
+    },
+    {
+      "rank": 4,
+      "teamId": "DEMO-004",
+      "name": "Metro Tech",
+      "rating": 1588,
+      "projectedRating": 1585,
+      "trend": -3,
+      "wins": 20,
+      "losses": 6,
+      "history": [
+        1500,
+        1526,
+        1554,
+        1573,
+        1590,
+        1601,
+        1594,
+        1588
+      ]
+    },
+    {
+      "rank": 5,
+      "teamId": "DEMO-005",
+      "name": "Atlantic Coast",
+      "rating": 1578,
+      "projectedRating": 1584,
+      "trend": 6,
+      "wins": 19,
+      "losses": 7,
+      "history": [
+        1500,
+        1512,
+        1529,
+        1541,
+        1557,
+        1569,
+        1575,
+        1578
+      ]
+    },
+    {
+      "rank": 6,
+      "teamId": "DEMO-006",
+      "name": "Riverbend",
+      "rating": 1565,
+      "projectedRating": 1569,
+      "trend": 4,
+      "wins": 20,
+      "losses": 7,
+      "history": [
+        1500,
+        1518,
+        1529,
+        1540,
+        1551,
+        1557,
+        1562,
+        1565
+      ]
+    },
+    {
+      "rank": 7,
+      "teamId": "DEMO-008",
+      "name": "Coastal Union",
+      "rating": 1545,
+      "projectedRating": 1554,
+      "trend": 9,
+      "wins": 19,
+      "losses": 8,
+      "history": [
+        1500,
+        1498,
+        1510,
+        1518,
+        1520,
+        1529,
+        1539,
+        1545
+      ]
+    },
+    {
+      "rank": 8,
+      "teamId": "DEMO-007",
+      "name": "Highland",
+      "rating": 1553,
+      "projectedRating": 1548,
+      "trend": -5,
+      "wins": 18,
+      "losses": 8,
+      "history": [
+        1500,
+        1520,
+        1536,
+        1552,
+        1570,
+        1564,
+        1558,
+        1553
+      ]
+    },
+    {
+      "rank": 9,
+      "teamId": "DEMO-010",
+      "name": "Prairie State",
+      "rating": 1529,
+      "projectedRating": 1536,
+      "trend": 7,
+      "wins": 17,
+      "losses": 10,
+      "history": [
+        1500,
+        1507,
+        1501,
+        1511,
+        1513,
+        1520,
+        1524,
+        1529
+      ]
+    },
+    {
+      "rank": 10,
+      "teamId": "DEMO-009",
+      "name": "Elm City",
+      "rating": 1538,
+      "projectedRating": 1534,
+      "trend": -4,
+      "wins": 17,
+      "losses": 9,
+      "history": [
+        1500,
+        1513,
+        1528,
+        1541,
+        1548,
+        1547,
+        1542,
+        1538
+      ]
+    },
+    {
+      "rank": 11,
+      "teamId": "DEMO-011",
+      "name": "Stonebridge",
+      "rating": 1515,
+      "projectedRating": 1512,
+      "trend": -3,
+      "wins": 16,
+      "losses": 11,
+      "history": [
+        1500,
+        1514,
+        1527,
+        1539,
+        1527,
+        1522,
+        1518,
+        1515
+      ]
+    },
+    {
+      "rank": 12,
+      "teamId": "DEMO-012",
+      "name": "Westmoor",
+      "rating": 1508,
+      "projectedRating": 1511,
+      "trend": 3,
+      "wins": 16,
+      "losses": 11,
+      "history": [
+        1500,
+        1505,
+        1502,
+        1498,
+        1499,
+        1501,
+        1506,
+        1508
+      ]
+    },
+    {
+      "rank": 13,
+      "teamId": "DEMO-013",
+      "name": "Lakeside",
+      "rating": 1496,
+      "projectedRating": 1489,
+      "trend": -7,
+      "wins": 14,
+      "losses": 13,
+      "history": [
+        1500,
+        1512,
+        1525,
+        1516,
+        1510,
+        1505,
+        1502,
+        1496
+      ]
+    },
+    {
+      "rank": 14,
+      "teamId": "DEMO-014",
+      "name": "Granite College",
+      "rating": 1485,
+      "projectedRating": 1480,
+      "trend": -5,
+      "wins": 13,
+      "losses": 14,
+      "history": [
+        1500,
+        1504,
+        1512,
+        1501,
+        1498,
+        1495,
+        1489,
+        1485
+      ]
+    },
+    {
+      "rank": 15,
+      "teamId": "DEMO-015",
+      "name": "Redwood State",
+      "rating": 1477,
+      "projectedRating": 1479,
+      "trend": 2,
+      "wins": 12,
+      "losses": 15,
+      "history": [
+        1500,
+        1497,
+        1492,
+        1485,
+        1481,
+        1476,
+        1475,
+        1477
+      ]
+    },
+    {
+      "rank": 16,
+      "teamId": "DEMO-016",
+      "name": "Harbor Point",
+      "rating": 1461,
+      "projectedRating": 1458,
+      "trend": -3,
+      "wins": 11,
+      "losses": 16,
+      "history": [
+        1500,
+        1495,
+        1490,
+        1482,
+        1476,
+        1472,
+        1466,
+        1461
+      ]
+    }
+  ]
+}
