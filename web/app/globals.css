@@ -822,3 +822,43 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
    background:#b3ffd4;color:#08291e;border-color:#e1ffeb}
 }
 @media(max-width:375px){.v13-mobile-top-actions button{font-size:9px}}
+
+/* Auditable first-pick outcomes and neutral-court points baseline */
+.v14-results,.v14-score-projection{background:linear-gradient(135deg,#112d38,#0b222e);border:1px solid #466e62;border-radius:17px;margin:20px 0;padding:clamp(16px,3vw,30px);color:#e7fff1}
+.v14-result-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:24px 0}
+.v14-result-metrics>div,.v14-projection-metrics>div{border:1px solid #466d5e;background:#0d2933;padding:15px;border-radius:11px;min-width:0}
+.v14-result-metrics small,.v14-projection-metrics small{display:block;color:#add8bb;font-size:10px;font-weight:900;letter-spacing:.45px}
+.v14-result-metrics strong,.v14-projection-metrics strong{display:block;font:900 clamp(29px,4vw,43px)/1.05 "Barlow Condensed",Impact,sans-serif;color:#e7ffef;margin-top:8px;overflow-wrap:anywhere}
+.v14-results-controls{display:flex;align-items:end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:22px 0}
+.v14-results-controls [role=group]{display:flex;gap:7px;flex-wrap:wrap}
+.v14-results-controls button,.v14-load-more{background:#173c3f;border:1px solid #679882;color:#d5f9e1;border-radius:8px;padding:12px;cursor:pointer;font-size:11px;font-weight:900}
+.v14-results-controls button.active,.v14-results-controls button:hover{background:#adfacc;color:#143025}
+.v14-results-controls label{font-size:10px;color:#bad8c4;font-weight:900;display:flex;flex-direction:column;gap:8px}
+.v14-results-controls input{background:#0c2530;border:1px solid #558373;color:#effff3;padding:12px;border-radius:8px;width:min(260px,80vw)}
+.v14-outcome-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.v14-outcome{border:1px solid #477164;border-radius:11px;padding:16px;background:#12333b;min-width:0}
+.v14-outcome.is-right{border-left:4px solid #a8f9be}.v14-outcome.is-wrong{border-left:4px solid #ffb0a8}
+.v14-outcome-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.v14-outcome-head strong{font-size:10px;color:#d6f7dc;font-weight:900}
+.v14-outcome.is-wrong .v14-outcome-head strong{color:#ffd0c9}
+.v14-outcome-head span{font-size:9px;color:#a9c8ba}
+.v14-score-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:16px 0}
+.v14-score-row>span{display:flex;flex-direction:column;gap:8px;color:#dbffeb;font-size:12px;font-weight:800}
+.v14-score-row b{font:900 36px "Barlow Condensed",Impact,sans-serif;color:#f5fff7}
+.v14-result-answer{display:flex;justify-content:space-between;gap:11px;flex-wrap:wrap;font-size:11px;color:#aacdbc}
+.v14-result-answer b{color:#effff5}
+.v14-outcome-footer{border-top:1px solid #477063;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:12px;margin-top:14px;font-size:10px;color:#c2dccd}
+.v14-empty-result{border:1px dashed #6b9883;border-radius:10px;padding:22px;margin:14px 0;color:#d6f7df}
+.v14-empty-result strong{font:900 25px "Barlow Condensed",Impact,sans-serif}.v14-empty-result p{font-size:12px;color:#b3cbbb;line-height:1.65}
+.v14-load-more{margin-top:13px}
+.v14-projected-score{display:flex;align-items:center;justify-content:center;gap:clamp(12px,4vw,50px);padding:23px 8px;margin:17px 0;background:#0b2532;border-radius:13px}
+.v14-projected-score>div{text-align:center;min-width:0}.v14-projected-score small{display:block;color:#a9d0bb;font-size:10px;font-weight:900}
+.v14-projected-score strong{display:block;color:#d7ffdd;font:900 clamp(52px,8vw,85px) "Barlow Condensed",Impact,sans-serif}
+.v14-projected-score>span{font:900 28px "Barlow Condensed",Impact,sans-serif;color:#8ebc9d}
+.v14-projection-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.v14-projection-metrics strong{font-size:clamp(24px,3vw,33px)}
+.v14-projection-metrics span{display:block;color:#afccbb;font-size:10px;line-height:1.55;margin-top:7px}
+.v14-projection-warning{border-left:3px solid #ffe3a8;background:#342f2a;color:#ffeacf;padding:12px;font-size:11px;line-height:1.6}
+@media(max-width:800px){.v14-result-metrics,.v14-projection-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.v14-outcome-grid{grid-template-columns:1fr}}
+@media(max-width:430px){.v14-result-metrics,.v14-projection-metrics{grid-template-columns:1fr}.v14-projected-score{gap:12px}.v14-projected-score small{font-size:9px}}
