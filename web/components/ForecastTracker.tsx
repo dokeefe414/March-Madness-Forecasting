@@ -3,6 +3,7 @@ import { useEffect,useMemo,useState } from "react";
 import ForwardScorecard from "./ForwardScorecard";
 import SettlementHealth from "./SettlementHealth";
 import OperationsCenter from "./OperationsCenter";
+import PickResults from "./PickResults";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 type Pick = {eventId:string;scheduledStartUtc:string;scheduledEasternDate:string;home:string;away:string;homeTeamId:string;awayTeamId:string;homeWinProbability:number;neutralSite:boolean;model:string;modelId?:string|null;modelTrainingThroughDate?:string|null};
 type Snapshot = {id:string;generatedAtUtc:string;count:number;predictions:Pick[]};
@@ -53,6 +54,7 @@ export default function ForecastTracker(){
       <>
         <div className="source-status"><span className="status-bullet"/><div><strong>PUBLIC GITHUB AUDIT TRAIL</strong><span>Latest index <DateDisplay iso={ledger.generatedAtUtc}/> · {ledger.snapshots.length} saved capture runs · exact-time provenance</span></div><a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27/tree/main/web/public/forecasts" target="_blank" rel="noreferrer">VERIFY SOURCE FILES ↗</a></div>
         <ForwardScorecard report={ledger.uniqueGames}/>
+        <PickResults/>
         <SettlementHealth/>
         <OperationsCenter/>
         <div className="mini-metrics"><div><small>PRE-TIPOFF PICKS</small><strong>{all.length}</strong><span>Latest archived runs shown</span></div>
