@@ -20,6 +20,18 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ---
 
+## v1.7 — Audited historical training dataset and nested unseen-season research
+
+A new independent research pipeline validates and exports historical NCAA tournament matchups against season-specific *pre-tournament* team ratings, with source commit and SHA-256 proofs, complete-season eligibility, duplicate detection, missing-team exclusions, and deterministic winner-independent feature orientation. **No incomplete historical season is fabricated or used to train a supposedly complete bracket.**
+
+It compares original Elo, earlier-year calibrated Elo and a nested previously-held-out-season-selected option on exactly the same games. Training and selection are strictly from **earlier tournament years**, with transparent Brier, log loss, winner accuracy and season-block uncertainty. The [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) reports actual eligible source coverage and year-by-year held-out results. CI preserves the machine-readable source manifests, evaluation and optional training rows for reproducibility.
+
+**Existing original pregame forecasts remain untouched.** The new historical features do not represent per-game regular-season tipoff states, and this historical experiment does not justify automatically promoting a 2027 model.
+
+Read [v1.7 historical data and nested evaluation methods](docs/v17-historical-evaluation.md).
+
+---
+
 ## v1.6 — Original pregame-frozen ensemble, source-verified comparison and rigorous promotion gates
 
 **New forward-first challenger:** the public site now tests a *conservative shadow ensemble* of previously fitted current-season logistic, state-space, opponent-aware and adaptive strength models with Elo. The scheduled pre-tipoff recorder archives the ensemble probability, component count and weight alongside the original active pick. It **never rewrites earlier forecasts or automatically declares the ensemble more accurate**.

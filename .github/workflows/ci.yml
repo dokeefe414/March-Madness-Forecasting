@@ -32,6 +32,19 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.benchmark --web-dir web --out research/outputs/rolling-benchmark.json
+      - name: Audit source-pinned historical training rows and nested walk-forward evaluation
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.historical_dataset --web-dir web --manifest research/outputs/historical-data-manifest.json --evaluation research/outputs/historical-evaluation.json --rows research/outputs/historical-training-rows.jsonl
+      - name: Store historical source provenance and chronological evaluation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: audited-historical-model-dataset
+          path: |
+            research/outputs/historical-data-manifest.json
+            research/outputs/historical-evaluation.json
+            research/outputs/historical-training-rows.jsonl
+          if-no-files-found: error
       - name: Store reproducible benchmark report
         uses: actions/upload-artifact@v4
         with:
