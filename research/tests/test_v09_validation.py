@@ -64,7 +64,9 @@ class V09ValidationTests(unittest.TestCase):
     self.assertEqual(models["Opponent-aware research"]["pairedGames"],1)
     self.assertEqual(models["Adaptive state-space research"]["pairedGames"],1)
     self.assertIsNone(models["Adaptive state-space research"]["dateBlockGain95"])
-    self.assertGreater(models["Online logistic challenger"]["candidateBrierGain"],0)
+    self.assertLess(models["Online logistic challenger"]["candidateBrierGain"],0)
+    # A challenger that is worse on real outcomes must be reported as worse,
+    # rather than assuming every learned model improves on Elo.
  def test_earliest_first_pick_wins_against_late_cherrypicking(self):
     first=archived("2026-11-15",p=.85,alt=.75)
     next_=archived("2026-11-16",p=.20,alt=.10)
