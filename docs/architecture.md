@@ -75,3 +75,13 @@ The upgrade adds four independently testable systems without replacing frozen hi
 `web/public/current/2027.json` and `web/public/research/benchmark.json` are generated **only during deploy or explicit local rebuild**, not committed. The Pages workflow ensures fresh validated inputs before creating the static export. The CI tests remain independent of network availability.
 
 Expanded 2027 tournament entrants: **76**; Opening Round games: **12**. Details: [bracket engine](bracket-engine.md). Other contracts: [2027 pipeline](current-season.md), [validation](validation.md), [visual system](design-system.md), [operations](operations.md).
+
+## v0.6 scientific and frontend layering
+
+The current-season model is derived from four independent sources: (a) NCAA-source completed games; (b) NCAA team/conference directory; (c) game-level box-score possessions; (d) SportsDataverse season-2027 subdivision membership table joined by explicitly named `Division I` group ID. The last three are optional and publish transparent unavailable states. Crucially, neither an NCAA directory label nor a source-confirmed D-I subdivision guarantees individual postseason eligibility.
+
+`forecast.dynamics` supplies an explicitly heuristic causal EWMA/regime Elo projection; `forecast.boosted` learns regularized residual decision stumps from earlier-year historical tournament results; `forecast.benchmark` trains a chronologically chosen calibrated blend using only older already-held-out predictions. The current game predictor's model selector distinguishes base Elo from **historically calibrated scenarios**, not an already-validated 2027 tournament forecast.
+
+`forecast.snapshot` runs independently of Next.js: current rating snapshot → exact future ESPN events/start timestamps → append-only source-stamped Git records → later NCAA-source final score settlement. A bot commit can update the audit index on main without overwriting prior record files. Frontend `SelectionLab`, `ForecastTracker`, and `TeamTrend` expose source coverage, evidence and interaction separately. The Playwright suite runs desktop/mobile against the real static Next export and uploads failure traces.
+
+Detailed specs: [model zoo](model-zoo-v06.md), [division and conference identity](identity-and-conferences.md), [adjusted efficiency](adjusted-efficiency.md), [field watchlist](selection-watchlist.md), [pregame archive](forecast-audit.md), [browser QA](browser-quality.md).

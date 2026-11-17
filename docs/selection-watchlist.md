@@ -6,7 +6,7 @@ The 2027 men's field format is **76 teams**, with **32 automatic berths** and **
 
 Code: `research/forecast/selection.py`, UI: `web/components/SelectionLab.tsx`.
 
-Require at least 76 rated programs joined by full normalized name to the 2027 NCAA-source team directory, with exactly **32 distinct sourced conference values**. If any are missing or extra due to source conventions, return `status="insufficient-coverage"`, list no invented field, and explain why. This is a source completeness gate, not tournament eligibility certification.
+Require at least 76 rated programs joined by full normalized name to the 2027 NCAA-source team directory **and** independently joined to the 2027 SportsDataverse Division I subdivision group membership, with exactly **32 distinct matched conference values**. If any are missing or extra due to source conventions, return `status="insufficient-coverage"`, list no invented field, and explain why. This is a strict double-source completeness gate, not individual tournament eligibility certification. Unknown division membership is not assumed D-I.
 
 1. For each conference, pick its *highest projected Elo* from currently scored programs as an **AQ proxy**, not a championship pick or guaranteed autobid.
 2. From remaining teams, pick **44 highest projected Elo** programs as hypothetical at-large proxies.
@@ -28,7 +28,7 @@ These are **not actual tournament seeds** and are not used to fill the verified 
 
 ## Limitations
 
-- NCAA-source conference membership alone does not prove current Division I postseason eligibility.
+- NCAA-source conference membership alone does not prove Division I membership; the second 2027 subdivision source must affirm D-I. Even both matches do not independently prove a team is eligible for the postseason.
 - Elo conference leader is not an official regular-season/tournament conference champion.
 - Power-only at-large ranking is not an NCAA NET ranking, quadrant resume, selection committee model or bid probability.
 - First-half-November samples can be small and source incomplete. Actual 2027 bracket is not yet selected.
@@ -39,3 +39,7 @@ The status card shows conference match coverage and permits users to inspect an 
 ## Future scientifically valid upgrade
 
 Build a validated NCAA eligibility/NET/team-ID source, retrieve past selection results and committee resume features **as-of Selection Sunday**, establish longitudinal crosswalks, and backtest which teams and seeds the model predicts out of time. Only then report candidate bid probabilities or predicted official seed placements.
+
+## Independent subdivision source
+
+Selection `eligible` now requires `divisionIConfirmed is True` from `forecast.division` as well as `conferenceVerified` from `forecast.reference`. SportsDataverse [2027 team group seasons](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_groups) identifies Division I with an explicit season-specific subdivision `group_id`. When source names do not match exactly or group data is unavailable, **the field gate remains closed**. See [identity and conferences](identity-and-conferences.md) for the three-way D-I/other/unknown semantics.

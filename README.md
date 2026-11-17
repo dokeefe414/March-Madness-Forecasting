@@ -23,7 +23,7 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 | Area | New capability | What it does *not* claim |
 | --- | --- | --- |
-| **NCAA source identity** | Exact 2027 team ID/conference crosswalk; matched/unmatched coverage, conference filters | An NCAA team-directory match isn't independent confirmation of D-I postseason eligibility |
+| **NCAA source identity** | Exact 2027 team ID/conference crosswalk **plus independent 2027 Division I subdivision membership evidence**; matched/unmatched coverage, conference filters | D-I source group membership is verified separately; neither membership nor a conference name certifies individual postseason eligibility |
 | **True pace stats** | Opponent-regularized per-100-possession offense, defense, net and pace from real NCAA-derived team box rows | Descriptive efficiency is not yet a historically trained win-probability model |
 | **Strong prediction research** | Seven baseline/learned methods plus a prior-year-tuned **probability ensemble**; boosted Elo, causal EWMA, uncertainty, full walk-forward validation | Out-of-time historical results do not guarantee success in the upcoming season |
 | **Real pregame evidence** | Scheduled future ESPN fixtures, conservative identity matching, strict pretipoff creation timestamps, immutable Git-published picks, later NCAA-score settlements | A scheduled ESPN start is not independently verified actual tipoff; no past picks are backfilled |
@@ -55,7 +55,7 @@ The historical tournament benchmark scores the **same 2,270 games from 35 held-o
 
 **2027 Pulse** displays NCAA-source finals, independent 2027 Elo ratings, actual team history, a causal volatility/regime signal, confirmed crosswalk confidence and optional box-score possession estimates. The matchup tool can compare base Elo with historically calibrated/ensemble *scenarios* when that calibration report exists. It explicitly flags that March-neutral calibration was not validated for regular-season home games.
 
-**Field Watch** creates a **hypothetical** 76-team, 32-conference power-based field only when enough exact sourced conference membership data is present. Early-season conference leaders are strength proxies, not official championship bids; wide seed tiers describe heuristic relative strength, not seed odds. If coverage is incomplete, the dashboard says so and displays no fake participants.
+**Field Watch** creates a **hypothetical** 76-team, 32-conference power-based field only when the source independently verifies a team’s 2027 Division I subdivision **and** exact NCAA-source conference identity. Early-season conference leaders are strength proxies, not official championship bids; wide seed tiers describe heuristic relative strength, not seed odds. If coverage is incomplete, the dashboard says so and displays no fake participants.
 
 **Picks Ledger** reads immutable, Git-committed pretipoff probability files. Once the scheduler has really captured matches, it shows forecast date versus listed start, exact event IDs, original predictions, and independently settled Brier/winner results. Before then it shows **no audited forecast archive yet**, not generated hindsight "picks."
 
@@ -74,6 +74,8 @@ flowchart LR
   J["NCAA source team box / possessions"] --> K["Opponent-adjusted per-100 ratings"]
   G --> L["Current 2027 team strengths"]
   I --> L
+  R["SportsDataverse 2027 subdivision groups"] --> S["Exact D-I membership source check"]
+  S --> L
   K --> L
   L --> M["76-team provisional power watchlist"]
   L --> N["Before-start ESPN fixtures"]
@@ -87,7 +89,7 @@ flowchart LR
   P --> Q
 ```
 
-This separation is intentional: **historical Kaggle numeric IDs**, 2027 NCAA-source names/IDs, and ESPN event IDs are different provenance domains. Exact source-linked mapping is required before joining; a display-name similarity is not enough.
+This separation is intentional: **historical Kaggle numeric IDs**, 2027 NCAA-source names/IDs, and ESPN event IDs are different provenance domains. Exact source-linked mapping is required before joining; a display-name similarity is not enough. A second season-specific subdivision membership source supports independently verified D-I candidate flags.
 
 ## Quickstart (Windows / VS Code)
 
@@ -167,6 +169,7 @@ research/forecast/
   dynamics.py             causal EWMA, volatility and regime change signal
   benchmark.py            eight-method prior-year walk-forward NCAA evaluation
   reference.py            exact NCAA-source 2027 conference/name crosswalk
+  division.py             independent 2027 Division I subdivision reference join
   efficiency.py           true possession-based opponent-adjusted team strength
   selection.py            32+44 provisional strength watchlist and seed tiers
   live.py                 validated 2027 results and supplemental source imports
@@ -216,7 +219,7 @@ docs/                     complete scientific, design, data and operator docs
 
 ## What remains a research challenge
 
-**There is no authenticated official 2027 field before Selection Sunday.** The selection watchlist is explicitly power-only. Conference mapping is not itself eligibility certification, and current team-box statistics have not been historically evaluated for game probabilities. The pretipoff audit does not have an invented backlog: it will become populated only if actual future fixtures can be matched and archived in time. ESPN's scheduled time is not independent proof of actual tipoff; results are settled conservatively by verified NCAA final-score game identities.
+**There is no authenticated official 2027 field before Selection Sunday.** The selection watchlist is explicitly power-only. Conference mapping **and D-I subdivision membership** are independently sourced but neither is an individual postseason eligibility certification, and current team-box statistics have not been historically evaluated for game probabilities. The pretipoff audit does not have an invented backlog: it will become populated only if actual future fixtures can be matched and archived in time. ESPN's scheduled time is not independent proof of actual tipoff; results are settled conservatively by verified NCAA final-score game identities.
 
 The first complete v0.6 release prioritizes **evidence, trust, usable visuals and reproducible code**. Future work should backtest real committee/resume/NET selection prediction, secure truly historical possession-by-possession crosswalks, measure 2027 forward model drift, and evaluate injury/transfer-aware features only when real source data and redistribution rights are available.
 

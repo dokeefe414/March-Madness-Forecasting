@@ -38,3 +38,20 @@ Fixture tests cover Unicode/punctuation normalization, exact matches, missing/am
 ## Decisions and next steps
 
 A certified Division I eligible-program universe with conference realignment and postseason restrictions should be obtained from an official up-to-date NCAA roster/directory, and joined using verified NCAA numeric team IDs — not solely by scraped display names. Until that source and join are verified, the project says **conference linked**, not **Division I verified**.
+
+## v0.6 independently verified Division I source status (additional gate)
+
+The project also uses the **SportsDataverse season-2027 basketball conference/division lineage release**: [mbb_groups](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_groups), specifically `mbb_group_seasons.csv` and `mbb_team_group_seasons_2027.csv`. Its schema is described by [SportsDataverse team group season docs](https://py.sportsdataverse.org/docs/mbb/reference/loaders/team).
+
+`forecast.division.parse_division_members` first identifies a season-2027 `level=subdivision` record explicitly named `Division I` or `NCAA Division I`. It then checks each season-2027 team membership row's **exact `subdivision_id` reference**. Teams are matched back to scored-program names by the same conservative normalized full-name equality; no cross-provider numeric-ID assumptions. Conflicting duplicate team names are dropped.
+
+Three explicit states are exposed for each rated program:
+- `divisionIConfirmed=true`: matched source membership row that explicitly belongs to the 2027 Division I subdivision.
+- `divisionIConfirmed=false`: matched source record explicitly belongs to another subdivision.
+- `divisionIConfirmed=null`: no unambiguous 2027 membership row can be joined. **Unknown is not ineligible.**
+
+`divisionCoverage` reports how many scored teams matched the division source, confirmed D-I, explicitly outside D-I and unknown, alongside the number of unique D-I source conference groups represented. If either supplementary group source cannot be fetched/validated, this status is unavailable and all team division flags remain unknown. The Field Watch algorithm now **requires BOTH** `divisionIConfirmed=true` and `conferenceVerified=true` to create any of its 76 hypothetical entrants, then still requires 32 conferences and 76 candidates. The earlier NCAA team-name crosswalk alone can no longer put a school in the hypothetical field.
+
+**Caveat:** The source's season-end group membership indicates subdivision affiliation; it is NOT the NCAA’s own official postseason eligibility determination for probation, transitions, disciplinary sanctions or other restrictions. The 2027 watchlist is still hypothetical until Selection Sunday.
+
+Offline source-specific tests: `research/tests/test_division.py` (confirmed D-I, explicitly other division, unmatched, duplicate source conflict, missing subdivision reference, and refusing unsourced field scenarios).

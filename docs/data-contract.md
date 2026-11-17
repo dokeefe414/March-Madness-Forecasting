@@ -95,3 +95,13 @@ Both generated JSON outputs are ignored by git, constructed in the deployment be
 ### Historical simulator field source
 
 Archive seed codes `W01`, `W16a`, `W16b` map archived team IDs to a region/seed position. A slot with two teams is an Opening Round match; 64 main slots plus 4 additional entrants describes a 68-team field; plus 12 describes the 76-team 2027 format. Actual 2027 positions remain unknown until selection. See [bracket-engine.md](bracket-engine.md).
+
+## v0.6 team identity, group verification, models and audit fields
+
+`current/2027.json` extends the per-team data contract with source-only `conference`, `ncaaSourceTeamId`, `conferenceVerified`; independently verified season-2027 membership `divisionIConfirmed` (boolean/null), `adaptiveRating`, `volatility`, `regimeShift`, `ewmaSlope`, and optional `offRating100`, `defRating100`, `pacePossessions`, `adjOff100`, `adjDef100`, `adjNet100`, `possessionGames`. Values are omitted when data is not verified.
+
+Root-level `identityCoverage`, `divisionCoverage`, and `efficiencyCoverage` provide separate source URLs, availability, crosswalk match counts, D-I group verification counts and posseession coverage; `selectionWatchlist` is either `status=insufficient-coverage` or a 76-team **unofficial strength scenario** containing the source-backed candidates, conference power proxies and at-large proxies. `historicalCalibration` records earlier-year temperature/blend weight with a caveat about transferring March-neutral calibration to regular-season games.
+
+`research/benchmark.json` now uses `schemaVersion=3`, with eight model keys (coin flip, Elo, trend Elo, adaptive form, calibrated Elo, logistic, gradient boosting and past-year blend), `productionCalibration`, sequential model cutoffs, reliability and season bootstrap uncertainty. See [model-zoo-v06.md](model-zoo-v06.md).
+
+`web/public/forecasts/snapshots/*.json` and `settlements/*.json` are append-only Git-committed proof records; `forecasts/index.json` is a derived public dashboard aggregate with score counts, per-pick Brier/log loss, and source identity. A missing `index.json` is a **legitimate "not yet archived"** UI state, not license to fabricate an archive. See [forecast-audit.md](forecast-audit.md).
