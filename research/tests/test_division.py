@@ -1,6 +1,6 @@
 """2027 Division I reference join: source memberships, not conference guessing."""
 import unittest
-from forecast.division import parse_division_members, annotate_division
+from forecast.division import parse_division_members, parse_ncaa_aliases, annotate_division
 from forecast.selection import build_watchlist
 
 GROUPS = """league,group_id,season,level,name
@@ -15,6 +15,15 @@ mbb,2027,3,College C,mbb:di,mbb:metro
 mbb,2026,4,Old Team,mbb:di,mbb:big-south
 """
 
+
+ALIASES = """league,team_id,team_id_source,source,source_id,id_kind,name_kind,value,valid_from,valid_to
+mbb,1,espn,ncaa,101,school,name,Duke,2024,2027
+mbb,2,espn,ncaa,102,school,name,Northwestern St,2024,2027
+mbb,3,espn,ncaa,103,school,name,College C,2025,2027
+mbb,4,espn,ncaa,104,school,name,Old Team,2020,2026
+mbb,5,espn,ncaa,105,school,name,Future Team,2028,2029
+mbb,99,espn,fox,500,team,name,Duke,2026,2027
+"""
 
 class DivisionMembershipTests(unittest.TestCase):
     def test_source_division_and_unknown_are_not_assumed(self):
@@ -32,6 +41,26 @@ class DivisionMembershipTests(unittest.TestCase):
         conflict = MEMBERS + "mbb,2027,55,College A,mbb:dii,mbb:other\n"
         members = parse_division_members(GROUPS, conflict)
         self.assertNotIn("college a", members)
+
+    def test_valid_dated_ncaa_alias_maps_espn_group_to_ncaa_school(self):
+        group_names = MEMBERS.replace("College A", "Duke Blue Devils")
+        catalog = parse_division_members(GROUPS, group_names, ALIASES)
+        self.assertIn("duke", catalog)
+        self.assertTrue(catalog["duke"]["divisionIConfirmed"])
+        rows = [{"name": "Duke"}, {"name": "Northwestern St"}]
+        coverage = annotate_division(rows, catalog)
+        self.assertEqual([row["divisionIConfirmed"] for row in rows], [True, False])
+        self.assertEqual(coverage["divisionIConfirmed"], 1)
+
+    def test_provider_alias_date_window_and_collision_safety(self):
+        links = parse_ncaa_aliases(ALIASES)
+        self.assertEqual(links["duke"], "1")
+        self.assertNotIn("old team", links)
+        self.assertNotIn("future team", links)
+        clash = ALIASES + "mbb,11,espn,ncaa,501,school,name,Duke,2026,2027\\n"
+        self.assertNotIn("duke", parse_ncaa_aliases(clash))
+        with self.assertRaisesRegex(ValueError, "aliases missing fields"):
+            parse_ncaa_aliases("team_name,team_id\\nDuke,1")
 
     def test_field_gate_excludes_undocumented_division(self):
         teams = [
