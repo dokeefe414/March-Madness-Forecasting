@@ -67,6 +67,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.challengers --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/challengers.json
+      - name: Build independently auditable settlement backlog report
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.settlement_health --ledger web/public/forecasts --out web/public/current/settlement-health.json
       - name: Summarize prospective first-pick error drift
         env:
           PYTHONPATH: research
