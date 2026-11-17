@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import rawData from "../data/rankings.json";
 import yearIndex from "../data/history-index.json";
 import { matchupProbability, type RatingsDataset } from "../lib/models";
@@ -72,6 +72,10 @@ export default function Dashboard() {
   const [archiveStatus, setArchiveStatus] = useState<"idle" | "loading" | "error">("idle");
   const sortedTeams = useMemo(() => [...data.teams].sort((a, b) => b.projectedRating - a.projectedRating), [data]);
   const [tab, setTab] = useState<Tab>("current");
+  // SSR markup may be visible before React attaches navigation handlers.
+  // A deterministic hydration signal lets browser tests avoid lost clicks.
+  const [hydrated,setHydrated] = useState(false);
+  useEffect(()=>setHydrated(true),[]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<Sort>("rank");
   const [detailId, setDetailId] = useState(initialTeams[0]?.teamId ?? "");
@@ -135,7 +139,7 @@ export default function Dashboard() {
   }
 
   return (
-    <main>
+    <main data-hydrated={hydrated?"yes":"no"}>
       <div className="site-shell">
         <header className="site-header">
           <button className="brand" onClick={() => setTab("current")} aria-label="March Forecast home">

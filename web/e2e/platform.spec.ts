@@ -9,6 +9,7 @@ async function section(page: import("@playwright/test").Page, label:string) {
 
 test("v0.6 workspaces navigate without synthetic predictions",async ({page},testInfo)=>{
   await page.goto("/");
+  await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
   await expect(page.getByRole("heading",{name:/Current pulse/i})).toBeVisible();
   await section(page,"Field Watch");
   await expect(page.getByRole("heading",{name:/Field watchlist/i})).toBeVisible();
