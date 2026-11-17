@@ -1,10 +1,10 @@
 name: Archive real pre-tipoff forecasts
 on:
   schedule:
-    # 9:07 a.m. local Eastern daily in basketball season.
-    # Lets the 1 a.m. + 5:17 a.m. source refreshes finish before forward picks.
+    # 9:07 a.m. ET: pregame archive, after overnight results.
+    # 4:07 p.m. ET: refresh prospective evening picks and source settlements.
     # Never retroactively labels a completed game a pregame forecast.
-    - cron: "7 9 * 1,2,3,4,11,12 *"
+    - cron: "7 9,16 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
   workflow_dispatch:
 permissions:

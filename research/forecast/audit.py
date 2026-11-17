@@ -128,6 +128,14 @@ def audit_ledger(folder: Path) -> dict:
         "winnerAccuracy": round(sum(float(r["winnerCorrect"]) for r in scored)/len(scored),6) if scored else None,
     }
     if index is not None:
+        health = index.get("archiveHealth")
+        if health is not None:
+            if health.get("everArchivedPredictions") != len(original):
+                raise ValueError("Public archive health prediction count mismatches immutable files")
+            if not isinstance(health.get("sourceWarnings"), list):
+                raise ValueError("Archive health source warnings must be a list")
+            if health.get("verifiedNewSettlements", 0) > len(scored):
+                raise ValueError("Archive health settlement count exceeds source evidence")
         if index.get("uniqueGames") is not None:
             from .performance import summarize_forward
             expected=summarize_forward([s for _,s in sources],scored)

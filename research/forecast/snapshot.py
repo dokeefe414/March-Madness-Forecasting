@@ -114,7 +114,8 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
         raise ValueError("state-space and ratings do not share source provenance")
     unique: dict[str, dict] = {}
     counters = {"eventsSeen": 0, "notScheduled": 0, "startedOrTooClose": 0,
-                "unmatchedOrAmbiguous": 0, "duplicateIds": 0}
+                "unmatchedOrAmbiguous": 0, "duplicateIds": 0,
+                "unsafeSameDateRatings": 0}
     cutoff = generated_at + timedelta(minutes=BUFFER_MINUTES)
     for scoreboard in scoreboards:
         if not isinstance(scoreboard, dict) or not isinstance(scoreboard.get("events"), list):
@@ -152,6 +153,12 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
             # The trained home/away correction is not evaluated for neutral
             # venues. Such games keep the baseline without an extrapolation.
             future_eastern_day = starts.astimezone(LOCAL).date().isoformat()
+            # An upstream 2027 score snapshot may have an unverified same-day
+            # nonzero in-progress row. Require the last included game's date
+            # strictly earlier than the scheduled local fixture day.
+            if ratings.get("lastGameDate") and ratings["lastGameDate"] >= future_eastern_day:
+                counters["unsafeSameDateRatings"] += 1
+                continue
             candidate = None
             if (not neutral and online_model and
                 online_model.get("mode") in ("active","shadow")):
