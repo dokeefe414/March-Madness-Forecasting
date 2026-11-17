@@ -30,6 +30,20 @@ class ForwardPerformanceTests(unittest.TestCase):
         self.assertAlmostEqual(score["shadowComparison"]["challengerBrier"],.36)
         self.assertEqual(len(score["recentMisses"]),1)
 
+    def test_confidence_groups_and_negative_brier_skill_are_honest(self):
+        report=summarize_forward([snap("2026-12-04",.9)], [result("2026-12-04",0)])
+        self.assertEqual(report["confidenceBands"]["strong"]["games"],1)
+        self.assertEqual(report["confidenceBands"]["tossUp"]["games"],0)
+        self.assertEqual(report["confidenceBands"]["moderate"]["games"],0)
+        self.assertLess(report["coinFlipBrierSkill"],0)
+        self.assertEqual(report["rolling25"],[])
+        self.assertAlmostEqual(report["confidenceBands"]["strong"]["brier"],.81)
+
+    def test_empty_statistics_not_painted_as_a_win(self):
+        report=summarize_forward([],[])
+        self.assertIsNone(report["coinFlipBrierSkill"])
+        self.assertIsNone(report["confidenceBands"]["strong"]["accuracy"])
+
     def test_unsettled_earlier_pick_does_not_cherry_pick_later_one(self):
         score=summarize_forward([snap("2026-12-04"),snap("2026-12-05")],
                                  [result("2026-12-05",1)])

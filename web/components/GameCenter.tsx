@@ -3,6 +3,7 @@ import {useEffect,useMemo,useState} from "react";
 import type {Team,RatingsDataset} from "../lib/models";
 import {matchupProbability} from "../lib/models";
 import GameAudit, {type ArchivedSnapshot,type ArchivedSettlement} from "./GameAudit";
+import MatchupIntelligence from "./MatchupIntelligence";
 
 const basePath=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Past={id:string;date:string;opponent:string;home:boolean;for:number;against:number;outcome:"W"|"L"};
@@ -234,6 +235,8 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
               <p>The same team ratings are built from results against other opponents. Factors below are evidence, not four separate probability coefficients.</p></div>
             <div className="gc-factors">{(selected.factors||[]).map(f=><div key={f.title}><small>{f.title}</small>
               <strong>{plus(f.value)}</strong><p>{f.detail}</p></div>)}</div>
+            <MatchupIntelligence home={ratings?.teams.find(t=>t.teamId===selected.homeTeamId)}
+              away={ratings?.teams.find(t=>t.teamId===selected.awayTeamId)}/>
             <div className="gc-profiles"><ProfilePanel profile={selected.awayProfile} side="AWAY"/><ProfilePanel profile={selected.homeProfile} side="HOME"/></div>
             <div className="gc-evidence"><div><span className="section-kicker">03 / THE OTHER GAMES</span><h3>Shared opponents.</h3>
                 <p>When both teams previously played the same opponent, compare their actual margins. These games also contribute to Elo through each program's sequence of results.</p>

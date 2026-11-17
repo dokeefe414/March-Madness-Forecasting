@@ -8,6 +8,9 @@ type Forward = {
   reference:{pairedGames:number;eloBrier:number|null;actualModelBrier:number|null};
   trajectory:Array<{date:string;eventId:string;games:number;accuracy:number|null;brier:number|null}>;
   calibration:Array<{bin:string;count:number;predictedConfidence:number|null;realizedAccuracy:number|null}>;
+  confidenceBands?:Record<string,{games:number;accuracy:number|null;brier:number|null;logLoss:number|null}>;
+  rolling25?:Array<{date:string;eventId:string;games:number;accuracy:number|null;brier:number|null}>;
+  coinFlipBrierSkill?:number|null;
   recentMisses:Array<{eventId:string;date:string;home:string;away:string;probability:number;confidence:number;model:string;note:string}>;
 };
 const pct=(x:number)=>(x*100).toFixed(1)+"%";
@@ -39,6 +42,24 @@ export default function ForwardScorecard({report}:{report:Forward|null|undefined
                               (125-110*(x.accuracy||0)).toFixed(2)).join(" ")}/>
       </svg><p>Winner selection accuracy is measured on source-settled actual games. Even 50/50 calls contribute only half a correct pick.</p>
     </div>:<p className="fp-empty">No genuine first-archived pretipoff forecasts have settled yet. Accuracy is deliberately unavailable, not 0% or an invented 100%. The historical-date replay score is a different measurement.</p>}
+    {!!count&&<div className="fp-intelligence">
+      <div className="fp-intelligence-heading"><div><span className="feature-kicker">PROSPECTIVE CALIBRATION INTELLIGENCE</span>
+        <h4>Performance by confidence.</h4></div>
+        <p>Each game appears in one band according to its original frozen favorite probability. No retroactive edits.</p></div>
+      <div className="fp-regime-grid">{([
+        ["tossUp","50–60% · TOSS-UP"],["moderate","60–75% · MODERATE"],["strong","75–100% · STRONG"]
+      ] as const).map(([id,title])=>{const row=report?.confidenceBands?.[id];return <div key={id}>
+        <small>{title}</small><strong>{row?.accuracy==null?"—":pct(row.accuracy)}</strong>
+        <span>{row?.games??0} settled · Brier {row?.brier?.toFixed(4)??"—"}</span>
+      </div>})}</div>
+      <div className="fp-skill"><div><small>BRIER SKILL VS 50/50</small>
+        <strong>{report?.coinFlipBrierSkill==null?"—":(report.coinFlipBrierSkill*100).toFixed(1)+"%"}</strong>
+        <span>Negative means worse than a uniform 50% forecast. This is not winner accuracy.</span></div>
+        <div><small>LAST 25 FINISHED GAMES · ROLLING BRIER</small>
+          <strong>{report?.rolling25?.length?report.rolling25[report.rolling25.length-1].brier?.toFixed(4)??"—":"—"}</strong>
+          <span>{report?.rolling25?.length?"Chronological settled first picks":"Requires at least 25 settled unique games"}</span></div>
+      </div>
+    </div>}
     {!!count&&<div className="fp-analysis">
       <div><span className="feature-kicker">WHICH FROZEN MODEL ACTUALLY PICKED THE WINNER?</span>
         <h4>First-pick model scorecard.</h4>

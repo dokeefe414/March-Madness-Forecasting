@@ -587,3 +587,45 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 @media(max-width:700px){.ga-postgame{grid-template-columns:1fr}.gc-settled-grid{grid-template-columns:1fr}
 .ga-capture-list>div{grid-template-columns:1fr;gap:3px}.gc-quick-actions button{width:100%;text-align:center}
 .gc-model-cta{width:100%}}
+
+/* Prediction Intelligence v1.0: sourced matchup comparison and controlled brackets */
+.gc-intelligence{margin:23px 0;padding:clamp(15px,2.5vw,25px);border:1px solid #477363;border-radius:14px;background:linear-gradient(150deg,#12343b,#0b2631)}
+.gc-intelligence-header h3,.scenario-intro h3,.fp-intelligence h4{font:900 clamp(29px,4vw,46px)/1 "Barlow Condensed",Impact,sans-serif;text-transform:uppercase;color:#eafff0;margin:10px 0}
+.gc-intelligence-header p,.scenario-intro p,.scenario-comparison p,.scenario-help,.fp-intelligence-heading p{color:#b2cfc7;line-height:1.7;font-size:11px}
+.gc-intelligence-teams,.gc-intelligence-values,.gc-intelligence-bars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.gc-intelligence-teams{margin-top:20px;justify-content:space-between;color:#caffdb;font-size:11px}
+.gc-intelligence-teams b:last-child{text-align:right}
+.gc-intelligence-metric{padding:13px 0;border-top:1px solid #31564f}
+.gc-intelligence-title{display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.gc-intelligence-title strong{font-size:12px;color:#eefff3}
+.gc-intelligence-title small{font-size:10px;color:#9dbeb3}
+.gc-intelligence-values{margin:9px 0 5px;color:#e1ffed;font-size:16px;font-weight:800}
+.gc-intelligence-values span:last-child{text-align:right}
+.gc-intelligence-bars>div{height:8px;border-radius:10px;background:#234550;overflow:hidden}
+.gc-intelligence-bars>div i{display:block;height:100%;background:#7f9feb;border-radius:10px}
+.gc-intelligence-bars>div:last-child i{background:#9cffc9}
+.gc-intelligence-caveat{font-size:10px;color:#9fbeb7;line-height:1.7;margin:13px 0 0}
+.scenario-studio{margin:20px 0;padding:clamp(17px,3vw,32px);background:linear-gradient(140deg,#153d3e,#0a2534);border:1px solid #55907e;border-radius:15px}
+.scenario-intro h3 em{font-style:normal;color:#9fffcb}
+.scenario-controls{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(120px,.75fr) auto;gap:13px;align-items:end;margin:22px 0}
+.scenario-controls label{display:flex;flex-direction:column;gap:8px;color:#a7d5c2;font-size:10px;font-weight:900;letter-spacing:.6px}
+.scenario-controls select{width:100%;min-width:0;padding:12px;border-radius:9px;color:#f0fff4;background:#0b2730;border:1px solid #4f7f6d}
+.scenario-controls button{white-space:nowrap}
+.scenario-legend{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:13px 0;color:#baffd1;font-size:12px}
+.scenario-legend span{font-size:10px;color:#98c2b3}
+.scenario-row{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.9fr) 90px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #375c57;font-size:12px}
+.scenario-row strong{color:#e8fff0;overflow-wrap:anywhere}
+.scenario-row span{color:#b6d0c8;text-align:right}
+.scenario-row b{text-align:right}
+.scenario-positive{color:#a7ffd0}.scenario-negative{color:#ffbea7}
+.fp-intelligence{border-top:1px solid #41685b;margin-top:20px;padding-top:22px}
+.fp-intelligence-heading{display:flex;align-items:end;justify-content:space-between;gap:20px}
+.fp-intelligence-heading p{max-width:360px}
+.fp-regime-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}
+.fp-regime-grid>div,.fp-skill>div{background:#10323a;border:1px solid #39675d;border-radius:10px;padding:16px;min-width:0}
+.fp-regime-grid small,.fp-skill small{display:block;color:#a4d6c0;font-size:9px;font-weight:900}
+.fp-regime-grid strong,.fp-skill strong{display:block;color:#d4ffe3;font:900 42px/1 "Barlow Condensed",Impact,sans-serif;margin:10px 0}
+.fp-regime-grid span,.fp-skill span{color:#9dbfb8;font-size:10px;line-height:1.7}
+.fp-skill{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}
+@media(max-width:790px){.scenario-controls{grid-template-columns:1fr 1fr}.scenario-controls button{grid-column:1/-1}.fp-intelligence-heading{display:block}}
+@media(max-width:550px){.scenario-controls,.fp-regime-grid,.fp-skill{grid-template-columns:1fr}.scenario-controls button{grid-column:auto}.scenario-row{grid-template-columns:1fr auto}.scenario-row b{grid-column:2}.scenario-row span{font-size:10px}.gc-intelligence-title{display:block}.gc-intelligence-title small{display:block;margin-top:4px}}

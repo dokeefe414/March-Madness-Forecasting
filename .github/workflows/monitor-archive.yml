@@ -8,6 +8,7 @@ on:
       timezone: "America/New_York"
 permissions:
   contents: read
+  issues: write
 jobs:
   verify:
     name: Ensure prior real-game forecast evidence was archived
@@ -25,3 +26,19 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.audit --dir web/public/forecasts
+      - name: Open one actionable issue on archive monitor failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="Forecast archive health needs attention"
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "Open archive recovery issue #$existing already exists; no duplicate created."
+          else
+            gh issue create --title "$title" --body "The scheduled pretipoff archive monitor failed. See the [failed workflow run]($RUN_URL). Check missing/stale original snapshots, source availability, and Git write permissions. Recover using docs/v09-forecast-operations.md. Never backfill forecasts after tipoff."
+          fi
