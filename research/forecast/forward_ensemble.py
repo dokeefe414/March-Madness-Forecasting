@@ -85,7 +85,9 @@ def _rows(folder:Path,now:datetime)->list[dict]:
         if baseline is None or formula is None:continue
         y=settled["observedHome"]
         if type(y) is not int or y not in (0,1):raise ValueError("Nonbinary verified final")
+        frozen=_prob(pred.get("ensembleHomeWinProbability"))
         rows.append({"eventId":event,"date":settled["actualResultDate"],"y":y,
+                     "frozenEnsemble":frozen,
                      "elo":baseline,"research":formula["researchMeanHomeWinProbability"],
                      "originalAtUtc":snap["generatedAtUtc"]})
     rows.sort(key=lambda row:(row["date"],row["eventId"]))
@@ -129,7 +131,18 @@ def build_report(folder:Path,source_ratings:dict,now:datetime|None=None)->dict:
     test_candidate=_brier(test,weight)
     gain=(test_elo-test_candidate) if test_elo is not None and test_candidate is not None else None
     interval=_date_interval(test,weight) if len(test)>=MIN_VALIDATION else None
-    eligible=(len(train)>=MIN_TRAIN and len(test)>=MIN_VALIDATION
+    published=[r for r in samples if r["frozenEnsemble"] is not None]
+    published_comparison=[{**r,"research":r["frozenEnsemble"]} for r in published]
+    # The published ensemble probability is already final: compare it directly
+    # with first-pick Elo; do NOT apply the current fitted weight a second time.
+    frozen_elo=_brier(published,0)
+    frozen_ensemble=_brier(published_comparison,1.)
+    frozen_gain=(frozen_elo-frozen_ensemble) if frozen_elo is not None and frozen_ensemble is not None else None
+    frozen_interval=_date_interval(published_comparison,1.) if len(published)>=MIN_VALIDATION else None
+    prospective_ready=(len(published)>=100 and len({r["date"] for r in published})>=12
+                       and frozen_gain is not None and frozen_gain>=MIN_GAIN
+                       and frozen_interval is not None and frozen_interval[0]>0)
+    eligible=(prospective_ready and len(train)>=MIN_TRAIN and len(test)>=MIN_VALIDATION
               and len({r["date"] for r in test})>=MIN_DATE_BLOCKS
               and weight>0 and gain is not None and gain>=MIN_GAIN
               and interval is not None and interval[0]>0)
@@ -147,10 +160,18 @@ def build_report(folder:Path,source_ratings:dict,now:datetime|None=None)->dict:
       "ensembleHoldoutBrier":round(test_candidate,6) if test_candidate is not None else None,
       "holdoutBrierGain":round(gain,6) if gain is not None else None,
       "dateBlockBrierGain95":interval,
+      "archivedPortfolioGames":len(published),
+      "archivedPortfolioDates":len({r["date"] for r in published}),
+      "archivedPortfolioEloBrier":round(frozen_elo,6) if frozen_elo is not None else None,
+      "archivedPortfolioBrier":round(frozen_ensemble,6) if frozen_ensemble is not None else None,
+      "archivedPortfolioBrierGain":round(frozen_gain,6) if frozen_gain is not None else None,
+      "archivedPortfolioDateBlockGain95":frozen_interval,
+      "prospectiveGatePassed":bool(prospective_ready),
       "scientificReviewEligible":bool(eligible),"promoteAutomatically":False,
       "candidateWeights":list(WEIGHTS),
-      "policy":"Only originally frozen shadow probabilities with independently verified first-pick finals can tune weights. Chronological train/holdout split is date blocked; model stays shadow and never auto-promotes to active Elo.",
+      "policy":"Research weight tuning uses older independently verified first-pick frozen component probabilities and a later date-block holdout. Scientific review additionally requires at least 100 independently settled ORIGINAL frozen ensemble forecasts on 12 dates with positive date-block 95% evidence. No auto-promotion.",
       "caveats":["One fixed holdout selection is a monitoring diagnostic, not an unbiased repeated external evaluation after continued research.",
+                 "The reconstructed prior-component holdout is retrospective recalibration, not original frozen ensemble outcomes. Only archivedPortfolio* fields constitute genuinely prospective portfolio scoring.",
                  "The mean combines heterogeneous models; correlations and missing component coverage can reduce realized accuracy.",
                  "Unavailable or invalid source features withhold a candidate rather than silently switching to a falsely advertised ensemble."]
     }
