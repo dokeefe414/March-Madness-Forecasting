@@ -862,3 +862,24 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 @media(max-width:800px){.v14-result-metrics,.v14-projection-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.v14-outcome-grid{grid-template-columns:1fr}}
 @media(max-width:430px){.v14-result-metrics,.v14-projection-metrics{grid-template-columns:1fr}.v14-projected-score{gap:12px}.v14-projected-score small{font-size:9px}}
+
+/* v1.5 — scientific score quality and measured model reliability */
+.v15-score-research{margin:24px 0;border:1px solid #467c6b;background:linear-gradient(145deg,#143440,#0a222e);padding:clamp(16px,3vw,29px);border-radius:18px;color:#e6fff1}
+.v15-score-head{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:21px 0}
+.v15-score-head>div{border:1px solid #527b6a;border-radius:10px;padding:15px;background:#0e2b36;min-width:0}
+.v15-score-head small{display:block;color:#b6d9c4;font-size:10px;font-weight:800;letter-spacing:.4px}
+.v15-score-head strong{display:block;color:#e6ffef;font:900 clamp(30px,4vw,44px) "Barlow Condensed",Impact,sans-serif;margin-top:7px}
+.v15-score-head strong.v15-small{font-size:clamp(18px,2vw,24px);line-height:1.3}
+.v15-score-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #43685e}
+.v15-score-table{width:100%;min-width:580px;border-collapse:collapse;font-size:11px;color:#e0ffec}
+.v15-score-table th,.v15-score-table td{text-align:left;padding:13px 15px;border-bottom:1px solid #385e54}
+.v15-score-table thead th{background:#183e42;color:#b8e8ce;font-size:9px;letter-spacing:.5px}
+.v15-score-table tbody th{font-weight:900}
+.v15-error-trend{margin-top:20px;max-height:390px;overflow-y:auto}
+.v15-error-trend h4{font:900 23px "Barlow Condensed",Impact,sans-serif;color:#ecfff5;margin:12px 0}
+.v15-error-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(0,2fr) minmax(0,2fr);gap:8px;align-items:center;margin:8px 0}
+.v15-error-row span{font-size:10px;color:#bdd8c9}
+.v15-error-row>div{height:14px;background:#0d2733;overflow:hidden;border-radius:7px}
+.v15-error-row i{display:block;height:14px;background:#bbffd4;border-radius:7px}
+.v15-error-row>div:last-child i{background:#98bcf1}
+@media(max-width:650px){.v15-score-head{grid-template-columns:1fr}.v15-error-row{grid-template-columns:1fr 1fr}.v15-error-row span{grid-column:1/-1}}
