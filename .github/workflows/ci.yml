@@ -16,6 +16,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m unittest discover -s research/tests -v
+      - name: Audit any committed pregame forecast ledger
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.audit --dir web/public/forecasts
       - name: Evaluate held-out tournament seasons
         env:
           PYTHONPATH: research

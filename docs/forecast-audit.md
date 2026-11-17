@@ -71,3 +71,16 @@ py -m forecast.snapshot --ratings web/public/current/2027.json --scoreboard-json
 - Historical-only calibration is intentionally not used in archived live regular-season predictions until independently validated. The audit's model key remains baseline Elo.
 - The 2027 current schedule may lag final results and omit contests; a settlement is possible only after the data source publishes a uniquely matched final.
 - This is a public repository workflow, **not** a secure tamper-proof external timestamping authority. Maintainers with write privileges can rewrite Git history; auditability improves transparency but does not eliminate trust.
+
+## v0.6.1 independent ledger integrity check
+
+`research/forecast/audit.py` reconstructs the public index's aggregate scores from every immutable settlement file and verifies each settlement against the **original** per-event prediction. It rejects altered predicted probabilities, outcome arithmetic errors, duplicated settlements, missing original predictions, source ratings fetched after forecast generation, and forecasts created inside the 15-minute pretipoff buffer. It also checks that public score totals agree with the underlying evidence. The GitHub Actions archival job runs this audit **before committing**; CI runs it on every PR and main push.
+
+```powershell
+$env:PYTHONPATH="research"
+py -m forecast.audit --dir web/public/forecasts
+```
+
+An empty ledger reports `verified` but **zero** predictions and settlements. That is not proof of a deployed pretipoff track record, only confirmation that no archived evidence has been tampered with. A valid internal archive cannot independently establish actual start times or the truth of the upstream ESPN/NCAA source; those limitations remain.
+
+The settlement worker now defensively refuses to grade a forecast unless its source rating was obtained at or before forecast creation, and creation preceded the scheduled tipoff by the committed buffer. This is an extra defense even if someone manually deposits a malformed snapshot artifact.
