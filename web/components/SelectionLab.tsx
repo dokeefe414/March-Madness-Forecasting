@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { RatingsDataset, Team } from "../lib/models";
 
 type WatchTeam = {teamId:string; name:string; conference:string; projectedRating:number; wins:number;
- losses:number; games:number; category:string; powerRank:number|null; sampleBand:string;illustrativeSeedRange?:number[]|null;conferenceGroupId?:string};
+ losses:number; games:number; category:string; powerRank:number|null; sampleBand:string;illustrativeSeedRange?:number[]|null;conferenceGroupId?:string;ncaaDirectoryConference?:string};
 type Watchlist = {season:number; asOfDate:string; official:false; status:string; method:string;fieldSize:number;
  automaticSlotCount:number;atLargeSlotCount:number;eligibleCandidateCount:number;matchedConferences:number;
  reason?:string; teams:WatchTeam[];bubble:WatchTeam[];cutlineRating?:number;limitations:string[]};
@@ -97,7 +97,10 @@ export default function SelectionLab(){
           </div>
           <aside className="watch-spotlight">
             {selected ? <><span className="feature-kicker">PROGRAM WATCH / POWER RATING</span><h3>{selected.name}</h3><p className="watch-conference">{selected.conference}</p>
-              <p className="watch-group-source">Verified 2027 conference group: {selected.conferenceGroupId||"not available"}</p>
+              <p className="watch-group-source">Verified 2027 conference group: {selected.conferenceGroupId||"not available"}
+                {selected.ncaaDirectoryConference && selected.ncaaDirectoryConference!==selected.conference
+                  ? " · NCAA directory lists: "+selected.ncaaDirectoryConference : ""}
+              </p>
               <div className="watch-rating">{selected.projectedRating.toFixed(0)}<span>MODEL ELO</span></div>
               <div className="watch-facts"><div><small>POWER POSITION</small><strong>{selected.powerRank||"Outside 76"}</strong></div><div><small>SEASON SAMPLE</small><strong>{selected.games} games</strong></div><div><small>ILLUSTRATIVE SEED TIER</small><strong>{selected.illustrativeSeedRange?selected.illustrativeSeedRange.join("–"):"N/A"}</strong></div><div><small>DATA CONFIDENCE</small><strong>{selected.sampleBand}</strong></div></div>
               <div className="watch-tag">{selected.category.replaceAll("-"," ").toUpperCase()}</div>

@@ -7,6 +7,8 @@ GROUPS = """league,group_id,season,level,name
 mbb,mbb:di,2027,subdivision,Division I
 mbb,mbb:dii,2027,subdivision,Division II
 mbb,mbb:di,2026,subdivision,Division I
+mbb,mbb:big-south,2027,conference,Big South
+mbb,mbb:metro,2027,conference,Metro
 """
 MEMBERS = """league,season,team_id,team_name,subdivision_id,conference_id
 mbb,2027,1,College A,mbb:di,mbb:big-south
@@ -43,8 +45,10 @@ class DivisionMembershipTests(unittest.TestCase):
         self.assertEqual(report["divisionIConfirmed"], 2)
         self.assertEqual(report["sourceDivisionIConferenceGroups"], 2)
         self.assertEqual(rows[0]["divisionConferenceGroupId"], "mbb:big-south")
+        self.assertEqual(rows[0]["divisionConferenceGroupName"], "Big South")
         self.assertIsNone(rows[1]["divisionConferenceGroupId"])
         self.assertEqual(rows[2]["divisionConferenceGroupId"], "mbb:metro")
+        self.assertEqual(rows[2]["divisionConferenceGroupName"], "Metro")
         self.assertIsNone(rows[3]["divisionConferenceGroupId"])
         self.assertEqual(report["unmatchedRatedTeams"], 1)
 

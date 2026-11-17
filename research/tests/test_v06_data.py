@@ -85,6 +85,7 @@ class VerifiedSourceTests(unittest.TestCase):
                     "teamId": f"t{rank}", "name": f"Team {rank}",
                     "conference": f"League {ci}", "conferenceVerified": True, "divisionIConfirmed": True,
                     "divisionConferenceGroupId": f"source-group-{ci}",
+                    "divisionConferenceGroupName": f"Source League {ci}",
                     "projectedRating": 1800 - rank, "wins": 10, "losses": j,
                 })
         result = build_watchlist(rows, "2026-11-15")
@@ -104,6 +105,8 @@ class VerifiedSourceTests(unittest.TestCase):
         still_ready = build_watchlist(rows, "2026-11-15")
         self.assertEqual(still_ready["matchedConferences"], 32)
         self.assertEqual(still_ready["distinctConferenceDisplayNames"], 31)
+        self.assertEqual(still_ready["distinctGroupConferenceNames"], 32)
+        self.assertEqual(len({t["conference"] for t in still_ready["teams"] if t["category"] == "conference-proxy"}), 32)
         self.assertEqual(len(still_ready["teams"]), 76)
         no_league = rows[:-3]
         broken = build_watchlist(no_league, "2026-11-15")
