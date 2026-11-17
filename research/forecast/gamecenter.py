@@ -225,13 +225,16 @@ def main()->None:
             except (OSError,ValueError,TimeoutError) as exc:
                 failures.append(f"{day.isoformat()}: {exc}")
         if not boards:
-            # A provider failure must NOT turn into a silently empty fixture list.
-            raise RuntimeError("No ESPN schedule days available; cannot validate upcoming games")
+            # Protect the core score/rating refresh from an ESPN outage.
+            # Emit an EXPLICIT unavailable status, never an invented empty
+            # schedule or fabricated fixture probability.
+            boards=[{"events":[]}]
         if failures:
             print("WARNING: ESPN schedule days unavailable; current game center incomplete: "+"; ".join(failures))
     output=build_game_center(boards,ratings,games_file["games"],now,model,state)
     if not args.scoreboards_json and failures:
         output["sourceWarnings"]=failures
+        output["scheduleSourceAvailable"]=len(failures)<DAYS_AHEAD
     args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(json.dumps(output,indent=2)+"\n",encoding="utf-8")
     print(f"Game Center: {output['coverage']['eligibleForecasts']} verified probabilities "

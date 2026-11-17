@@ -45,6 +45,14 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json
+      - name: Fit causal Kalman-style latent team strength and evaluate prior days
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.state_space --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-state-space.json
+      - name: Assemble real upcoming ESPN fixtures with matchup reasons and prior-game evidence
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.gamecenter --games web/public/current/2027-games.json --ratings web/public/current/2027.json --online-model web/public/current/2027-online-model.json --state-space web/public/current/2027-state-space.json --out web/public/current/upcoming.json
       - name: Validate accepted-game totals and publish refresh provenance
         env:
           PYTHONPATH: research
