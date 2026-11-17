@@ -11,7 +11,7 @@
 
 ### [OPEN THE LIVE WEBSITE](https://dokeefe414.github.io/March-Madness-Forecasting/)
 
-[Research models](docs/model-zoo-v06.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Research models](docs/model-zoo-v06.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
@@ -230,3 +230,14 @@ The first complete v0.6 release prioritizes **evidence, trust, usable visuals an
 ## v0.6 data-quality correction: conference groups vs labels
 
 The production 2027 sources now **directly verify 365 D-I teams** through the official same-season NCAA-to-ESPN ID crosswalk. The NCAA directory returns **31 distinct conference display strings**, even though the separate season-2027 verified Division I membership records encode **32 distinct conference group IDs**. Treating a display label as a conference identity therefore incorrectly suppressed the hypothetical 32-AQ field. The field watchlist now groups *only* source-confirmed D-I members by their authoritative 2027 `divisionConferenceGroupId`, retains human-friendly NCAA directory names for display, and reports the number of group IDs versus display-name counts separately. Two different source groups may display similar labels without being merged. Unmatched or unverified teams still cannot enter the power-only scenario. See [watchlist methodology](docs/selection-watchlist.md) and [identity contracts](docs/identity-and-conferences.md).
+
+## Independent pretipoff ledger verification (v0.6.1)
+
+The user-facing `Forecast Tracker` is backed by immutable source-timestamped snapshot files plus later result-settlement files; a visual chart alone is **not** evidence of a real published prediction. To independently check every committed record and recompute scoreboard metrics:
+
+```powershell
+$env:PYTHONPATH="research"
+py -m forecast.audit --dir web/public/forecasts
+```
+
+The integrity audit confirms: 15-minute pregame publication buffer, source rating not newer than forecast generation, forecast probabilities preserved during settlement, binary observed winner consistent with final scores, correct Brier/log-loss/accuracy, uniqueness of settlement, and public aggregate scores matching actual files. It runs on every GitHub Actions archival capture and every CI pull request before allowing publication. A report with zero snapshots is a **valid empty archive**, not evidence of past public forecasts. External source truth and actual tipoff times are not independently guaranteed. Full details: [Forecast audit](docs/forecast-audit.md).

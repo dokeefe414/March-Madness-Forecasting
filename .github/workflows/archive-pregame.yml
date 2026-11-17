@@ -28,6 +28,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.snapshot --ratings web/public/current/2027.json --out-dir web/public/forecasts
+      - name: Audit source timestamps, forecast buffer and score arithmetic
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.audit --dir web/public/forecasts
       - name: Commit immutable, public ledger entries
         shell: bash
         run: |

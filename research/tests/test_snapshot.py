@@ -90,6 +90,46 @@ class PregameAuditTests(unittest.TestCase):
                    "away":"Duke","homeScore":100,"awayScore":70}]
         self.assertEqual(settle_snapshots([report], source, set(), NOW + timedelta(days=2)), [])
 
+    def test_tampering_and_time_travel_are_rejected(self):
+        from forecast.audit import audit_ledger
+        forecast = forecast_scheduled([{"events": [
+            game("ESPN-1", "2026-11-17T01:00:00Z")]}], RATINGS, NOW)
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)
+            write_ledger(path, forecast, [], NOW)
+            self.assertEqual(audit_ledger(path)["predictions"], 1)
+            snap_file = next((path / "snapshots").glob("*.json"))
+            saved = json.loads(snap_file.read_text())
+            altered = {**saved, "generatedAtUtc": "2026-11-17T00:55:00Z"}
+            snap_file.write_text(json.dumps(altered))
+            with self.assertRaisesRegex(ValueError, "tip-off buffer"):
+                audit_ledger(path)
+            snap_file.write_text(json.dumps(saved))
+            self.assertEqual(
+                settle_snapshots([{**saved, "generatedAtUtc": "2026-11-17T00:55:00Z"}],
+                    [{"id":"100","date":"2026-11-16","home":"Duke","away":"North Carolina",
+                      "homeScore":80,"awayScore":70}], set(), NOW + timedelta(days=2)),
+                [], "a near-tipoff artifact must not settle",
+            )
+            final = [{"id":"100","date":"2026-11-16","home":"Duke","away":"North Carolina",
+                      "homeScore":80,"awayScore":70}]
+            write_ledger(path, {"predictions": []}, final, NOW + timedelta(days=2))
+            self.assertEqual(audit_ledger(path)["settledPredictions"], 1)
+            settlement_file = next((path / "settlements").glob("*.json"))
+            settled = json.loads(settlement_file.read_text())
+            settled["results"][0]["brier"] = 0.999999
+            settlement_file.write_text(json.dumps(settled))
+            with self.assertRaisesRegex(ValueError, "scoring mismatch"):
+                audit_ledger(path)
+
+    def test_empty_public_ledger_is_explicit(self):
+        from forecast.audit import audit_ledger
+        with tempfile.TemporaryDirectory() as folder:
+            result = audit_ledger(Path(folder))
+            self.assertEqual(result["status"], "verified")
+            self.assertEqual(result["predictions"], 0)
+            self.assertEqual(result["settledPredictions"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

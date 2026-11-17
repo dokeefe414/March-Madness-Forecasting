@@ -167,9 +167,22 @@ def settle_snapshots(snapshots: list[dict], final_games: list[dict],
         created = parse_time(snap["generatedAtUtc"])
         if created >= now:
             continue
+        # Do not settle an artifact even if manually inserted unless it
+        # proves the ratings existed at capture time. Older archives may have
+        # missing metadata; these cannot qualify as verified live forecasts.
+        try:
+            rated_at = parse_time(snap["ratingRetrievedAtUtc"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if rated_at > created:
+            continue
         for f in snap.get("predictions", []):
             key = snap["snapshotId"] + ":" + f["eventId"]
-            if key in previously_settled or parse_time(f["scheduledStartUtc"]) >= now:
+            scheduled = parse_time(f["scheduledStartUtc"])
+            buffer = timedelta(minutes=int(snap.get("timeBufferMinutes", BUFFER_MINUTES)))
+            if buffer < timedelta(minutes=BUFFER_MINUTES):
+                continue
+            if key in previously_settled or scheduled >= now or created + buffer >= scheduled:
                 continue
             candidates = by_key.get((f["scheduledEasternDate"],
                                      canonical(f["home"]), canonical(f["away"])), [])
