@@ -1,6 +1,6 @@
 """2027 Division I reference join: source memberships, not conference guessing."""
 import unittest
-from forecast.division import parse_division_members, parse_ncaa_aliases, annotate_division
+from forecast.division import parse_division_members, parse_ncaa_aliases, parse_ncaa_espn_ids, annotate_division
 from forecast.selection import build_watchlist
 
 GROUPS = """league,group_id,season,level,name
@@ -23,6 +23,13 @@ mbb,3,espn,ncaa,103,school,name,College C,2025,2027
 mbb,4,espn,ncaa,104,school,name,Old Team,2020,2026
 mbb,5,espn,ncaa,105,school,name,Future Team,2028,2029
 mbb,99,espn,fox,500,team,name,Duke,2026,2027
+"""
+
+SOURCE_IDS = """season,ncaa_team_id,espn_team_id,match_method
+2026-27,101,1,exact
+2026-27,102,2,alias
+2025-26,999,1,exact
+2026-27,103,,unmatched
 """
 
 class DivisionMembershipTests(unittest.TestCase):
@@ -61,6 +68,29 @@ class DivisionMembershipTests(unittest.TestCase):
         self.assertNotIn("duke", parse_ncaa_aliases(clash))
         with self.assertRaisesRegex(ValueError, "aliases missing fields"):
             parse_ncaa_aliases("team_name,team_id\nDuke,1")
+
+    def test_source_2027_ncaa_id_to_espn_membership_even_when_names_differ(self):
+        group_names = MEMBERS.replace("College A", "College A Tigers")
+        members = parse_division_members(GROUPS, group_names,
+                                         crosswalk_csv=SOURCE_IDS)
+        self.assertTrue(members["ncaa-id:101"]["divisionIConfirmed"])
+        teams = [{"name": "Totally different display text", "ncaaSourceTeamId": "101"},
+                 {"name": "Another name", "ncaaSourceTeamId": "102"},
+                 {"name": "No verified mapping", "ncaaSourceTeamId": "999"}]
+        report = annotate_division(teams, members)
+        self.assertEqual([x["divisionIConfirmed"] for x in teams], [True, False, None])
+        self.assertEqual(report["seasonNCAAIdMatchedTeams"], 2)
+        self.assertEqual(report["divisionIConfirmed"], 1)
+
+    def test_conflicting_or_wrong_season_ncaa_numeric_id_is_rejected(self):
+        ids = parse_ncaa_espn_ids(SOURCE_IDS)
+        self.assertEqual(ids["101"], "1")
+        self.assertNotIn("103", ids)
+        self.assertNotIn("999", ids)
+        bad = SOURCE_IDS + "2026-27,101,4,exact\n"
+        self.assertNotIn("101", parse_ncaa_espn_ids(bad))
+        with self.assertRaisesRegex(ValueError, "crosswalk missing fields"):
+            parse_ncaa_espn_ids("season,id\n2026-27,101")
 
     def test_field_gate_excludes_undocumented_division(self):
         teams = [
