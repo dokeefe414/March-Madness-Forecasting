@@ -188,6 +188,7 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
    </section>
    <ModelEvidence/>
    <ResearchVisualization/>
+   <ScoreResearchEvidence/>
    <div className="ml-recent">
      <div><span className="section-kicker">04 / THE MOST RECENT OPPONENT EXPERIMENT</span>
        <h3>Game-day <em>performance.</em></h3>
