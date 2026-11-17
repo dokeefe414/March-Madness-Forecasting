@@ -7,6 +7,10 @@ type Evidence={
  weight:number;eloHoldoutBrier:number|null;ensembleHoldoutBrier:number|null;holdoutBrierGain:number|null;
  dateBlockBrierGain95:number[]|null;scientificReviewEligible:boolean;promoteAutomatically:false;
  sourceRetrievedAtUtc:string;policy:string;
+ archivedPortfolioGames:number;archivedPortfolioDates:number;
+ archivedPortfolioEloBrier:number|null;archivedPortfolioBrier:number|null;
+ archivedPortfolioBrierGain:number|null;archivedPortfolioDateBlockGain95:number[]|null;
+ prospectiveGatePassed:boolean;
 };
 const num=(n:number|null|undefined)=>n==null?"—":n.toFixed(4);
 export default function EnsembleEvidence(){
@@ -38,6 +42,17 @@ export default function EnsembleEvidence(){
       <div><small>HOLDOUT ELO BRIER ↓</small><strong>{num(evidence.eloHoldoutBrier)}</strong></div>
       <div><small>HOLDOUT ENSEMBLE BRIER ↓</small><strong>{num(evidence.ensembleHoldoutBrier)}</strong></div>
     </div>
+    <div className="v16-prospective">
+      <h4>ACTUALLY PUBLISHED BEFORE TIPOFF</h4>
+      <div className="v16-prospective-grid">
+        <div><small>VERIFIED ENSEMBLE FIRST PICKS</small><strong>{evidence.archivedPortfolioGames}</strong></div>
+        <div><small>FROZEN ELO BRIER ↓</small><strong>{num(evidence.archivedPortfolioEloBrier)}</strong></div>
+        <div><small>FROZEN ENSEMBLE BRIER ↓</small><strong>{num(evidence.archivedPortfolioBrier)}</strong></div>
+      </div>
+      <p>Prospective Brier gain: <strong>{num(evidence.archivedPortfolioBrierGain)}</strong> · Date-block 95% interval: <strong>{evidence.archivedPortfolioDateBlockGain95?.map(num).join(" to ")||"Insufficient independently settled game dates"}</strong></p>
+      <p>{evidence.prospectiveGatePassed?"Source-verified prospective evaluation gate passed.":"Prospective promotion evidence is insufficient; the active Elo probability is unchanged."}</p>
+    </div>
+    <h4 className="v16-archive-heading">RETROSPECTIVE RECOMBINATION OF PREVIOUSLY FROZEN COMPONENTS</h4>
     <div className="v16-comparison">
       <p><strong>Chronological train:</strong> {evidence.trainingGames} games / {evidence.trainingDates} dates</p>
       <p><strong>Later untouched holdout:</strong> {evidence.untouchedHoldoutGames} games / {evidence.untouchedHoldoutDates} dates</p>
@@ -46,7 +61,7 @@ export default function EnsembleEvidence(){
     </div>
     <p className="v16-evidence-status"><strong>{evidence.scientificReviewEligible?"REVIEW ELIGIBLE — NOT PROMOTED":"SHADOW RESEARCH — ELO REMAINS ACTIVE"}</strong>
      {" "}The site does not automatically switch models based on a backtest or a small set of results.</p>
-    <p className="v12-subtle">Confidence is withheld when source-verified first-pick observations are unavailable. A fixed exploratory 25% research weight does not imply statistical superiority. This portfolio only appears when at least two supported pregame research signals are present.</p>
+    <p className="v12-subtle">Confidence is withheld when source-verified first-pick observations are unavailable. A fixed exploratory 25% research weight does not imply statistical superiority. The retrospective recombination above is not the prospective performance of the originally published ensemble. This portfolio only appears when at least two supported pregame research signals are present.</p>
    </>}
  </section>;
 }
