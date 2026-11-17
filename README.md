@@ -376,3 +376,9 @@ Field Watch adds an explicitly **hypothetical neutral Elo upset-lens** for any t
 ### Research integrity
 
 (1) A future *single-game win probability*, (2) a retrospective *chronological backtest accuracy*, and (3) a genuine *published before-tipoff accuracy* are different quantities. The site labels each and never uses an after-game prediction as a claim of forward accuracy.
+
+### Historical seasons and past tournaments — availability fix
+
+Historical 1985–2026 season JSON and tournament result JSON are bundled with the publicly deployed website. The Historical, Bracket, and Archive views now use a **cache-bypassing same-origin loader** with fallback for the former GitHub Pages subpath, schema validation, and actionable error details rather than silently failing when a browser retains an old project URL. Production-prefix Playwright checks now explicitly switch between 2024/2023 brackets and 2024/2022 recorded tournament results.
+
+**Use the canonical URL** [March Forecast 2026–27](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=history) instead of the old `/March-Madness-Forecasting/` bookmark. The **2026 tournament archive has recorded games but lacks complete First Four entrant coverage**, so its complete historical bracket is intentionally unavailable; use Archive to view available 2026 results or select a complete year such as 2025 or 2024 for bracket simulations. See [browser testing](docs/browser-quality.md).
