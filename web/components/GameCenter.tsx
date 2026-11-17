@@ -37,6 +37,22 @@ function GameReceipt({game}:{game:Past}){
     <div><strong>{game.opponent}</strong><small>{game.date}</small></div>
     <b>{game.for}–{game.against}</b></div>;
 }
+function TeamStrengthCurve({team,values}:{team:string;values:number[]}){
+  const valid=values.filter(v=>Number.isFinite(v));
+  if(valid.length<2)return <p className="gc-curve-empty">Not enough earlier results to chart a real team trend.</p>;
+  const lo=Math.min(...valid)-8,hi=Math.max(...valid)+8,span=Math.max(1,hi-lo);
+  const x=(i:number)=>12+i*260/Math.max(1,valid.length-1);
+  const y=(v:number)=>73-(v-lo)/span*56;
+  const path=valid.map((v,i)=>(i===0?"M":"L")+x(i).toFixed(1)+","+y(v).toFixed(1)).join(" ");
+  const gain=valid[valid.length-1]-valid[valid.length-2];
+  return <div className="gc-team-trend"><div><small>EARLIER RESULTS → RATING CURVE</small>
+     <strong>{gain>=0?"+":""}{gain.toFixed(1)} ELO LAST RECORDED GAME</strong></div>
+     <svg viewBox="0 0 285 84" role="img" aria-label={team+" actual earlier-game Elo strength from "+valid[0].toFixed(1)+" to "+valid[valid.length-1].toFixed(1)}>
+        <line x1="12" x2="274" y1="73" y2="73" stroke="#37645b" strokeDasharray="4 6"/>
+        <path d={path} fill="none" stroke="#baffcf" strokeWidth="2.7" strokeLinejoin="round" strokeLinecap="round"/>
+        <circle cx={x(valid.length-1)} cy={y(valid[valid.length-1])} r="3.8" fill="#e6ffd8"/>
+     </svg><p>One change per sourced game, not a real-time possession chart.</p></div>;
+}
 function ProfilePanel({profile,side}:{profile:Profile;side:"HOME"|"AWAY"}){
   return <div className="gc-profile"><div className="gc-profile-heading"><small>{side} / RATING INPUTS</small>
     <h4>{profile.name}</h4><span>{profile.conference||"Conference unverified"}</span></div>
@@ -46,6 +62,7 @@ function ProfilePanel({profile,side}:{profile:Profile;side:"HOME"|"AWAY"}){
       <div><small>RECENT FORM</small><strong>{plus(profile.trend)}</strong></div>
       <div><small>AVG OPP ELO</small><strong>{profile.opponentAverageElo?.toFixed(0)??"—"}</strong></div>
     </div>
+    <TeamStrengthCurve team={profile.name} values={profile.ratingHistory||[]}/>
     <p className="gc-eyebrow">LATEST VERIFIED PRIOR-DATE RESULTS</p>
     <div className="gc-results">{profile.recentGames.length?
       profile.recentGames.map(g=><GameReceipt key={g.id} game={g}/>):
@@ -69,6 +86,13 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
   const [a,setA]=useState("");
   const [b,setB]=useState("");
   const [now,setNow]=useState(0);
+  useEffect(()=>{
+    // Keep the scheduled-start warning accurate while a page stays open.
+    const refresh=()=>setNow(Date.now());
+    refresh();
+    const timerId=window.setInterval(refresh,60_000);
+    return()=>window.clearInterval(timerId);
+  },[]);
   useEffect(()=>{
     let alive=true;
     Promise.all([
@@ -169,11 +193,14 @@ export default function GameCenter({onOpenAccuracy,onOpenModels}:{onOpenAccuracy
           onChange={e=>{setTeamFilter(e.target.value);const url=new URL(window.location.href);
             if(e.target.value)url.searchParams.set("team",e.target.value);else url.searchParams.delete("team");
             window.history.replaceState(null,"",url.toString());}}>
-          <option value="">All teams</option>{(ratings?.teams||[]).sort((x,y)=>x.name.localeCompare(y.name)).map(t=><option key={t.teamId} value={t.teamId}>{t.name}</option>)}
+          <option value="">All teams</option>{[...(ratings?.teams||[])].sort((x,y)=>x.name.localeCompare(y.name)).map(t=><option key={t.teamId} value={t.teamId}>{t.name}</option>)}
         </select></label>
         <label className="gc-check"><input type="checkbox" checked={showAll} onChange={e=>setShowAll(e.target.checked)}/> Include started since last refresh</label>
       </div>
       {schedule.sourceWarnings?.length?<p className="gc-warning" role="status">ESPN schedule partly unavailable; listed games may be incomplete. No missing schedule is filled in.</p>:null}
+      {schedule.generatedAtUtc&&now-Date.parse(schedule.generatedAtUtc)>36*60*60*1000&&<p className="gc-warning" role="status">
+         The published fixture snapshot is older than 36 hours. Details may have changed. Check the archive-health monitor before treating a percentage as current.
+       </p>}
       <div className="gc-stage">
         <div className="gc-fixtures">
           <div className="gc-list-header"><strong>{rows.length} GAMES FOUND</strong><span>{schedule.coverage.eligibleForecasts} rated / {schedule.coverage.futureScheduled} future scheduled at capture</span></div>
