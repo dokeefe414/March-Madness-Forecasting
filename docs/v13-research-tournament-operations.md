@@ -26,7 +26,7 @@ The existing GitHub monitor checks age, audit files and source warnings and open
 
 ### Operational response
 
-Check [the archive workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml), [the monitor](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/monitor-archive.yml), the archived `index.json`, and the public Operations panel. For an unresolved over-48h row, examine ESPN event status, updated start time, NCAA score and team identity; postpone claims if they do not match. Run `PYTHONPATH=research python -m forecast.audit --dir web/public/forecasts` to verify original evidence. **Do not** retroactively record a probability, guess a score, force-push archive history, or silently substitute a postgame model probability for the original first forecast.
+Check [the archive workflow](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/archive-pregame.yml), [the monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml), the archived `index.json`, and the public Operations panel. For an unresolved over-48h row, examine ESPN event status, updated start time, NCAA score and team identity; postpone claims if they do not match. Run `PYTHONPATH=research python -m forecast.audit --dir web/public/forecasts` to verify original evidence. **Do not** retroactively record a probability, guess a score, force-push archive history, or silently substitute a postgame model probability for the original first forecast.
 
 ## 2. Two substantial research-only model implementations
 
