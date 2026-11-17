@@ -2,7 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 const base=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Outcome={eventId:string;date:string;scheduledStartUtc:string;forecastAtUtc:string;
-  home:string;away:string;homeScore:number;awayScore:number;predictedHome:number;
+  home:string;away:string;homeScore:number|null;awayScore:number|null;predictedHome:number;
   observedHome:number;predictedWinner:string|null;actualWinner:string;correct:boolean|null;
   brier:number;model:string};
 type Unique={forecastedUniqueGames:number;settledUniqueGames:number;verifiedOutcomes?:Outcome[]};
@@ -54,7 +54,7 @@ export default function PickResults(){
    </div>:<>
     <div className="v14-outcome-grid">{visible.slice(0,limit).map(g=><article key={g.eventId} className={"v14-outcome "+(g.correct===true?"is-right":g.correct===false?"is-wrong":"is-even")}>
       <div className="v14-outcome-head"><strong>{g.correct===true?"✓ CORRECT PICK":g.correct===false?"× MISSED PICK":"◊ NO FAVORITE"}</strong><span>{g.date} · EVENT {g.eventId}</span></div>
-      <div className="v14-score-row"><span>{g.away}<b>{g.awayScore}</b></span><span>{g.home}<b>{g.homeScore}</b></span></div>
+      <div className="v14-score-row"><span>{g.away}<b>{g.awayScore??"—"}</b></span><span>{g.home}<b>{g.homeScore??"—"}</b></span></div>
       <div className="v14-result-answer"><span>Predicted: <b>{g.predictedWinner||"50/50 tie"} · {pct(Math.max(g.predictedHome,1-g.predictedHome))}</b></span><span>Winner: <b>{g.actualWinner}</b></span></div>
       <div className="v14-outcome-footer"><span>Brier {g.brier.toFixed(4)}</span><span>Frozen {eastern(g.forecastAtUtc)}</span></div>
      </article>)}</div>
