@@ -132,3 +132,23 @@ If no update appears after the expected time, inspect [deploy runs](https://gith
 ## v0.7 in-season model retraining
 
 The Pages job runs `forecast.live --games-out web/public/current/2027-games.json` followed by `forecast.retrain --games ... --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json`. The 9:07 a.m. Eastern prediction archive repeats both source-linked steps before it freezes upcoming predictions. A retraining error fails the job rather than producing an unverified forecast. The model scores and Brier improvement gate are publicly inspectable in Current Pulse and in `/current/2027-online-model.json`. The raw scored-game archive and model report are generated deployment artifacts, not permanently source-controlled histories. [Full chronological methodology](online-retraining.md).
+
+
+## v0.8 Game Center publishing, forward performance, and missed-call operations
+
+After the 2027 ratings and regular-season logistic model are rebuilt from the same source retrieval, the Pages workflow also runs:
+
+```powershell
+$env:PYTHONPATH="research"
+py -m forecast.state_space --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-state-space.json
+py -m forecast.gamecenter --games web/public/current/2027-games.json --ratings web/public/current/2027.json --online-model web/public/current/2027-online-model.json --state-space web/public/current/2027-state-space.json --out web/public/current/upcoming.json
+py -m forecast.audit --dir web/public/forecasts
+```
+
+The ESPN schedule requests are **best-effort over five Eastern days**. One bad day is logged in `sourceWarnings`; a complete outage is explicitly marked as unavailable, **not** an invented set of fixtures, and should not block the unrelated NCAA scored-game rebuild. Actual historical time-series data remains separately sourced. The Game Center shows no odds for an ambiguous/unverified NCAA↔ESPN link. A selected fixture whose listed start has passed is hidden unless the user explicitly elects to see a historical capture.
+
+At 9:07 a.m. Eastern, the archiver also fits the state-space **research** candidate then freezes its probability (when source-supported), alongside actual selected Elo or logistic and optional shadow challenger probabilities. The immutable source files still own the evidence. The score index now includes `uniqueGames` for one earliest pick per event; `forecast.audit` independently recomputes the aggregate. If there are no genuinely settled predictions, forward winner accuracy is *unavailable*, never inferred from a backtest.
+
+Missing/wrong predictions remain frozen. After newly accepted previous-day finals appear, the standard nightly retraining uses them chronologically. Before promoting the learned challenger, require existing date-block thresholds plus **at least 40 genuine earliest-game settled Elo and shadow candidate comparisons** with prospective Brier gain >=0.002. Never force an update after an individual upset or silently edit a previously public pick.
+
+Public reference endpoints: `/current/upcoming.json` and `/current/2027-state-space.json` for sourced schedule and experimental team trajectories, `/current/2027-online-model.json` for model status, and `/forecasts/index.json` for actual pregame accuracy (created only when the archive has run). See [game-center](game-center.md), [forward scoring](forward-performance.md) and [state-space](state-space.md).

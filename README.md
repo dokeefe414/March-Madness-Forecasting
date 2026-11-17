@@ -4,14 +4,14 @@
 
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml)
-![Version](https://img.shields.io/badge/release-v0.7%20Adaptive%20Learning-a6ffce)
+![Version](https://img.shields.io/badge/release-v0.8%20Game%20Intelligence-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
-### [OPEN THE LIVE WEBSITE](https://dokeefe414.github.io/March-Madness-Forecasting/)
+### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting/)
 
-[Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
@@ -167,7 +167,10 @@ research/forecast/
   advanced.py             L2 regularized matchup logistic model
   boosted.py              deterministic second-order residual decision stumps
   dynamics.py             causal EWMA, volatility and regime change signal
-  retrain.py              in-season logistic learning and chronological Elo promotion
+  retrain.py              in-season logistic retraining and genuine forward promotion gates
+  gamecenter.py           source-verified ESPN schedule, matchups, prior-game reasons
+  performance.py          one-first-pick-per-game accuracy, confidence and miss reports
+  state_space.py          causal Gaussian skill, uncertainty and shock experiments
   benchmark.py            eight-method prior-year walk-forward NCAA evaluation
   reference.py            exact NCAA-source 2027 conference/name crosswalk
   division.py             independent 2027 D-I subdivision + season-specific NCAA/ESPN source crosswalk
@@ -183,6 +186,8 @@ web/
     Dashboard.tsx         nine-tab historical and current application
     LiveSeason.tsx        team trends, pace profile, conferences, matchup tools
     OnlineLearning.tsx    live in-season model scorecard, gate and source report
+    GameCenter.tsx        default game-first browse/search and why-the-pick report
+    ForwardScorecard.tsx  unique-game forward accuracy, model results and misses
     SelectionLab.tsx      transparent 2027 power-only watchlist
     ForecastTracker.tsx   public pretipoff audit trail, Brier/accuracy dashboard
     TeamTrend.tsx         keyboard-interactive game-by-game Elo trend SVG
@@ -205,6 +210,9 @@ docs/                     complete scientific, design, data and operator docs
 | --- | --- |
 | **Eight models, equations, prior-year fitting, measured results** | [Model zoo & validation](docs/model-zoo-v06.md) |
 | **Nightly fitting, previous-date evaluation and model promotion** | [In-season retraining](docs/online-retraining.md) |
+| **Pick a real game and inspect other games behind its prediction** | [Game Center](docs/game-center.md) |
+| **True before-tipoff accuracy, calibration and missed-call reviews** | [Forward accuracy](docs/forward-performance.md) |
+| **Gaussian uncertainty and shock-aware time-series experiment** | [State-space research](docs/state-space.md) |
 | **Exact NCAA team identity/confidence and eligibility limits** | [Identity & conferences](docs/identity-and-conferences.md) |
 | **Source possession formulas and opponent adjustment** | [Adjusted efficiency](docs/adjusted-efficiency.md) |
 | **2027 field coverage gate, bubble and strength tiers** | [Selection watchlist](docs/selection-watchlist.md) |
@@ -271,3 +279,20 @@ This is different from a cosmetic time-series chart: the model's coefficients ar
 **Conservative automatic promotion:** new coefficients train every refresh, but the model stays in **shadow mode** and genuine archived picks remain Elo until it has at least 120 validation games over 12 dates, beats Elo by 0.002 Brier on the exact same games, and has positive lower day-block confidence bound. If it clears that bar, it becomes eligible for future non-neutral pregame forecasts, with original model/version receipts stored immutably. A future failure of the gate returns new picks to Elo; old picks are never rewritten.
 
 See the site's **Current Pulse → Automated Model Lab** section, [public 2027 learned-model report](https://dokeefe414.github.io/March-Madness-Forecasting/current/2027-online-model.json), and [methodology/validation instructions](docs/online-retraining.md). This is an in-season regular-game model, **not** an automatically retrained NCAA bracket or committee prediction engine.
+
+
+## v0.8 — Game Intelligence: choose any supported real game and see why
+
+The website now opens in **Find a Game**. The Game Center requests real future ESPN scheduled fixtures for five Eastern calendar days (updated during scheduled GitHub Actions) and matches them to independently sourced 2027 NCAA team identities. Select or search a fixture to see **home/away winning percentages, the model used, both teams' records and Elo, home adjustment, recent form, average opponent quality, five prior-date results per side, head-to-head and common-opponent comparisons**. Those earlier games influence team rating histories; common-opponent margins are not falsely double-counted as separate probability coefficients. Unknown/ambiguous source matches never receive invented odds. A separate neutral hypothetical sandbox works even when there are no future fixtures. [Game Center methodology](docs/game-center.md).
+
+**Prediction percentage versus forecasting accuracy are distinct.** The `Accuracy & Picks` tab reports the correct-winner rate for **one earliest genuinely archived before-tipoff prediction per ESPN event**. It provides Brier/log loss, cumulative performance, model-specific percentages, reliability/confidence bins and a transparent list of missed calls. With zero real settled first-pick games, the percentage is **—**, *not* the retrospective model's accuracy or a made-up 100%. [Independent forward audit](docs/forward-performance.md).
+
+**Misses improve future training, not past scores.** New previous-day source results enter the existing 1:00 a.m. Eastern / 5:17 a.m. catch-up pipeline. The regular-season learned model keeps its earlier-date Brier and date-block safeguards, and now additionally requires **40 unique settled pregame paired Elo-versus-challenger forecasts** with a Brier advantage >=0.002 before it can be used for future eligible games. It automatically remains in shadow/demotes to Elo without real supporting evidence. An experimental **Kalman-style Gaussian time-series filter** also models evolving team strength and observation uncertainty; it is *research-only* until prospective evidence supports it. [State-space assumptions](docs/state-space.md). No model is allowed to alter a forecast after learning the actual result.
+
+Field Watch adds an explicitly **hypothetical neutral Elo upset-lens** for any two sourced provisional power-list candidates. This is not a 2027 official tournament bracket, seed or selection probability. The regular-season data cutoff still freezes the 2027 snapshot at Selection Sunday; a new season requires manual source/cutoff migration.
+
+**Automation:** Site source refresh and updated model at 1:00 a.m. Eastern daily, in-season 5:17 a.m. Eastern catch-up, and 9:07 a.m. Eastern genuinely forward game archiving and source settlement. Schedule/provider delays are disclosed; this is not instantaneous live odds. [Runbook](docs/operations.md).
+
+### Research integrity
+
+(1) A future *single-game win probability*, (2) a retrospective *chronological backtest accuracy*, and (3) a genuine *published before-tipoff accuracy* are different quantities. The site labels each and never uses an after-game prediction as a claim of forward accuracy.

@@ -120,3 +120,10 @@ For pregame picks, `archive-pregame.yml` runs at **9:07 a.m. Eastern November–
 ## v0.7 automatic current-season learning
 
 `forecast.live --games-out` can save the exact deduplicated scored-game source alongside `2027.json`, linked by `retrievedAtUtc`. `forecast.retrain` refits an L2 logistic correction to home-advantaged Elo using **only previous-date** outcomes, publishes per-day prequential Brier comparisons and a 2027 model report, and never assumes new coefficients outperform Elo. The web dashboard labels shadow vs active status and the remaining Elo fallback. The actual model-selection and as-of safeguards are in [online-retraining.md](online-retraining.md).
+
+
+## v0.8 real game schedule joins and source availability
+
+The scoreboard's completed-score source remains NCAA-derived SportsDataverse. `gamecenter.py` independently requests *ESPN public scheduled fixtures* for the next five Eastern days. The existing season-2027 team identity pipeline now exposes `espnSourceTeamId` only when backed by verified same-season membership/alias evidence. A conflicting ESPN ID cannot be overridden by a similar display name. Games without unambiguous match are visible without odds. The page also lists source-confirmed previous-date results, common opponents and team factors. No newly sourced result from **today's Eastern calendar date** is used for past-game explanation, guarding incomplete scoreboards. [Game Center source contract](game-center.md).
+
+Generated `/current/upcoming.json` and `/current/2027-state-space.json` are refreshed only during Pages builds; no per-click request to a live prediction server occurs. The state-space report is retrospective `research-only`, not a promoted NCAA win probability or certified change-point sensor.
