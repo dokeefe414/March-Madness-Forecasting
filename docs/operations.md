@@ -96,3 +96,7 @@ The third `CI` job now executes Playwright desktop and mobile against the **Next
 Inspect the first failure in the [Pages workflow](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml). If the mandatory source, historical calibration generation or production build fails, do not invent data or bypass a cutoff. Fix source parsing using a new hermetic regression test, merge through passing CI, and confirm the next Pages deployment returns success with a current `lastGameDate` and `retrievedAtUtc`. A successful web build alone does not prove the user's website has been deployed.
 
 The 2027 source convention must be reviewed before the 2028 season; never display a 2027 report as new-season 2028 ratings.
+
+### 2027 name-space reconciliation runbook
+
+The initial v0.6 source-run returned **365 exact NCAA directory matches but 0 direct ESPN-subdivision-name matches**. Check [SportsDataverse `mbb_groups`](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_groups) asset `mbb_team_aliases.csv`. The importer now consumes only NCAA-source name aliases with a matching 2027-valid season window and the original ESPN group team ID, then checks the source team's 2027 Division I membership. If no matches appear, inspect schema, provider alias dates and coverage **without relaxing** the ID/season validation. The watchlist is deliberately unavailable until joined Division I membership is actually verified.

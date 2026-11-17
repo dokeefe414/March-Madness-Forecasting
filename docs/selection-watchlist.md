@@ -43,3 +43,7 @@ Build a validated NCAA eligibility/NET/team-ID source, retrieve past selection r
 ## Independent subdivision source
 
 Selection `eligible` now requires `divisionIConfirmed is True` from `forecast.division` as well as `conferenceVerified` from `forecast.reference`. SportsDataverse [2027 team group seasons](https://github.com/sportsdataverse/sportsdataverse-data/releases/tag/mbb_groups) identifies Division I with an explicit season-specific subdivision `group_id`. When source names do not match exactly or group data is unavailable, **the field gate remains closed**. See [identity and conferences](identity-and-conferences.md) for the three-way D-I/other/unknown semantics.
+
+### Cross-provider alias validation
+
+The group lineage uses ESPN team IDs while our schedule uses stats.ncaa.org school names. An exact score-name to ESPN mascot-name match can be zero even when both data sources are correct. `mbb_team_aliases.csv` supplies **date-validated, provider-published NCAA school-name → ESPN group-team ID links**. The D-I group check accepts these source-authored links, but no ambiguous, expired or fuzzy school join. Coverage and the watchlist gate are recomputed from actual imported results; until sufficiently many programs have both proofs, the site stays in its conservative insufficient-coverage state.
