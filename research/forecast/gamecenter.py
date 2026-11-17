@@ -73,7 +73,8 @@ def _team_detail(row:dict,history:list[dict])->dict:
 
 def build_game_center(scoreboards:list[dict],ratings:dict,games:list[dict],
                       now:datetime,online_model:dict|None=None,
-                      state_space:dict|None=None)->dict:
+                      state_space:dict|None=None,
+                      opponent_model:dict|None=None)->dict:
     if now.tzinfo is None:
         raise ValueError("scheduled snapshot requires timezone-aware clock")
     now=now.astimezone(timezone.utc)
@@ -90,7 +91,7 @@ def build_game_center(scoreboards:list[dict],ratings:dict,games:list[dict],
     if len(by_team_id)!=len(ratings["teams"]):
         raise ValueError("Duplicated current-season team identity")
     # Reuse the exact probability engine used by Git's immutable pregame ledger.
-    forecast=forecast_scheduled(scoreboards,ratings,now,online_model,state_space)
+    forecast=forecast_scheduled(scoreboards,ratings,now,online_model,state_space,opponent_model)
     frozen={p["eventId"]:p for p in forecast["predictions"]}
     results={}
     coverage={"futureScheduled":0,"eligibleForecasts":0,"unmatchedOrAmbiguous":0,
@@ -154,6 +155,15 @@ def build_game_center(scoreboards:list[dict],ratings:dict,games:list[dict],
                                             (away.get("opponentAverageElo") or 1500),1),
                      "detail":"Descriptive difference in average opponents' current Elo; not a separate model coefficient."}
                 ]
+                if opponent_model is not None:
+                    candidate=opponent_model.get("strengths",{})
+                    if home["name"] in candidate and away["name"] in candidate:
+                        factors.append({
+                            "title":"Opponent-adjusted signal",
+                            "value":round(candidate[home["name"]]["eloAdjustment"]-
+                                          candidate[away["name"]]["eloAdjustment"],1),
+                            "detail":"Experimental pre-date surprise margins relative to opponent Elo. Research comparison only, not the active forecast formula."
+                        })
                 item={"eventId":eid,"scheduledStartUtc":pick["scheduledStartUtc"],
                       "scheduledEasternDate":edate,
                       "neutralSite":neutral,"home":home["name"],"away":away["name"],
@@ -162,6 +172,7 @@ def build_game_center(scoreboards:list[dict],ratings:dict,games:list[dict],
                       "baselineHomeWinProbability":pick["baselineHomeWinProbability"],
                       "challengerHomeWinProbability":pick.get("challengerHomeWinProbability"),
                       "stateSpaceHomeWinProbability":pick.get("stateSpaceHomeWinProbability"),
+                      "opponentAdjustedHomeWinProbability":pick.get("opponentAdjustedHomeWinProbability"),
                       "model":pick["model"],"modelId":pick.get("modelId"),
                       "status":"ready","reason":None,
                       "homeProfile":_team_detail(home,h_hist),
@@ -198,6 +209,7 @@ def main()->None:
     p.add_argument("--games",type=Path,default=Path("web/public/current/2027-games.json"))
     p.add_argument("--online-model",type=Path)
     p.add_argument("--state-space",type=Path)
+    p.add_argument("--opponent-model",type=Path)
     p.add_argument("--scoreboards-json",type=Path,help="Hermetic list of ESPN scoreboard dictionaries")
     p.add_argument("--out",type=Path,default=Path("web/public/current/upcoming.json"))
     args=p.parse_args()
@@ -208,6 +220,7 @@ def main()->None:
         raise ValueError("Current score/ratings source snapshot mismatch")
     model=json.loads(args.online_model.read_text(encoding="utf-8")) if args.online_model else None
     state=json.loads(args.state_space.read_text(encoding="utf-8")) if args.state_space else None
+    opponent=json.loads(args.opponent_model.read_text(encoding="utf-8")) if args.opponent_model else None
     if args.scoreboards_json:
         boards=json.loads(args.scoreboards_json.read_text(encoding="utf-8"))
     else:
@@ -226,7 +239,7 @@ def main()->None:
             boards=[{"events":[]}]
         if failures:
             print("WARNING: ESPN schedule days unavailable; current game center incomplete: "+"; ".join(failures))
-    output=build_game_center(boards,ratings,games_file["games"],now,model,state)
+    output=build_game_center(boards,ratings,games_file["games"],now,model,state,opponent)
     if not args.scoreboards_json and failures:
         output["sourceWarnings"]=failures
         output["scheduleSourceAvailable"]=len(failures)<DAYS_AHEAD

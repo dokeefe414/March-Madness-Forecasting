@@ -94,7 +94,8 @@ def _one_team(side: dict, name_index: dict[str, list[dict]],
 
 def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                        generated_at: datetime, online_model: dict | None = None,
-                       state_space: dict | None = None) -> dict:
+                       state_space: dict | None = None,
+                       opponent_model: dict | None = None) -> dict:
     """Strict as-of future-start verification and source identity matching."""
     generated_at = generated_at.astimezone(timezone.utc)
     retrieved = parse_time(ratings["retrievedAtUtc"])
@@ -112,6 +113,11 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
     if state_space is not None and (state_space.get("season") != 2027 or
            state_space.get("ratingRetrievedAtUtc") != ratings["retrievedAtUtc"]):
         raise ValueError("state-space and ratings do not share source provenance")
+    if opponent_model is not None and (
+           opponent_model.get("season") != 2027 or
+           opponent_model.get("retrievedAtUtc") != ratings["retrievedAtUtc"] or
+           opponent_model.get("mode") != "research-only"):
+        raise ValueError("opponent model does not match the scored-game source")
     unique: dict[str, dict] = {}
     counters = {"eventsSeen": 0, "notScheduled": 0, "startedOrTooClose": 0,
                 "unmatchedOrAmbiguous": 0, "duplicateIds": 0,
@@ -183,6 +189,16 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 if home["name"] in strengths and away["name"] in strengths:
                     state_probability=matchup_probability(strengths[home["name"]]["mean"],
                                       strengths[away["name"]]["mean"],65)
+            opponent_probability=None
+            if opponent_model is not None and not neutral and (
+                not opponent_model.get("trainedThroughDate") or
+                opponent_model["trainedThroughDate"] < future_eastern_day
+            ):
+                skill=opponent_model.get("strengths",{})
+                if home["name"] in skill and away["name"] in skill:
+                    opponent_probability=matchup_probability(
+                        skill[home["name"]]["opponentAdjustedElo"],
+                        skill[away["name"]]["opponentAdjustedElo"],65)
             p=challenger if selected else baseline
             model_name=("chronologically validated in-season logistic"
                         if selected else "as-of regular-season Elo")
@@ -197,6 +213,7 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 "baselineHomeWinProbability":round(baseline,7),
                 "challengerHomeWinProbability":round(challenger,7) if challenger is not None else None,
                 "stateSpaceHomeWinProbability":round(state_probability,7) if state_probability is not None else None,
+                "opponentAdjustedHomeWinProbability":round(opponent_probability,7) if opponent_probability is not None else None,
                 "modelId": selected.get("modelId") if selected else None,
                 "modelTrainingThroughDate": selected.get("trainedThroughDate") if selected else None,
                 "match": "exact canonical NCAA name to ESPN team location/display",
@@ -403,6 +420,7 @@ def main() -> None:
     parser.add_argument("--ratings", type=Path, default=Path("web/public/current/2027.json"))
     parser.add_argument("--online-model", type=Path, help="Current-source 2027 chronologically retrained model JSON")
     parser.add_argument("--state-space", type=Path, help="Optional same-source causal experimental team-state report")
+    parser.add_argument("--opponent-model", type=Path, help="Optional same-source opponent-adjusted research report")
     parser.add_argument("--out-dir", type=Path, default=Path("web/public/forecasts"))
     parser.add_argument("--scoreboard-json", type=Path, help="Offline fixture JSON for hermetic runs")
     parser.add_argument("--finals-csv", type=Path, help="Offline results CSV")
@@ -411,6 +429,7 @@ def main() -> None:
     ratings = json.loads(args.ratings.read_text(encoding="utf-8"))
     online_model = json.loads(args.online_model.read_text(encoding="utf-8")) if args.online_model else None
     state_space = json.loads(args.state_space.read_text(encoding="utf-8")) if args.state_space else None
+    opponent_model = json.loads(args.opponent_model.read_text(encoding="utf-8")) if args.opponent_model else None
     if online_model and online_model.get("generatedAtUtc"):
         if parse_time(online_model["generatedAtUtc"]) > now:
             raise ValueError("online training artifact is newer than archived forecast")
@@ -446,7 +465,7 @@ def main() -> None:
         if not scoreboards:
             raise RuntimeError("All scheduled ESPN fixture checks failed; no false archive created")
     forecast = forecast_scheduled(scoreboards, ratings, now, online_model=online_model,
-                                  state_space=state_space)
+                                  state_space=state_space, opponent_model=opponent_model)
     if args.finals_csv:
         finals_text = args.finals_csv.read_text(encoding="utf-8-sig")
     else:
