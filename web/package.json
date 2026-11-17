@@ -11,7 +11,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "check:data": "node scripts/check-data.mjs",
-    "test:bracket": "node --import tsx --test scripts/test-bracket.mts"
+    "test:bracket": "node --import tsx --test scripts/test-bracket.mts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "16.4.6",
@@ -23,6 +24,8 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "typescript": "^5.8.2",
-    "tsx": "^4.20.6"
+    "tsx": "^4.20.6",
+    "@playwright/test": "^1.56.1",
+    "@axe-core/playwright": "^4.10.2"
   }
 }
