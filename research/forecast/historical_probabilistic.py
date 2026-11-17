@@ -101,6 +101,26 @@ def _score(ps:list[tuple[float,int]])->dict:
         "logLoss":round(-sum(math.log(max(1e-12,p if y else 1-p)) for p,y in ps)/len(ps),6),
         "accuracy":round(sum(.5 if p==.5 else float((p>.5)==bool(y)) for p,y in ps)/len(ps),6)}
 
+def _calibration(rows:list[dict],key:str)->dict:
+    """Only untouched test-year predictions; no refitting or bucket optimization."""
+    if not rows:return {"ece":None,"bins":[]}
+    buckets=[[] for _ in range(10)]
+    for row in rows:
+        p=row[key]
+        if not math.isfinite(p) or not 0<=p<=1:
+            raise ValueError("Nonfinite prediction in held-out calibration audit")
+        buckets[min(9,int(p*10))].append(row)
+    bins=[]
+    for i,group in enumerate(buckets):
+        conf=sum(r[key] for r in group)/len(group) if group else None
+        actual=sum(r["y"] for r in group)/len(group) if group else None
+        bins.append({"lower":i/10,"upper":(i+1)/10,"games":len(group),
+                     "averageProbability":round(conf,5) if conf is not None else None,
+                     "realizedFrequency":round(actual,5) if actual is not None else None})
+    ece=sum(len(g)/len(rows)*abs(sum(x[key] for x in g)/len(g)-sum(x["y"] for x in g)/len(g))
+            for g in buckets if g)
+    return {"ece":round(ece,6),"bins":bins}
+
 def _score_intervals(rows:list[dict])->dict:
     if not rows:return {"games":0,"marginMAE":None,"totalMAE":None,"marginRMSE":None,"totalRMSE":None,"margin80Coverage":None,"total80Coverage":None,"margin80MeanWidth":None,"total80MeanWidth":None}
     n=len(rows)
@@ -196,6 +216,8 @@ def evaluate(rows:list[HistoricalGame],manifest:dict,min_train:int=MIN_PRIOR_YEA
         "scoringProbability":get("scoreProbability"),"nestedEnsemble":ensemble,
         "projectedScores":_score_intervals(all_predictions)},
       "ensembleBrierGainVsElo":round(control["brier"]-ensemble["brier"],6),
+      "calibration":{name:_calibration(all_predictions,key) for name,key in
+        (("elo","baseline"),("scoring","scoreProbability"),("ensemble","ensemble"))},
       "seasonBlockGain95":_season_bootstrap(season_samples),
       "yearByYear":reports,
       "policy":{"minimumPriorSeasons":min_train,"minimumPriorOosSeasons":MIN_META_YEARS,
@@ -207,6 +229,7 @@ def evaluate(rows:list[HistoricalGame],manifest:dict,min_train:int=MIN_PRIOR_YEA
         "The score model learns tournament totals/margins from prior tournament years only; it is not a possession-model backtest because per-game box features are unavailable.",
         "Marginal Gaussian errors are a model assumption; tested 80% interval coverage is empirical and may be miscalibrated.",
         "Nested weights are selected only on earlier held-out years; repeated research against these same historical archives can overfit them.",
+        "Ten-bin expected calibration error is descriptive; ECE can look artificially small for extreme imbalance or sparse bins.",
         "The ensemble was NEVER automatically promoted to the public pregame Elo model."]}
 
 def main():
