@@ -90,7 +90,7 @@ class EnsembleTests(unittest.TestCase):
         first=root/"snapshots"/"snap-1.json"
         repeated=json.loads(first.read_text())
         repeated["snapshotId"]="snap-second-1"
-        repeated["generatedAtUtc"]="2026-11-01T12:00:00Z"
+        repeated["generatedAtUtc"]="2026-11-02T11:00:00Z"
         for g in repeated["predictions"]:
             g["ensembleHomeWinProbability"]=.01
         (root/"snapshots"/"later-duplicate.json").write_text(json.dumps(repeated))
