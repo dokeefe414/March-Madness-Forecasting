@@ -414,3 +414,34 @@ test("v1.6 independent portfolio evidence never claims retrospective recombinati
  await expect(panel).toContainText("RETROSPECTIVE RECOMBINATION");
  await expect(panel).toContainText("The retrospective recombination above is not the prospective performance");
 });
+
+test("historical model lab separates source-verified old-season evaluation from current first picks",async ({page})=>{
+ const source="pinned-historical-source";
+ await page.route("**/research/historical-data-manifest.json",route=>route.fulfill({
+  contentType:"application/json",body:JSON.stringify({
+   sourceCommit:source,historicalIndexSha256:"test-index-hash",
+   includedSeasons:39,includedGames:2560,omittedMissingRatedTeams:2,
+   excludedSeasons:[2020,2026],featureAsOf:"season day 132",perSeason:[]})}));
+ await page.route("**/research/historical-evaluation.json",route=>route.fulfill({
+  contentType:"application/json",body:JSON.stringify({
+   schemaVersion:1,sourceCommit:source,datasetIndexSha256:"test-index-hash",
+   testedGames:2230,firstTestSeason:1990,lastTestSeason:2025,evaluatedSeasons:34,
+   nestedBrierGainVsElo:.004,nestedGainSeasonBlock95:[-.001,.008],
+   activePublicModelChanged:false,
+   metrics:{elo:{games:2230,brier:.233,logLoss:.668,accuracy:.65},
+    calibratedTrendElo:{games:2230,brier:.229,logLoss:.656,accuracy:.66},
+    nestedSelected:{games:2230,brier:.229,logLoss:.657,accuracy:.66}},
+   yearByYear:[{season:2025,trainingThrough:2024,selectedByEarlierOos:"elo",
+    evaluatedGames:67,elo:{brier:.21},nestedSelected:{brier:.21}}],
+   limitations:[]})}));
+ await page.goto("/?view=models");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const panel=page.getByRole("region",{name:"Audited historical training and out-of-time model evaluation"});
+ await expect(panel).toContainText("PROVE IT");
+ await expect(panel).toContainText("2,230");
+ await expect(panel).toContainText("0.2330");
+ await expect(panel).toContainText("0.2290");
+ await panel.getByText("View year-by-year held-out results and audit exclusions").click();
+ await expect(panel).toContainText("2020, 2026");
+ await expect(panel).toContainText("2025");
+});
