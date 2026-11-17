@@ -240,8 +240,12 @@ test("v1.3 two independent bracket players can disagree on identical matchups",a
  const duel=page.getByRole("region",{name:"Two-player bracket competition"});
  await expect(duel.getByRole("heading",{name:/TWO PLAYERS/i})).toBeVisible({timeout:20000});
  await duel.getByRole("group",{name:"Duel round"}).getByRole("button",{name:"ROUND OF 64"}).click();
- const game=duel.locator(".v13-duel-match").first();
+ // A historical play-in seed can leave one entrant pending in some first-round
+ // matches. Pick an actual two-entrant fixture rather than clicking a disabled
+ // legitimate "winner pending" placeholder.
+ const game=duel.locator(".v13-duel-match").filter({has:page.locator("button:last-of-type:not([disabled])")}).first();
  await expect(game.getByRole("button")).toHaveCount(2);
+ await expect(game.getByRole("button").last()).toBeEnabled();
  await game.getByRole("button").first().click();
  await duel.getByRole("group",{name:"Active bracket competitor"}).getByRole("button",{name:"PLAYER B"}).click();
  await game.getByRole("button").last().click();
