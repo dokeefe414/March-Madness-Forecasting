@@ -393,3 +393,26 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 .fp-online-gate small{color:#94bdb7;font-size:10px}
 @media(max-width:930px){.fp-scoreboard-main,.fp-foot{grid-template-columns:1fr}}
 @media(max-width:560px){.fp-forward-facts{grid-template-columns:1fr}.fp-scoreboard h3{font-size:70px}.fp-scoreboard h3 small{display:block;margin-top:8px}}
+
+/* v0.8: explicitly hypothetical neutral-site bracket upset lens */
+.selection-lens{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:24px;margin:25px 0;padding:clamp(20px,3vw,35px);
+ border:1px solid #4e7561;border-radius:16px;background:linear-gradient(125deg,#183d35,#0e2531 60%)}
+.selection-lens h3{font:900 clamp(39px,5vw,63px)/1 "Barlow Condensed",Impact,sans-serif;text-transform:uppercase;color:#f1ffec;margin:11px 0}
+.selection-lens h3 em{font-style:normal;color:#baffce}
+.selection-lens-copy p{color:#afd0c5;font-size:12px;line-height:1.7}
+.selection-lens-controls{background:#102c35;border:1px solid #396058;border-radius:11px;padding:20px;min-width:0}
+.selection-lens-controls>div:first-child{display:flex;flex-direction:column;gap:5px;margin-bottom:15px}
+.selection-lens-controls small{font-size:9px;font-weight:900;letter-spacing:.9px;color:#9dceba}
+.selection-lens-controls strong{font:900 24px "Barlow Condensed",Impact,sans-serif;color:#e4fff0}
+.selection-lens-controls>div:first-child span{font-size:10px;color:#92bdb4}
+.selection-lens-controls label{display:flex;flex-direction:column;gap:7px;color:#a2c8bb;font-size:9px;letter-spacing:.8px;font-weight:900}
+.selection-lens-controls select{width:100%;min-width:0;background:#0b212c;border:1px solid #42645a;border-radius:8px;color:#eaffef;padding:12px;font-size:12px}
+.selection-lens-result{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:15px}
+.selection-lens-result>div:not(.selection-lens-meter){background:#09242c;border-radius:9px;border:1px solid #396358;padding:12px}
+.selection-lens-result strong{display:block;color:#baffd5;font-size:36px}
+.selection-lens-result .selection-lens-meter{grid-column:1/-1;overflow:hidden;background:#617cba;height:13px;border-radius:30px}
+.selection-lens-meter>div{height:100%;background:#9effc8;border-right:2px solid #eaffec}
+.selection-lens-result p{grid-column:1/-1;color:#abc5c4;font-size:11px;line-height:1.65}
+.selection-lens-result p strong{display:inline;font-size:15px}
+@media(max-width:800px){.selection-lens{grid-template-columns:1fr}}
+@media(max-width:440px){.selection-lens-result{grid-template-columns:1fr}.selection-lens-result .selection-lens-meter{grid-column:1}.selection-lens-result p{grid-column:1}}
