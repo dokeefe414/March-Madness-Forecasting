@@ -349,3 +349,47 @@ test("score predictor declines unavailable per-game points rather than inventing
  await expect(score).toContainText("NOT ENOUGH VERIFIED SCORING DATA");
  await expect(score).not.toContainText("PROJECTED SPREAD");
 });
+
+test("verified possession rates produce distinct adjusted score scenarios",async ({page})=>{
+ const scheduled=new Date(Date.now()+4*86400000).toISOString();
+ const team=(id:string,name:string,off:number,def:number)=>({
+  teamId:id,name,rank:1,rating:1500,projectedRating:1500,trend:0,
+  wins:9,losses:2,history:[1500],pointsForPerGame:78,pointsAgainstPerGame:73,
+  adjOff100:off,adjDef100:def,offRating100:off,defRating100:def,
+  pacePossessions:id==="h"?68:72,possessionGames:9});
+ const home=team("h","Home School",118,101),away=team("a","Away School",108,106);
+ await page.route("**/current/2027.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+  mode:"current",season:2027,teams:[home,away],retrievedAtUtc:"2026-11-17T14:00:00Z"})}));
+ await page.route("**/current/upcoming.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+  schemaVersion:1,generatedAtUtc:"2026-11-17T14:00:00Z",
+  coverage:{futureScheduled:1,eligibleForecasts:1,unmatchedOrAmbiguous:0},
+  games:[{eventId:"adj-test",scheduledStartUtc:scheduled,scheduledEasternDate:scheduled.slice(0,10),
+   neutralSite:true,status:"ready",home:home.name,away:away.name,homeTeamId:home.teamId,awayTeamId:away.teamId,
+   homeWinProbability:.72,baselineHomeWinProbability:.72,model:"Elo",
+   homeProfile:{...home,conference:"Example",recentGames:[],ratingHistory:[1500]},
+   awayProfile:{...away,conference:"Example",recentGames:[],ratingHistory:[1500]},
+   factors:[],commonOpponents:[],headToHead:[]}]} )}));
+ await page.goto("/?view=games");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const panel=page.getByRole("region",{name:"Experimental game score and spread projection"});
+ await expect(panel).toContainText("OPPONENT-ADJUSTED POSSESSION MODEL");
+ await expect(panel).toContainText("70.0");
+ await expect(panel).toContainText("PROJECTED SPREAD");
+ await expect(panel).toContainText("9 source-linked possession games");
+});
+test("scoring research evidence does not pretend it is a live pregame record",async ({page})=>{
+ await page.route("**/current/score-research.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+  schemaVersion:1,season:2027,mode:"research-only",retrievedAtUtc:"2026-11-17T14:00:00Z",
+  sourceGames:80,evaluatedGames:10,evaluatedDays:4,excluded:{},
+  methods:{opponentAdjusted:{games:10,marginMAE:8.1,totalMAE:12.4,brier:.22},
+   rawScoringMeans:{games:10,marginMAE:9.6,totalMAE:14,brier:.24},
+   elo:{games:10,brier:.21}},
+  perDate:[{date:"2026-11-09",games:5,adjustedMarginMAE:7,rawMarginMAE:9,adjustedBrier:.22,rawBrier:.25,eloBrier:.2}],
+  modelVersion:"regularized-additive-margin-v1",policy:"research only" })}));
+ await page.goto("/?view=models");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const section=page.getByRole("region",{name:"Chronological score and margin forecasting benchmark"});
+ await expect(section.getByRole("heading",{name:/PROVE THE SCORING EDGE/i})).toBeVisible();
+ await expect(section).toContainText("8.10");
+ await expect(section).toContainText("not timestamped prospective first-pick evidence");
+});
