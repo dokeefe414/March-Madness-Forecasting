@@ -57,19 +57,45 @@ test("core page has no critical WCAG violations",async ({page})=>{
   expect(severe.map(v=>v.id+": "+v.description)).toEqual([]);
 });
 
-test("game finder has accessible search, fixture details and honest empty outcomes",async ({page})=>{
+test("game finder supports sourced fixture search, explanations and opponent evidence",async ({page})=>{
+  // Hermetic browser fixture: never rely on ESPN / NCAA network in CI.
+  const fixture="2027-01-15T20:00:00Z";
+  const profile=(name:string,id:string,elo:number)=>({
+    name,teamId:id,rating:elo,trend:3,wins:7,losses:3,
+    conference:"Example conference",opponentAverageElo:1502,
+    recentGames:[{id:"old",date:"2027-01-10",opponent:"Example University",
+      home:true,for:80,against:71,outcome:"W"}],ratingHistory:[1500,elo]
+  });
+  const away=profile("Example Away","ncaa-away",1510);
+  const home=profile("Example Home","ncaa-home",1540);
+  await page.route("**/current/2027.json",route=>route.fulfill({
+    contentType:"application/json",body:JSON.stringify({mode:"current",season:2027,
+      retrievedAtUtc:"2027-01-15T12:00:00Z",lastGameDate:"2027-01-14",
+      teams:[{...away,rank:2,projectedRating:1513},{...home,rank:1,projectedRating:1543}]}),
+  }));
+  await page.route("**/current/upcoming.json",route=>route.fulfill({
+    contentType:"application/json",body:JSON.stringify({schemaVersion:1,
+      generatedAtUtc:"2027-01-15T12:00:00Z",ratingRetrievedAtUtc:"2027-01-15T12:00:00Z",
+      lastIncludedGameDate:"2027-01-14",
+      coverage:{futureScheduled:1,eligibleForecasts:1,unmatchedOrAmbiguous:0},
+      games:[{eventId:"test-fixture-1",scheduledStartUtc:fixture,scheduledEasternDate:"2027-01-15",
+        neutralSite:false,home:"Example Home",away:"Example Away",homeWinProbability:.69,
+        baselineHomeWinProbability:.65,status:"ready",model:"as-of regular-season Elo",
+        homeProfile:home,awayProfile:away,
+        factors:[{title:"Strength gap",value:30,detail:"Earlier results influence Elo."},
+                 {title:"Venue adjustment",value:65,detail:"Home-court assumption."}],
+        commonOpponents:[{opponent:"Example University",homeResultDate:"2027-01-10",
+          awayResultDate:"2027-01-11",homeMargin:9,awayMargin:2}],
+        headToHead:[]}]})
+  }));
   await page.goto("/");
   await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
   await expect(page.getByRole("heading",{name:/Game intelligence/i})).toBeVisible();
   await expect(page.getByLabel("Search upcoming games")).toBeVisible();
+  await expect(page.locator(".gc-fixture")).toHaveCount(1);
+  await page.locator(".gc-fixture").first().click();
+  await expect(page.locator(".gc-detail")).toContainText("69.0%");
+  await expect(page.locator(".gc-detail")).toContainText("Example University");
   await expect(page.getByLabel("Hypothetical team A")).toBeVisible();
   await expect(page.getByLabel("Hypothetical team B")).toBeVisible();
-  // In CI, there may be no external fixture file; do not invent a probability.
-  const data=await page.locator(".gc-fixture").count();
-  if(data){
-    await page.locator(".gc-fixture").first().click();
-    await expect(page.locator(".gc-detail")).toBeVisible();
-  }else{
-    await expect(page.locator(".gc-unmatched").or(page.locator(".premium-empty")).first()).toBeVisible();
-  }
 });
