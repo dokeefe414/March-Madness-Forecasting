@@ -9,6 +9,7 @@ No retrospective rolling-date test is presented as an actual pretipoff pick.
 from __future__ import annotations
 
 import math
+import random
 from collections import defaultdict
 
 def _mean(rows: list[dict], field: str) -> float | None:
@@ -98,6 +99,51 @@ def summarize_forward(snapshots: list[dict], settlements: list[dict]) -> dict:
     brier_gain=(sum((_rate(r["elo"],r["observedHome"])["brier"]-
                       _rate(r["challenger"],r["observedHome"])["brier"]) for r in duel)/len(duel)
                 if duel else None)
+    # Paired forward comparisons share the SAME earliest publicly archived
+    # fixtures, not separately selected good-looking model subsets.
+    candidate_fields={
+        "Online logistic challenger":"challenger",
+        "Opponent-aware research":"opponent",
+        "Fixed state-space research":"stateSpace",
+        "Adaptive state-space research":"adaptiveState",
+    }
+    paired_report={}
+    for label,field in candidate_fields.items():
+        paired=[r for r in selected if r["elo"] is not None and r[field] is not None]
+        paired_elo_stats=[_rate(r["elo"],r["observedHome"]) for r in paired]
+        paired_other_stats=[_rate(r[field],r["observedHome"]) for r in paired]
+        if paired:
+            improvement=sum(a["brier"]-b["brier"] for a,b in zip(paired_elo_stats,paired_other_stats))/len(paired)
+            # Resample dates rather than treating multiple same-day games as
+            # independent evidence; descriptive only, not an auto-promotion.
+            by_day:dict[str,list[float]]=defaultdict(list)
+            for row,a,b in zip(paired,paired_elo_stats,paired_other_stats):
+                by_day[row["date"]].append(a["brier"]-b["brier"])
+            interval=None
+            if len(by_day)>=5 and len(paired)>=40:
+                days=list(sorted(by_day))
+                draws=[]
+                rng=random.Random(2027)
+                for _ in range(400):
+                    sampled=[by_day[days[rng.randrange(len(days))]] for _ in days]
+                    values=[v for block in sampled for v in block]
+                    draws.append(sum(values)/len(values))
+                draws.sort()
+                interval=[round(draws[9],6),round(draws[390],6)]
+        else:
+            improvement=None
+            interval=None
+        paired_report[label]={
+            "pairedGames":len(paired),
+            "pairedDates":len({r["date"] for r in paired}),
+            "baselineEloBrier":_mean(paired_elo_stats,"brier"),
+            "candidateBrier":_mean(paired_other_stats,"brier"),
+            "baselineEloAccuracy":_mean(paired_elo_stats,"correct"),
+            "candidateAccuracy":_mean(paired_other_stats,"correct"),
+            "candidateBrierGain":round(improvement,6) if improvement is not None else None,
+            "dateBlockGain95":interval,
+            "claim":"Source-verified first-pick paired comparison; no candidate promotion implied",
+        }
     return {
         "schemaVersion":1,
         "unit":"one earliest archived pre-tipoff prediction per source ESPN event ID",
@@ -116,6 +162,7 @@ def summarize_forward(snapshots: list[dict], settlements: list[dict]) -> dict:
             "challengerBrierGain":round(brier_gain,6) if brier_gain is not None else None,
         },
         "experimentalComparisons":{label:_stats(rows) for label,rows in comparable.items()},
+        "pairedModelComparisons":paired_report,
         "calibration":calibration, "trajectory":timeline[-400:],
         "recentMisses":list(reversed(misses[-12:])),
         "warnings":[
