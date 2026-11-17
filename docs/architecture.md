@@ -1,44 +1,60 @@
-# Architecture and development plan
+# March Forecast v0.2 — historical data architecture
 
-## Data flow
+## Source and lineage
 
-The project separates data science code from the public static UI.
+The upstream statistical record is the men's Kaggle March Machine Learning Mania 2026 CSV set, from a public GitHub mirror pinned at commit f8c521735ec41580711ce2d3e27dfd40f24e9e29. The Python downloader verifies exact Git blob IDs before using files.
 
-    Kaggle men's compact game results
-                  |
-          research/forecast/io.py      (CSV + season/day cutoff)
-                  |
-          research/forecast/core.py    (chronological Elo updates)
-                  |
-          research/forecast/cli.py     (versioned JSON snapshot)
-                  |
-             web/data/rankings.json
-                  |
-             Next.js static export
-                  |
-             GitHub Pages website
+Data pipeline:
 
-The committed snapshot is intentionally synthetic. Historical data is never described as a live prediction. No external API key or database is needed for the first version.
+    raw CSV mirror (pinned commit + verified blob SHA)
+                   |
+             forecast.download
+                   |
+      research/data/raw/ (gitignored)
+                   |
+      forecast.history (yearly chronological Elo)
+                   |
+    +--------------+------------------+
+    |              |                  |
+    v              v                  v
+    historical ratings     tournament results     historical index
+    web/public/seasons/    web/public/tournaments/ web/data/history-index.json
+    |              |                  |
+    +--------------+------------------+
+                   |
+         Next.js static export
+                   |
+        GitHub Pages/public site
 
-## Design decisions
+The committed static season JSON is source-derived and browseable without a paid API.
 
-- **No lookahead:** Regular-season results are processed by season/day. Pre-game Brier calculations happen before rating updates.
-- **One season at a time:** The Elo baseline starts fresh at 1500 rather than assuming team rosters stay the same across years.
-- **Honest model labels:** A bounded recent-trend adjustment is a heuristic, not a Kalman filter, ARIMA or trained ensemble.
-- **Simple public contract:** One validated snapshot file drives the entire frontend. With future provenance and model version metadata, old forecasts can be audited.
-- **Portable simulator:** Both Python and JavaScript implement the same neutral-site Elo probability equation. Their random draws need not match.
-- **Static deployment:** GitHub Pages provides simple public viewing; data refresh currently requires committing a new JSON snapshot.
+## Method design
 
-## Research roadmap
+**Regular-season strength:** Start every team with 1500 Elo at each season's beginning. Apply K=24 and 65-point home-court adjustment. Sort each season by Kaggle DayNum and team IDs; same-day matches are not necessarily chronological in tip-off time.
 
-1. Acquire historical men's NCAA Kaggle data, preserve provenance and licensing information.
-2. Add *tournament-specific* rolling-origin yearly holdouts, using game features available before Selection Sunday and the correct actual bracket for each year.
-3. Compare Elo, last-value, rolling efficiencies, ARIMA, standard Kalman, adaptive Kalman, and possibly more advanced time-series models.
-4. Measure Brier score, log loss, expected calibration error, and bootstrap uncertainty; assess if methods beat simple baselines.
-5. Introduce calibrated bracket simulation, conference automatic bid/at-large selection and format-aware play-in handling.
-6. Ingest reproducible 2026–27 current-season snapshots; archive prediction timestamps, dataset release and fitted model version.
-7. Improve website with bracket editing, historical forecast playback, inter-model comparisons and CI checks against data leakage.
+**Projection:** Display current Elo plus a clipped recent five-game slope shrunk to a three-game projection. This is a transparent baseline heuristic, not ARIMA, a Kalman filter, or learned time series.
 
-## Known limitations
+**Tournament evaluation:** After the season cutoff, freeze each team's projected rating. Apply the neutral-site Elo logistic function to actual tournament matchups. Calculate Brier score against eventual outcomes *without updating on the tournament results*. Seeds and tournament outcomes are observed after the forecast cutoff and never used as model features.
 
-The baseline only uses outcomes/location, not pace, offensive/defensive efficiency, injury status or opponent-specific tactics. Same-day Kaggle DayNum is not guaranteed to represent real tip-off order. The bracket model starts with an ordered power-of-two field (such as the 64-team main draw); it does not currently model 2027 play-ins, field selection or seeding. Pre-game regular-season Brier is not a held-out tournament validation metric.
+**Historical tournaments:** Kaggle compact results provide scores/teams through 2025. 2026 is a separate 64-team main-draw file containing 63 games, missing play-ins. Its champion is independently confirmed by NCAA reporting, but 2026 is excluded from Brier evaluation because the mirror's regular season ends at DayNum 118, not 132.
+
+## Web behavior
+
+- On initial load, import complete 2025 data as the default season.
+- Historical selector fetches /seasons/<year>.json from the static site's public directory.
+- Archive tab loads /tournaments/<year>.json on demand. Empty result for 2020 is shown.
+- Matchup and eight-team simulation always use the selected historical season's teams; they are NOT 2027 forecasts and the demo bracket is NOT a real NCAA tournament bracket.
+- NEXT_PUBLIC_BASE_PATH supports /March-Madness-Forecasting deployment on GitHub Pages.
+
+## Research integrity constraints
+
+- Do not use actual future results or tournament selection information to fit pre-Selection-Sunday model probabilities.
+- Distinguish regular-season pregame Brier from held-out tournament Brier.
+- Mark historical snapshots and incomplete 2020/2026 regular-season cutoffs. Do not silently imply current/live 2027 rankings.
+- Treat model K/home advantage/projection slope as fixed design choices; future work must select them using previous seasons and report out-of-time test performance, not retune on test years.
+- Separate published historical outcomes, projected seeds, selection odds and simulated title probabilities.
+- Keep raw file checksums, commit pins and transformation code accessible for reproduction.
+
+## Follow-on architecture
+
+Add detailed possession-based efficiency metrics, formal rolling-year cross-validation, calibrators fit on past years only, Kalman/filter-based adaptation to changes and confidence bands. Later introduce actual 2026–27 data feeds with a dated immutable prediction snapshot and model version. Do not schedule scraping or claim live updates without a reliable data provider.

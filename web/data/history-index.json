@@ -1,0 +1,428 @@
+{
+  "source": "Kaggle March Machine Learning Mania men's data (pinned community mirror)",
+  "sourceCommit": "f8c521735ec41580711ce2d3e27dfd40f24e9e29",
+  "firstSeason": 1985,
+  "lastSeason": 2026,
+  "seasons": [
+    {
+      "season": 1985,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 3737,
+      "teams": 282,
+      "champion": "Villanova",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2199
+    },
+    {
+      "season": 1986,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 3783,
+      "teams": 283,
+      "champion": "Louisville",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2255
+    },
+    {
+      "season": 1987,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 3915,
+      "teams": 290,
+      "champion": "Indiana",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2246
+    },
+    {
+      "season": 1988,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 3955,
+      "teams": 290,
+      "champion": "Kansas",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2296
+    },
+    {
+      "season": 1989,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4037,
+      "teams": 293,
+      "champion": "Michigan",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2183
+    },
+    {
+      "season": 1990,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4045,
+      "teams": 292,
+      "champion": "UNLV",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2194
+    },
+    {
+      "season": 1991,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4123,
+      "teams": 295,
+      "champion": "Duke",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2298
+    },
+    {
+      "season": 1992,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4127,
+      "teams": 298,
+      "champion": "Duke",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.221
+    },
+    {
+      "season": 1993,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 3982,
+      "teams": 298,
+      "champion": "North Carolina",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2215
+    },
+    {
+      "season": 1994,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4060,
+      "teams": 301,
+      "champion": "Arkansas",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2303
+    },
+    {
+      "season": 1995,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4077,
+      "teams": 302,
+      "champion": "UCLA",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2093
+    },
+    {
+      "season": 1996,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4122,
+      "teams": 305,
+      "champion": "Kentucky",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2072
+    },
+    {
+      "season": 1997,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4155,
+      "teams": 305,
+      "champion": "Arizona",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2348
+    },
+    {
+      "season": 1998,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4167,
+      "teams": 306,
+      "champion": "Kentucky",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2172
+    },
+    {
+      "season": 1999,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4222,
+      "teams": 310,
+      "champion": "Connecticut",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.2191
+    },
+    {
+      "season": 2000,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4519,
+      "teams": 318,
+      "champion": "Michigan St",
+      "tournamentGames": 63,
+      "tournamentBrier": 0.241
+    },
+    {
+      "season": 2001,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4467,
+      "teams": 318,
+      "champion": "Duke",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.2209
+    },
+    {
+      "season": 2002,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4555,
+      "teams": 321,
+      "champion": "Maryland",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.2325
+    },
+    {
+      "season": 2003,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4616,
+      "teams": 327,
+      "champion": "Syracuse",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.2348
+    },
+    {
+      "season": 2004,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4571,
+      "teams": 326,
+      "champion": "Connecticut",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.2298
+    },
+    {
+      "season": 2005,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4675,
+      "teams": 330,
+      "champion": "North Carolina",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.215
+    },
+    {
+      "season": 2006,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 4757,
+      "teams": 334,
+      "champion": "Florida",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.2207
+    },
+    {
+      "season": 2007,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5043,
+      "teams": 336,
+      "champion": "Florida",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.208
+    },
+    {
+      "season": 2008,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5163,
+      "teams": 342,
+      "champion": "Kansas",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.1979
+    },
+    {
+      "season": 2009,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5249,
+      "teams": 347,
+      "champion": "North Carolina",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.2154
+    },
+    {
+      "season": 2010,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5263,
+      "teams": 347,
+      "champion": "Duke",
+      "tournamentGames": 64,
+      "tournamentBrier": 0.2143
+    },
+    {
+      "season": 2011,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5246,
+      "teams": 345,
+      "champion": "Connecticut",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2247
+    },
+    {
+      "season": 2012,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5253,
+      "teams": 345,
+      "champion": "Kentucky",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2269
+    },
+    {
+      "season": 2013,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5320,
+      "teams": 347,
+      "champion": "Louisville",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2325
+    },
+    {
+      "season": 2014,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5362,
+      "teams": 351,
+      "champion": "Connecticut",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2262
+    },
+    {
+      "season": 2015,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5354,
+      "teams": 351,
+      "champion": "Duke",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2173
+    },
+    {
+      "season": 2016,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5369,
+      "teams": 351,
+      "champion": "Villanova",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.23
+    },
+    {
+      "season": 2017,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5395,
+      "teams": 351,
+      "champion": "North Carolina",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2325
+    },
+    {
+      "season": 2018,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5405,
+      "teams": 351,
+      "champion": "Villanova",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2293
+    },
+    {
+      "season": 2019,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5463,
+      "teams": 353,
+      "champion": "Virginia",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2155
+    },
+    {
+      "season": 2020,
+      "throughDay": 128,
+      "isComplete": false,
+      "regularSeasonGames": 5328,
+      "teams": 353,
+      "champion": null,
+      "tournamentGames": 0,
+      "tournamentBrier": null
+    },
+    {
+      "season": 2021,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 3855,
+      "teams": 347,
+      "champion": "Baylor",
+      "tournamentGames": 66,
+      "tournamentBrier": 0.2375
+    },
+    {
+      "season": 2022,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5345,
+      "teams": 358,
+      "champion": "Kansas",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2378
+    },
+    {
+      "season": 2023,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5602,
+      "teams": 363,
+      "champion": "Connecticut",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2443
+    },
+    {
+      "season": 2024,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5607,
+      "teams": 362,
+      "champion": "Connecticut",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2307
+    },
+    {
+      "season": 2025,
+      "throughDay": 132,
+      "isComplete": true,
+      "regularSeasonGames": 5641,
+      "teams": 364,
+      "champion": "Florida",
+      "tournamentGames": 67,
+      "tournamentBrier": 0.2134
+    },
+    {
+      "season": 2026,
+      "throughDay": 118,
+      "isComplete": false,
+      "regularSeasonGames": 5149,
+      "teams": 365,
+      "champion": "Michigan",
+      "tournamentGames": 63,
+      "tournamentBrier": null
+    }
+  ]
+}
