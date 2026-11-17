@@ -68,8 +68,48 @@ def parse_ncaa_aliases(csv_text: str, season: int = 2027) -> dict[str, str]:
     return answers
 
 
+CROSSWALK_URL = (
+    "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/"
+    "mbb_crosswalk/ncaa_espn_team_crosswalk.csv"
+)
+
+
+def parse_ncaa_espn_ids(csv_text: str) -> dict[str, str]:
+    """Return explicit *same-season* NCAA team ID -> ESPN team ID mappings.
+
+    stats.ncaa.org team IDs are *reissued each season*. The ESPN team ID can
+    never be inferred by integer equality. Accept only source-authored 2026-27
+    mappings whose match_method is not unmatched. Any same-season conflicting
+    NCAA ID is omitted, rather than randomly choosing a candidate.
+    """
+    reader = csv.DictReader(io.StringIO(csv_text))
+    needed = {"season", "ncaa_team_id", "espn_team_id", "match_method"}
+    if not needed.issubset(reader.fieldnames or []):
+        raise ValueError(f"NCAA-ESPN crosswalk missing fields: {sorted(needed-set(reader.fieldnames or []))}")
+    matches: dict[str, str] = {}
+    ambiguous: set[str] = set()
+    for row in reader:
+        season = str(row.get("season", "") or "").strip().replace("–", "-")
+        if season not in {"2026-27", "2027"}:
+            continue
+        ncaa_id = str(row.get("ncaa_team_id", "") or "").strip()
+        espn_id = str(row.get("espn_team_id", "") or "").strip()
+        method = str(row.get("match_method", "") or "").strip().casefold()
+        if (not ncaa_id.isdecimal() or not espn_id.isdecimal()
+            or method in {"", "unmatched", "null", "none", "na"}):
+            continue
+        if ncaa_id in matches and matches[ncaa_id] != espn_id:
+            ambiguous.add(ncaa_id)
+        else:
+            matches[ncaa_id] = espn_id
+    for key in ambiguous:
+        matches.pop(key, None)
+    return matches
+
+
 def parse_division_members(groups_text: str, members_text: str,
-                           alias_csv: str | None = None) -> dict[str, dict]:
+                           alias_csv: str | None = None,
+                           crosswalk_csv: str | None = None) -> dict[str, dict]:
     """Return unambiguous 2027 team-name evidence of source D-I membership.
 
     The SportsDataverse reference uses a 2027 ENDING year and league='mbb'.
@@ -119,7 +159,7 @@ def parse_division_members(groups_text: str, members_text: str,
         candidates.pop(key, None)
     if not candidates:
         raise ValueError("group source did not provide 2027 membership rows")
-    if alias_csv is not None:
+    if alias_csv is not None or crosswalk_csv is not None:
         # ESPN season-2027 group names and NCAA season-2027 schedule names
         # are not necessarily spelled alike. The provider's own NCAA↔ESPN
         # alias rows create *verified* additional exact NCAA-name keys.
@@ -132,7 +172,8 @@ def parse_division_members(groups_text: str, members_text: str,
             indexed[espn_id] = entry
         for espn_id in duplicate_ids:
             indexed.pop(espn_id, None)
-        for ncaa_label, espn_id in parse_ncaa_aliases(alias_csv).items():
+        for ncaa_label, espn_id in (parse_ncaa_aliases(alias_csv).items()
+                                    if alias_csv is not None else []):
             member = indexed.get(espn_id)
             if not member:
                 continue
@@ -144,6 +185,14 @@ def parse_division_members(groups_text: str, members_text: str,
                 candidates[ncaa_label] = joined
         for label in ambiguous:
             candidates.pop(label, None)
+        if crosswalk_csv is not None:
+            for ncaa_id, espn_id in parse_ncaa_espn_ids(crosswalk_csv).items():
+                member = indexed.get(espn_id)
+                if not member:
+                    continue
+                candidates["ncaa-id:" + ncaa_id] = {
+                    **member, "joinedBy": "same-season published NCAA team ID to ESPN team ID",
+                }
     return candidates
 
 
@@ -152,9 +201,24 @@ def annotate_division(teams: list[dict], membership: dict[str, dict]) -> dict:
     divi = 0
     non_divi = 0
     source_groups: set[str] = set()
+    id_matched = 0
+    alias_matched = 0
     for team in teams:
-        match = membership.get(canonical(team["name"]))
+        source_id = str(team.get("ncaaSourceTeamId") or "").strip()
+        matched_id = membership.get("ncaa-id:" + source_id) if source_id else None
+        matched_name = membership.get(canonical(team["name"]))
+        # Two source-defined paths must agree on the ESPN group team ID.
+        # If they disagree, refuse a division claim rather than trusting one.
+        if (matched_id and matched_name and
+            matched_id["groupTeamId"] != matched_name["groupTeamId"]):
+            match = None
+        else:
+            match = matched_id or matched_name
         team["divisionIConfirmed"] = bool(match["divisionIConfirmed"]) if match else None
+        if matched_id and match:
+            id_matched += 1
+        elif matched_name and match and matched_name.get("joinedBy"):
+            alias_matched += 1
         if match:
             matched += 1
             if match["divisionIConfirmed"]:
@@ -169,6 +233,9 @@ def annotate_division(teams: list[dict], membership: dict[str, dict]) -> dict:
         "matchedRatedTeams": matched, "divisionIConfirmed": divi,
         "explicitlyNonDI": non_divi, "unmatchedRatedTeams": len(teams)-matched,
         "sourceDivisionIConferenceGroups": len(source_groups),
+        "seasonNCAAIdMatchedTeams": id_matched,
+        "ncaaAliasMatchedTeams": alias_matched,
+        "crosswalkSource": CROSSWALK_URL,
         "catalogEntries": len(membership),
         "policy": "Season-2027 exact-name join to documented subdivision; absence != not D-I; not postseason eligibility certification.",
     }

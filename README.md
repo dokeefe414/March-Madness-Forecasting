@@ -89,7 +89,7 @@ flowchart LR
   P --> Q
 ```
 
-This separation is intentional: **historical Kaggle numeric IDs**, 2027 NCAA-source names/IDs, and ESPN event IDs are different provenance domains. Exact source-linked mapping is required before joining; a display-name similarity is not enough. A second season-specific subdivision membership source and dated NCAA-to-ESPN source-name alias mapping support independently verified D-I candidate flags, without guessing mascot/school matches.
+This separation is intentional: **historical Kaggle numeric IDs**, 2027 NCAA-source names/IDs, and ESPN event IDs are different provenance domains. Exact source-linked mapping is required before joining; a display-name similarity is not enough. A second season-specific subdivision membership source and published **2026–27 NCAA-to-ESPN ID crosswalk**, with dated NCAA-name alias fallback, support verifiable D-I candidate flags without guessing mascot/school matches.
 
 ## Quickstart (Windows / VS Code)
 
@@ -169,7 +169,7 @@ research/forecast/
   dynamics.py             causal EWMA, volatility and regime change signal
   benchmark.py            eight-method prior-year walk-forward NCAA evaluation
   reference.py            exact NCAA-source 2027 conference/name crosswalk
-  division.py             independent 2027 Division I subdivision reference + dated NCAA/ESPN alias verification
+  division.py             independent 2027 D-I subdivision + season-specific NCAA/ESPN source crosswalk
   efficiency.py           true possession-based opponent-adjusted team strength
   selection.py            32+44 provisional strength watchlist and seed tiers
   live.py                 validated 2027 results and supplemental source imports
