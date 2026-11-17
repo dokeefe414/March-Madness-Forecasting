@@ -20,6 +20,16 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ---
 
+## v1.5 — Stronger basketball scoring models and honest out-of-time evidence
+
+**What improved:** the [Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) now prefers source-verified **opponent-adjusted points per 100 possessions and real pace** for projected scores, margins and totals when the NCAA-derived box-score pipeline has enough verified games for both teams. Insufficient/partial data is explicitly labeled and falls back to the previously verified simple scoring-average calculation without inventing possessions. These are descriptive score estimates, not a betting line or an independently calibrated margin distribution.
+
+**Prove it:** the [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) now includes a chronological, previous-game-date-only scoring experiment comparing an independent ridge-regularized opponent-adjusted score model to raw scoring means on identical source final games, reporting both scoring MAE and Brier. The source score-only backtest is **not mislabeled a possession experiment**. No results are claimed if evidence is unavailable or performance is not improved. Existing Elo winner probabilities remain active; this experiment does not retroactively change any pre-tipoff predictions.
+
+Mathematics, source eligibility gates, validation caveats, tests and roadmap: [v1.5 causal score and efficiency guide](docs/v15-causal-scoring-model.md).
+
+---
+
 ## Verified winners, misses, and an experimental score/spread projection
 
 The [Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) workspace now shows **each correctly predicted or missed winner** as a source-verified first-pick receipt: actual final score, original pre-tipoff favorite and confidence, outcome, model, timestamp and Brier. Filter by **correct**, **missed**, **even-odds**, or all independently settled games. Repeat captures of one ESPN game are never counted as independent successes.
