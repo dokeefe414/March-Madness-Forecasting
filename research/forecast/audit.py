@@ -139,7 +139,15 @@ def audit_ledger(folder: Path) -> dict:
         if index.get("uniqueGames") is not None:
             from .performance import summarize_forward
             expected=summarize_forward([s for _,s in sources],scored)
-            if index["uniqueGames"]!=expected:
+            archived=index["uniqueGames"]
+            # Schema evolution: older immutable-index revisions were built
+            # before the additive, source-derived verifiedOutcomes table.
+            # Every previously archived field must STILL match recomputation
+            # exactly; when new outcomes are published, they too are verified.
+            allowed_missing={"verifiedOutcomes"}
+            if (set(archived)-set(expected) or
+                (set(expected)-set(archived))-allowed_missing or
+                any(expected[k]!=v for k,v in archived.items())):
                 raise ValueError("Unique-game forward scoring differs from immutable evidence")
         if index.get("scores") != metrics:
             raise ValueError("Public index metrics disagree with immutable settlement entries")
