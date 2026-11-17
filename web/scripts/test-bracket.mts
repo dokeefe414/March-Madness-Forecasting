@@ -67,3 +67,25 @@ test("partial 2026 main draw cannot be mistaken for complete tournament", () => 
   const snapshot = JSON.parse(readFileSync("public/seasons/2026.json", "utf8"));
   assert.throws(() => buildHistoricalField(archive, snapshot.teams), /Partial tournament/);
 });
+
+test("rating sensitivity preserves original field and yields deterministic paired probabilities", () => {
+  const field = makeField(0);
+  const original = simulateFullBracket(field, 800, 73);
+  const target = field.entrants[0];
+  const scenario = buildFieldFromSlots(field.season, field.regions.map(region => ({
+    code:region.code,
+    slots:region.slots.map(slot => ({
+      region:slot.region, seed:slot.seed,
+      teams:slot.teams.map(team => team.teamId === target.teamId ?
+        {...team, projectedRating:team.projectedRating + 150}:team)
+    }))
+  })));
+  assert.equal(field.entrants.find(t=>t.teamId===target.teamId)?.projectedRating,target.projectedRating);
+  assert.equal(scenario.entrants.length,field.entrants.length);
+  const newResult=simulateFullBracket(scenario,800,73);
+  assert.deepEqual(newResult,simulateFullBracket(scenario,800,73));
+  assert.ok(newResult.find(r=>r.teamId===target.teamId)!.champion >=
+            original.find(r=>r.teamId===target.teamId)!.champion,
+            "A stronger team should not lose title probability under common random numbers");
+  assert.ok(Math.abs(newResult.reduce((s,r)=>s+r.champion,0)-1)<1e-9);
+});
