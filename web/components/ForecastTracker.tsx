@@ -1,7 +1,7 @@
 "use client";
 import { useEffect,useMemo,useState } from "react";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-type Pick = {eventId:string;scheduledStartUtc:string;scheduledEasternDate:string;home:string;away:string;homeTeamId:string;awayTeamId:string;homeWinProbability:number;neutralSite:boolean;model:string};
+type Pick = {eventId:string;scheduledStartUtc:string;scheduledEasternDate:string;home:string;away:string;homeTeamId:string;awayTeamId:string;homeWinProbability:number;neutralSite:boolean;model:string;modelId?:string|null;modelTrainingThroughDate?:string|null};
 type Snapshot = {id:string;generatedAtUtc:string;count:number;predictions:Pick[]};
 type Settled = {predictionKey:string;snapshotId:string;eventId:string;forecastAtUtc:string;scheduledStartUtc:string;home:string;away:string;homeScore:number;awayScore:number;predictedHome:number;observedHome:number;brier:number;winnerCorrect:number;logLoss:number};
 type Ledger = {schemaVersion:number;generatedAtUtc:string;snapshots:Snapshot[];settlements:Settled[];scores:{settledPredictions:number;brier:number|null;logLoss:number|null;winnerAccuracy:number|null};warning:string};
@@ -63,6 +63,7 @@ export default function ForecastTracker(){
           <div className="pick-top"><span>{p.result?"SETTLED / NCAA SOURCE":"AWAITING NCAA FINAL"}</span><span>ESPN EVENT {p.eventId}</span></div>
           <div className="pick-versus"><div><small>ROAD</small><strong>{p.away}</strong></div><span>AT</span><div><small>HOME</small><strong>{p.home}</strong></div></div>
           <div className="pick-prob-row"><div><strong>{pct(1-p.homeWinProbability)}</strong><span>{pct(p.homeWinProbability)}</span></div><div className="pick-probbar"><div style={{width:pct(1-p.homeWinProbability)}}/></div></div>
+          <p className="online-pick-model">{p.model}{p.modelTrainingThroughDate?" · trained through "+p.modelTrainingThroughDate:""}</p>
           <div className="pick-details"><span>Listed start: <DateDisplay iso={p.scheduledStartUtc}/></span><span>Forecast frozen: <DateDisplay iso={p.generatedAtUtc}/></span></div>
           {p.result && <div className="pick-result"><strong>FINAL {p.result.awayScore}–{p.result.homeScore}</strong><span>Forecast Brier {p.result.brier.toFixed(4)} · {p.result.winnerCorrect===1?"CORRECT PICK":p.result.winnerCorrect===.5?"EVEN-ODDS PICK":"MISSED PICK"}</span></div>}
         </article>)}
