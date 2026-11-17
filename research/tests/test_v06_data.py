@@ -70,7 +70,7 @@ class VerifiedSourceTests(unittest.TestCase):
                 rank = ci * 3 + j
                 rows.append({
                     "teamId": f"t{rank}", "name": f"Team {rank}",
-                    "conference": f"League {ci}", "conferenceVerified": True,
+                    "conference": f"League {ci}", "conferenceVerified": True, "divisionIConfirmed": True,
                     "projectedRating": 1800 - rank, "wins": 10, "losses": j,
                 })
         result = build_watchlist(rows, "2026-11-15")

@@ -14,7 +14,7 @@ def build_watchlist(teams: list[dict], as_of: str) -> dict:
     inventing missing leagues, publication is unavailable unless exactly
     32 unique verified conferences and >=76 mapped programs are represented.
     """
-    eligible = [t for t in teams if t.get("conferenceVerified") and
+    eligible = [t for t in teams if t.get("divisionIConfirmed") is True and t.get("conferenceVerified") and
                 isinstance(t.get("conference"), str) and
                 math.isfinite(float(t["projectedRating"]))]
     by_conference = defaultdict(list)
@@ -27,10 +27,12 @@ def build_watchlist(teams: list[dict], as_of: str) -> dict:
         "fieldSize": FIELD_SIZE, "automaticSlotCount": AUTOMATIC,
         "atLargeSlotCount": AT_LARGE,
         "eligibleCandidateCount": len(eligible),
+        "divisionIConfirmedCandidateCount": sum(t.get("divisionIConfirmed") is True for t in teams),
         "matchedConferences": len(groups),
         "limitations": [
             "Conference leader is projected Elo leader, NOT conference standings or tournament champion.",
             "Power-only strength is NOT NCAA NET, quadrants, official selection criteria or bid probability.",
+            "Division I group membership is independently source-linked when available; membership does not guarantee postseason eligibility.",
             "Unknown/reclassifying member eligibility, conference tournament results, and bracket seed positions unavailable.",
             "No participant is officially in 2027 March Madness until Selection Sunday.",
             "Seed ranges are hand-specified early-sample *strength tiers*, NOT statistically calibrated NCAA seed probabilities.",
@@ -38,7 +40,7 @@ def build_watchlist(teams: list[dict], as_of: str) -> dict:
     }
     if len(groups) != AUTOMATIC or len(eligible) < FIELD_SIZE:
         report.update({"status": "insufficient-coverage",
-                       "reason": f"Need 32 source-verified conferences and 76 rated candidates; have {len(groups)} and {len(eligible)}",
+                       "reason": f"Need 32 2027 D-I group-linked and conference-matched leagues and 76 rated candidates; have {len(groups)} and {len(eligible)}",
                        "teams": [], "bubble": []})
         return report
     def order(t: dict):
