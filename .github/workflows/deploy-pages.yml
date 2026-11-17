@@ -40,7 +40,11 @@ jobs:
       - name: Validate and build 2027 NCAA-source results
         env:
           PYTHONPATH: research
-        run: python -m forecast.live --model-report web/public/research/benchmark.json --out web/public/current/2027.json
+        run: python -m forecast.live --model-report web/public/research/benchmark.json --out web/public/current/2027.json --games-out web/public/current/2027-games.json
+      - name: Retrain 2027 logistic model on earlier game dates and walk-forward score
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json
       - name: Validate accepted-game totals and publish refresh provenance
         env:
           PYTHONPATH: research

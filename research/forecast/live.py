@@ -317,6 +317,7 @@ def main() -> None:
     parser.add_argument("--model-report", type=Path, default=Path("web/public/research/benchmark.json"),
                         help="Earlier-season-only calibration report, if generated")
     parser.add_argument("--out", type=Path, default=Path("web/public/current/2027.json"))
+    parser.add_argument("--games-out", type=Path, help="Save the exact accepted source games with snapshot timestamp for causal in-season training")
     args = parser.parse_args()
     if args.input:
         raw = args.input.read_bytes()
@@ -377,6 +378,13 @@ def main() -> None:
         }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+    if args.games_out:
+        args.games_out.parent.mkdir(parents=True, exist_ok=True)
+        args.games_out.write_text(json.dumps({
+            "schemaVersion": 1, "season": SEASON,
+            "retrievedAtUtc": output["retrievedAtUtc"],
+            "sourceUrl": origin, "games": games,
+        }, indent=2) + "\n", encoding="utf-8")
     print(f"Published {len(games)} confirmed NCAA-source games, "
           f"{len(output['teams'])} teams, through {output['lastGameDate']}")
     print(f"Division I group-linked teams: {output['divisionCoverage'].get('divisionIConfirmed', 0)}; "

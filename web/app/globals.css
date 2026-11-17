@@ -216,3 +216,24 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
   .section-heading .research-pill{white-space:normal;overflow-wrap:anywhere;max-width:100%;align-self:flex-start;line-height:1.35}
   .picks-exp,.selection-exp,.current-exp,.research-exp{min-width:0;max-width:100%}
 }
+
+/* v0.7: current-season causal retraining and model selection proof card */
+.online-learning{margin:20px 0 24px;padding:26px;background:linear-gradient(125deg,#102f34,#0b1f2b 68%);border:1px solid #2f5a55;border-radius:16px;min-width:0}
+.online-learning-head{display:flex;gap:20px;justify-content:space-between;align-items:flex-start}
+.online-learning-head h3{font-family:"Barlow Condensed",sans-serif;font-size:clamp(27px,3.5vw,44px);font-weight:900;text-transform:uppercase;line-height:1;margin:9px 0}
+.online-learning-head p{max-width:650px;font-size:13px;line-height:1.65;color:#b3cbd0}
+.online-learning-state{color:#bfd7d3;border:1px solid #48746b;background:#1c3940;white-space:nowrap;border-radius:100px;padding:8px 12px;font-size:10px;letter-spacing:1px;font-weight:900}
+.online-learning-state.state-active{color:#a9ffd7;border-color:#72ba94}
+.online-learning-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:22px 0}
+.online-learning-metrics>div{padding:17px 15px;border:1px solid #33524d;border-radius:11px;background:#102b34;display:flex;flex-direction:column;gap:5px;min-width:0}
+.online-learning-metrics small{font-size:9px;font-weight:900;letter-spacing:.7px;color:#a2c6bb}
+.online-learning-metrics strong{font-family:"Barlow Condensed",sans-serif;font-size:36px;line-height:1.1;color:#c1ffdc}
+.online-learning-metrics span{font-size:11px;color:#a3bbc0}
+.online-learning-bottom{display:flex;align-items:start;justify-content:space-between;gap:20px}
+.online-learning-bottom p{flex:1;color:#c0d5d7;line-height:1.6;font-size:12px}
+.online-learning-bottom a{font-size:10px;white-space:normal;color:#a6ffd1;font-weight:900;text-decoration:underline;text-underline-offset:4px}
+.online-learning-foot{color:#8fb2ae;font-size:11px;line-height:1.6;margin-top:15px}
+.online-learning-unavailable{color:#c2d6d2;font-size:12px;margin-top:16px}
+.online-pick-model{color:#a3d5bb;font-weight:800;font-size:10px;letter-spacing:.3px;margin:12px 0 4px}
+@media(max-width:880px){.online-learning-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.online-learning-head{flex-wrap:wrap}.online-learning-bottom{flex-wrap:wrap}}
+@media(max-width:490px){.online-learning{padding:17px 13px}.online-learning-metrics{gap:8px}.online-learning-metrics>div{padding:13px 10px}.online-learning-metrics strong{font-size:28px}.online-learning-metrics small{font-size:8px}}

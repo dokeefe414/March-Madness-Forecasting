@@ -26,11 +26,15 @@ jobs:
       - name: Build source-verified, timestamped current ratings
         env:
           PYTHONPATH: research
-        run: python -m forecast.live --out web/public/current/2027.json
+        run: python -m forecast.live --out web/public/current/2027.json --games-out web/public/current/2027-games.json
+      - name: Chronologically retrain current-season model before fixture snapshot
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json
       - name: Snapshot future ESPN fixtures only and settle past NCAA finals
         env:
           PYTHONPATH: research
-        run: python -m forecast.snapshot --ratings web/public/current/2027.json --out-dir web/public/forecasts
+        run: python -m forecast.snapshot --ratings web/public/current/2027.json --online-model web/public/current/2027-online-model.json --out-dir web/public/forecasts
       - name: Audit source timestamps, forecast buffer and score arithmetic
         env:
           PYTHONPATH: research

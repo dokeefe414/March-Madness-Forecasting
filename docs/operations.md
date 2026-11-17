@@ -128,3 +128,7 @@ py -m forecast.audit --dir web/public/forecasts
 ```
 
 If no update appears after the expected time, inspect [deploy runs](https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/deploy-pages.yml), the last game date and both UTC timestamps. Try the **Run workflow** control on the Actions page; a scheduled event is not guaranteed to execute on the dot. If `forecast.freshness` rejects a malformed feed, repair the cause with a hermetic regression test rather than bypassing the validation. GitHub disables scheduled actions on inactive public repositories after 60 days; check the Actions tab in the off-season. GitHub Actions also requires that workflow files reside on default `main`.
+
+## v0.7 in-season model retraining
+
+The Pages job runs `forecast.live --games-out web/public/current/2027-games.json` followed by `forecast.retrain --games ... --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json`. The 9:07 a.m. Eastern prediction archive repeats both source-linked steps before it freezes upcoming predictions. A retraining error fails the job rather than producing an unverified forecast. The model scores and Brier improvement gate are publicly inspectable in Current Pulse and in `/current/2027-online-model.json`. The raw scored-game archive and model report are generated deployment artifacts, not permanently source-controlled histories. [Full chronological methodology](online-retraining.md).

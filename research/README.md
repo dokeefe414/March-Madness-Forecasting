@@ -91,3 +91,7 @@ Current versioned modules:
 Source files: `research/forecast/`; offline tests: `research/tests/test_{v06_data,division,boosted,dynamics,snapshot}.py`. The Python standard library covers the full modeling stack. Source fetching needs internet only when generating current 2027 data or a real pregame pick.
 
 Additional details: [model math](../docs/model-zoo-v06.md), [D-I season reference](../docs/identity-and-conferences.md), [possession ratings](../docs/adjusted-efficiency.md), [watchlist](../docs/selection-watchlist.md), [pregame audit](../docs/forecast-audit.md).
+
+## v0.7 current-season model fitting
+
+Use `python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json` following a source-fresh `forecast.live --games-out`. The model excludes every current Eastern-date game, fits from earlier day groups, and tests against later days before any game-day updates. It remains in shadow unless paired Elo Brier and game-date bootstrap evidence clears the documented thresholds; eligible real pregame picks keep an immutable model fingerprint. See [online retraining](../docs/online-retraining.md).

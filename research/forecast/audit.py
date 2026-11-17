@@ -59,6 +59,12 @@ def audit_ledger(folder: Path) -> dict:
             key = snap["snapshotId"] + ":" + str(pred["eventId"])
             if key in original:
                 raise ValueError(f"Duplicate pregame snapshot prediction {key}")
+            model_day = pred.get("modelTrainingThroughDate")
+            if model_day is not None and model_day >= pred["scheduledEasternDate"]:
+                raise ValueError(f"Online model training reaches forecast day: {key}")
+            if pred.get("model") == "chronologically validated in-season logistic":
+                if not model_day or not pred.get("modelId"):
+                    raise ValueError(f"Trained forecast lacks as-of model provenance: {key}")
             start = parse_time(pred["scheduledStartUtc"])
             if created + timedelta(minutes=buffer_minutes) >= start:
                 raise ValueError(f"Forecast not before tip-off buffer: {key}")

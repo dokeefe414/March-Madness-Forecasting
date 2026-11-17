@@ -130,6 +130,28 @@ class PregameAuditTests(unittest.TestCase):
             self.assertEqual(result["predictions"], 0)
             self.assertEqual(result["settledPredictions"], 0)
 
+    def test_model_adoption_only_after_chronological_gate(self):
+        ratings = {**RATINGS, "teams": [
+            {**RATINGS["teams"][0], "wins":6,"losses":2,"trend":8},
+            {**RATINGS["teams"][1], "wins":1,"losses":6,"trend":-7},
+        ]}
+        model = {"mode":"active","type":"current-season-chronological-logistic",
+                 "season":2027,"modelId":"model001",
+                 "ratingRetrievedAtUtc":"2026-11-16T13:00:00Z",
+                 "trainedThroughDate":"2026-11-15","modelWeights":[0,0,.4,0]}
+        fixture = {"events":[game("ESPN-1","2026-11-17T01:00:00Z")]}
+        pred=forecast_scheduled([fixture],ratings,NOW,online_model=model)["predictions"][0]
+        self.assertEqual(pred["model"],"chronologically validated in-season logistic")
+        self.assertEqual(pred["modelId"],"model001")
+        self.assertEqual(pred["modelTrainingThroughDate"],"2026-11-15")
+        other=forecast_scheduled([fixture],ratings,NOW,online_model={**model,"mode":"shadow"})
+        self.assertEqual(other["predictions"][0]["model"],"as-of regular-season Elo")
+        with self.assertRaisesRegex(ValueError,"same-date"):
+            forecast_scheduled([fixture],ratings,NOW,online_model={**model,"trainedThroughDate":"2026-11-16"})
+        neutral=forecast_scheduled([{"events":[game("ESPN-2","2026-11-17T01:00:00Z",neutral=True)]}],ratings,NOW,online_model=model)
+        self.assertEqual(neutral["predictions"][0]["model"],"as-of regular-season Elo")
+
+
 
 if __name__ == "__main__":
     unittest.main()

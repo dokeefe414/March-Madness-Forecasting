@@ -88,3 +88,7 @@ The settlement worker now defensively refuses to grade a forecast unless its sou
 ## Nightly coordination
 
 The current-season page refreshes at the scheduled **1:00 a.m. Eastern** every night, and at **5:17 a.m. Eastern** in season to pick up late-released results. The immutable forecast archiver runs separately at **9:07 a.m. Eastern** in-season, once the morning's latest available ratings have been assembled. Each cron uses GitHub Actions' native `timezone: America/New_York` to respect EDT/EST automatically. Archive jobs can be delayed; the event-time and source-retrieval guards apply regardless of how late the job starts. The website is rebuilt after archived bot commits (main branch push) or its own schedules. This **does not** certify the provider's actual tipoff or supply real-time score streaming.
+
+## v0.7 model fingerprint and as-of rules
+
+A pregame record now includes the model name and, when eligible, the fitted-model ID and `modelTrainingThroughDate`. Each active model must share exactly the same current source retrieval timestamp as the ratings. Any model whose last training date reaches or passes the scheduled Eastern game date is rejected. The independent audit verifies model training precedes the fixture and that the original probability does not change at settlement. Neutral games and shadow models remain Elo predictions. See [current-season model fitting](online-retraining.md) for retrospective chronological validation vs genuinely archived forward picks.
