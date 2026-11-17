@@ -73,6 +73,7 @@ class EloEngine:
         self.home_advantage = home_advantage
         self.states: dict[int, TeamState] = {}
         self.pregame_brier: list[float] = []
+        self.pregame_accuracy: list[float] = []
         self.season: int | None = None
         self.last_day: int | None = None
 
@@ -80,6 +81,7 @@ class EloEngine:
         """Fit one season; never leak a game's result into its pre-game prediction."""
         self.states = {}
         self.pregame_brier = []
+        self.pregame_accuracy = []
         self.last_day = None
         self.season = None
         ordered = sorted(games, key=lambda g: (g.day_num, g.winner, g.loser))
@@ -106,6 +108,7 @@ class EloEngine:
             p_first = expected_winner if first_id_won else 1.0 - expected_winner
             outcome_first = 1.0 if first_id_won else 0.0
             self.pregame_brier.append((p_first - outcome_first) ** 2)
+            self.pregame_accuracy.append(1.0 if expected_winner > .5 else .5 if expected_winner == .5 else 0.0)
             delta = self.k_factor * (1.0 - expected_winner)
             winner.rating += delta
             loser.rating -= delta
@@ -118,6 +121,9 @@ class EloEngine:
 
     def brier_score(self) -> float | None:
         return sum(self.pregame_brier) / len(self.pregame_brier) if self.pregame_brier else None
+
+    def pregame_accuracy_score(self) -> float | None:
+        return sum(self.pregame_accuracy) / len(self.pregame_accuracy) if self.pregame_accuracy else None
 
     def rankings(self) -> list[dict]:
         """Return compact dashboard data. Ratings are not title probabilities."""

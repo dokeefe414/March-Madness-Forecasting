@@ -77,3 +77,21 @@ Tournament files are records of **actual historic results**, not bracket predict
 ## Validation
 
 Run npm run check:data from web/ to verify the complete 42-year inventory, source commit consistency, counts, default year and empty 2020 tournament. Future changes in the pinned data, dataset cutoff or normalization require explicit rebuilds and review.
+
+## Additional generated (not committed) schemas
+
+### Current 2027 report: `web/public/current/2027.json`
+
+Built by `PYTHONPATH=research python -m forecast.live --out web/public/current/2027.json`. Requires `mode="current"`, `season=2027`, `retrievedAtUtc`, `lastGameDate`, `cutoffDate`, `source`, `sourceUrl`, `regularSeasonGames`, `isOfficialBracket=false`, `teams`, and `recentGames`. Teams have `teamId` prefixed with `ncaa-` and include ordinary Elo, projected Elo, recent rating history, win/loss totals and descriptive points/average-opponent Elo. NCAA names are **not** silently mapped to historical Kaggle IDs.
+
+The importer rejects future data, wrong-season games, invalid scores, duplicate contest conflicts and missing required columns. The snapshot marks the last result and retrieval UTC separately. See [2027 source contract](current-season.md).
+
+### Research report: `web/public/research/benchmark.json`
+
+Built by `PYTHONPATH=research python -m forecast.benchmark --out web/public/research/benchmark.json`. `aggregate` has game-weighted Brier/log loss/accuracy for coin flip, Elo, trend Elo, temperature-calibrated Elo and logistic. `yearByYear` includes test year, prior-year training boundary, calibration temperature, logistic weights and metrics. `reliability` has ten favorite-confidence bins with observation count, confidence and accuracy. `seasonBlockUncertainty` reports paired bootstrap Brier difference versus Elo with 95% intervals. See [scientific validation](validation.md).
+
+Both generated JSON outputs are ignored by git, constructed in the deployment before Next.js static export and loaded on demand by React. A missing file is an explicit unavailable state, not a cue to display fake data.
+
+### Historical simulator field source
+
+Archive seed codes `W01`, `W16a`, `W16b` map archived team IDs to a region/seed position. A slot with two teams is an Opening Round match; 64 main slots plus 4 additional entrants describes a 68-team field; plus 12 describes the 76-team 2027 format. Actual 2027 positions remain unknown until selection. See [bracket-engine.md](bracket-engine.md).

@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Best-effort daily refresh during the NCAA basketball season.
+    - cron: "22 14 * 1,2,3,4,11,12 *"
 permissions:
   contents: read
   pages: write
@@ -21,7 +24,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - uses: actions/configure-pages@v5
+      - name: Validate and build 2027 NCAA-source results
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.live --out web/public/current/2027.json
+      - name: Build leakage-aware research visualizations
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.benchmark --web-dir web --out web/public/research/benchmark.json
       - name: Install frontend dependencies
         working-directory: web
         run: npm install --no-audit --no-fund
