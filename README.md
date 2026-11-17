@@ -18,7 +18,7 @@ March Forecast is a public, responsive men's college basketball analytics and pr
 
 | Workspace | What works | Important boundary |
 | --- | --- | --- |
-| **2027 Pulse** | Updated current-season Elo rankings, actual final scores, form changes, margin-per-game and team matchup probabilities | NCAA-derived results published by SportsDataverse; **not** official NCAA power rankings or live play-by-play |
+| **2027 Pulse** | Updated current-season Elo rankings, actual final scores, form changes, margin-per-game, matchup probabilities and a sequential pregame model scorecard | NCAA-derived results published by SportsDataverse; **not** official NCAA power rankings or live play-by-play |
 | **Historical Rankings** | All 42 seasons 1985–2026, team search, sort, season selector and rating timelines | 2026 regular-season mirror is incomplete |
 | **Matchup Lab** | Compare historical teams using frozen Elo-based probabilities | No injury, lineup, travel or possession adjustment |
 | **Bracket Lab** | Historical official seeded 64/65/68-team fields, opening rounds and all six advancement stages | Known historical entrants; generic Final Four region crossover scenario |

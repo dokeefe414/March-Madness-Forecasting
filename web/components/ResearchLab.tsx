@@ -113,7 +113,7 @@ export default function ResearchLab() {
               </button>;
             })}
           </div>
-          <p className="method-note">{metric === "accuracy" ? "Higher is better; ties count 0.5." : "Lower is better. Every model scored the same 2,270 historical outcomes in the current report."} The 50/50 model is the reference baseline.</p>
+          <p className="method-note">{metric === "accuracy" ? "Higher is better; ties count 0.5." : "Lower is better. Every model scored the same " + report.aggregate.elo.games.toLocaleString() + " historical outcomes in the current report."} The 50/50 model is the reference baseline.</p>
         </div>
         <div className="research-card reliability-card">
           <div className="research-card-head"><div><small>CALIBRATION DIAGNOSTIC</small><h3>{label(method)}</h3></div>

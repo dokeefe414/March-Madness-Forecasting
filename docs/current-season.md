@@ -51,3 +51,9 @@ If the release disappears, contains inconsistent scores, is empty, exceeds size 
 - If the input column schema changes, update validation and offline regression tests before merging.
 - Do not turn a failed source into mock rankings or a fake official 2027 field.
 - The 2027 season is a version-specific feed. Before the 2028 season, explicitly review year, source URL, cutoff, tests and docs. No accidental stale carry-over.
+
+## Sequential source-score model tracking
+
+The published `pregameDiagnostics` object reports `evaluatedGames`, `brier`, `accuracy`, `coinFlipBrier=0.25`, method and caveat. These values are accumulated **before each regular-season game updates Elo**, and they come from actual final scores in the published source. This is a retrospective chronological *pre-game backtest*, **not** an audited history of probabilities posted publicly prior to tipoff. As in the historical Kaggle source, same-day real tipoff order may be unavailable. The interface clearly labels this limitation.
+
+`forecast.core.EloEngine` tracks both pregame Brier and winner accuracy; `forecast.live` serializes them for the web. No fabricated win/loss streak chart or unobserved performance statistic is displayed.
