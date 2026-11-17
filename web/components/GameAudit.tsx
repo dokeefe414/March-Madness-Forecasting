@@ -62,7 +62,7 @@ export default function GameAudit({eventId,snapshots,settlements,closed=false}:{
      <p>Only real Git-archived predictions appear below. Each capture was originally recorded before the source-listed tipoff. Later outcomes never rewrite the earlier win percentage.</p>
    </div>
    {receipt&&<div className="ga-postgame">
-     <div><small>VERIFIED GAME RESULT</small><h4>{receipt.away} {receipt.awayScore} · {receipt.home} {receipt.homeScore}</h4>
+     <div><small>{receipt.espnFinalVerified?"INDEPENDENTLY VERIFIED FINAL":"ARCHIVED SOURCE RESULT — FINAL NOT INDEPENDENTLY CONFIRMED"}</small><h4>{receipt.away} {receipt.awayScore} · {receipt.home} {receipt.homeScore}</h4>
        <p>{receipt.actualResultDate} · ESPN final-status confirmation: {receipt.espnFinalVerified?"YES":"not independently reported in this record"}</p></div>
      <div><small>ARCHIVED FORECAST OF HOME WIN</small><strong>{pct(receipt.predictedHome)}</strong><span>{when(receipt.forecastAtUtc)}</span></div>
      <div><small>WINNER SELECTION</small><strong>{receipt.winnerCorrect===1?"CORRECT":receipt.winnerCorrect===0?"MISSED":"50/50"}</strong><span>Brier: {receipt.brier.toFixed(4)}</span></div>
