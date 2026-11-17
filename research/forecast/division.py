@@ -215,6 +215,10 @@ def annotate_division(teams: list[dict], membership: dict[str, dict]) -> dict:
         else:
             match = matched_id or matched_name
         team["divisionIConfirmed"] = bool(match["divisionIConfirmed"]) if match else None
+        # This groupTeamId is the vendor's season-2027 ESPN team ID from
+        # independently verified NCAA-to-ESPN membership/alias evidence.
+        # It can safely join an ESPN scheduled fixture to an NCAA-rated team.
+        team["espnSourceTeamId"] = str(match["groupTeamId"]) if match else None
         # The provider's season-2027 conference *group ID* is the authority
         # for identity and AQ grouping. NCAA display labels may collapse
         # multiple distinct source leagues (31 names vs 32 source groups).

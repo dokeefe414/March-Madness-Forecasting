@@ -25,6 +25,7 @@ from .core import matchup_probability
 from .reference import canonical
 from .live import SOURCE_URL, final_games, fetch_csv
 from .retrain import validate_for_pick, probability as online_probability
+from .performance import summarize_forward
 
 ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard"
 LOCAL = ZoneInfo("America/New_York")
@@ -61,9 +62,18 @@ def retrieve_fixture(day: date) -> dict:
     return result
 
 
-def _one_team(side: dict, name_index: dict[str, list[dict]]) -> dict | None:
+def _one_team(side: dict, name_index: dict[str, list[dict]],
+              id_index: dict[str, list[dict]] | None = None) -> dict | None:
     team = side.get("team") or {}
     if not isinstance(team, dict):
+        return None
+    # Prefer a season-2027 NCAA↔ESPN verified team-ID join when present.
+    # ESPN display names may contain mascots or inconsistent abbreviations.
+    provider_id = str(team.get("id") or "").strip()
+    linked = (id_index or {}).get(provider_id,[]) if provider_id else []
+    if len(linked) == 1:
+        return linked[0]
+    if len(linked)>1:
         return None
     matched: dict[str, dict] = {}
     for label in ("location", "shortDisplayName", "displayName"):
@@ -72,14 +82,19 @@ def _one_team(side: dict, name_index: dict[str, list[dict]]) -> dict | None:
             continue
         entries = name_index.get(name, [])
         if len(entries) == 1:
-            matched[entries[0]["teamId"]] = entries[0]
+            # Do not override a contradictory verified provider ID based
+            # solely on similar school names from another ESPN program.
+            if not provider_id or not entries[0].get("espnSourceTeamId") or (
+                str(entries[0]["espnSourceTeamId"]) == provider_id):
+                matched[entries[0]["teamId"]] = entries[0]
     # ESPN's location and display names occasionally refer to different
     # programs: do not pick whichever name appears first.
     return next(iter(matched.values())) if len(matched) == 1 else None
 
 
 def forecast_scheduled(scoreboards: list[dict], ratings: dict,
-                       generated_at: datetime, online_model: dict | None = None) -> dict:
+                       generated_at: datetime, online_model: dict | None = None,
+                       state_space: dict | None = None) -> dict:
     """Strict as-of future-start verification and source identity matching."""
     generated_at = generated_at.astimezone(timezone.utc)
     retrieved = parse_time(ratings["retrievedAtUtc"])
@@ -90,6 +105,13 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
     name_index: dict[str, list[dict]] = {}
     for team in ratings["teams"]:
         name_index.setdefault(canonical(team["name"]), []).append(team)
+    id_index: dict[str,list[dict]] = {}
+    for row in ratings["teams"]:
+        if row.get("espnSourceTeamId"):
+            id_index.setdefault(str(row["espnSourceTeamId"]), []).append(row)
+    if state_space is not None and (state_space.get("season") != 2027 or
+           state_space.get("ratingRetrievedAtUtc") != ratings["retrievedAtUtc"]):
+        raise ValueError("state-space and ratings do not share source provenance")
     unique: dict[str, dict] = {}
     counters = {"eventsSeen": 0, "notScheduled": 0, "startedOrTooClose": 0,
                 "unmatchedOrAmbiguous": 0, "duplicateIds": 0}
@@ -118,8 +140,8 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
             if len(home_sides) != 1 or len(away_sides) != 1:
                 counters["unmatchedOrAmbiguous"] += 1
                 continue
-            home = _one_team(home_sides[0], name_index)
-            away = _one_team(away_sides[0], name_index)
+            home = _one_team(home_sides[0], name_index, id_index)
+            away = _one_team(away_sides[0], name_index, id_index)
             if not home or not away or home["teamId"] == away["teamId"]:
                 counters["unmatchedOrAmbiguous"] += 1
                 continue
@@ -129,21 +151,34 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
             neutral = bool(competitions[0].get("neutralSite", False))
             # The trained home/away correction is not evaluated for neutral
             # venues. Such games keep the baseline without an extrapolation.
-            selected = (None if neutral else validate_for_pick(
-                online_model, ratings, starts.astimezone(LOCAL).date().isoformat()))
-            p = matchup_probability(home["rating"], away["rating"], 0 if neutral else 65)
-            model_name = "as-of regular-season Elo"
-            if selected is not None:
-                # The published 2027 team snapshot carries the SAME causal
-                # projected Elo form and smoothed W/L fields used in training.
-                form_gap = (home.get("trend", 0) - away.get("trend", 0)) / 30.0
-                home_rate = (home["wins"]+1)/(home["wins"]+home["losses"]+2)
-                away_rate = (away["wins"]+1)/(away["wins"]+away["losses"]+2)
-                x = ((home["rating"]+65-away["rating"])/400,
-                     max(-1.0,min(1.0,form_gap)),
-                     home_rate-away_rate, 1.0)
-                p = online_probability(x,selected["modelWeights"])
-                model_name = "chronologically validated in-season logistic"
+            future_eastern_day = starts.astimezone(LOCAL).date().isoformat()
+            candidate = None
+            if (not neutral and online_model and
+                online_model.get("mode") in ("active","shadow")):
+                # Compute the shadow candidate before outcome; the original
+                # mode still controls whether it may become the actual pick.
+                candidate = validate_for_pick({**online_model,"mode":"active"},
+                                              ratings,future_eastern_day)
+            selected = candidate if online_model and online_model.get("mode")=="active" else None
+            baseline = matchup_probability(home["rating"], away["rating"], 0 if neutral else 65)
+            challenger = None
+            if candidate:
+                form_gap=(home.get("trend",0)-away.get("trend",0))/30.0
+                home_rate=(home["wins"]+1)/(home["wins"]+home["losses"]+2)
+                away_rate=(away["wins"]+1)/(away["wins"]+away["losses"]+2)
+                challenger=online_probability(((home["rating"]+65-away["rating"])/400,
+                       max(-1.,min(1.,form_gap)),home_rate-away_rate,1.),candidate["modelWeights"])
+            state_probability=None
+            if state_space is not None and not neutral and (
+                    not state_space.get("trainedThroughDate") or
+                    state_space["trainedThroughDate"] < future_eastern_day):
+                strengths=state_space.get("strengths",{})
+                if home["name"] in strengths and away["name"] in strengths:
+                    state_probability=matchup_probability(strengths[home["name"]]["mean"],
+                                      strengths[away["name"]]["mean"],65)
+            p=challenger if selected else baseline
+            model_name=("chronologically validated in-season logistic"
+                        if selected else "as-of regular-season Elo")
             unique[event_id] = {
                 "eventId": event_id, "scheduledStartUtc": starts.isoformat().replace("+00:00", "Z"),
                 "scheduledEasternDate": starts.astimezone(LOCAL).date().isoformat(),
@@ -152,6 +187,9 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 "homeWinProbability": round(p, 7),
                 "awayWinProbability": round(1-p, 7),
                 "neutralSite": neutral, "model": model_name,
+                "baselineHomeWinProbability":round(baseline,7),
+                "challengerHomeWinProbability":round(challenger,7) if challenger is not None else None,
+                "stateSpaceHomeWinProbability":round(state_probability,7) if state_probability is not None else None,
                 "modelId": selected.get("modelId") if selected else None,
                 "modelTrainingThroughDate": selected.get("trainedThroughDate") if selected else None,
                 "match": "exact canonical NCAA name to ESPN team location/display",
@@ -169,7 +207,7 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
         "limitations": [
             "Missing/ambiguous ESPN ↔ NCAA name matches are excluded, never guessed.",
             "ESPN scheduled start may change; this records its as-of state, not proof of the actual tip-off.",
-            "Elo is the operational fallback; the in-season logistic correction activates only after earlier-date rolling Brier and date-block confidence gates.",
+            "Every actual and experimental probability is frozen before the listed start; challenger and state-space scenarios are not automatically promoted.",
             "Only forecasts generated before reported start (with 15-minute buffer) are stored.",
         ],
     }
@@ -275,8 +313,10 @@ def write_ledger(out_dir: Path, snapshot: dict, finals: list[dict], now: datetim
         "logLoss": round(sum(r["logLoss"] for r in combined) / len(combined), 6) if combined else None,
         "winnerAccuracy": round(sum(r["winnerCorrect"] for r in combined) / len(combined), 6) if combined else None,
     }
+    forward = summarize_forward(all_snapshots,combined)
     index = {
         "schemaVersion": 1, "generatedAtUtc": now.isoformat().replace("+00:00", "Z"),
+        "uniqueGames": forward,
         "snapshots": [{
             "id": s["snapshotId"],
             "generatedAtUtc": s["generatedAtUtc"],
@@ -296,6 +336,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ratings", type=Path, default=Path("web/public/current/2027.json"))
     parser.add_argument("--online-model", type=Path, help="Current-source 2027 chronologically retrained model JSON")
+    parser.add_argument("--state-space", type=Path, help="Optional same-source causal experimental team-state report")
     parser.add_argument("--out-dir", type=Path, default=Path("web/public/forecasts"))
     parser.add_argument("--scoreboard-json", type=Path, help="Offline fixture JSON for hermetic runs")
     parser.add_argument("--finals-csv", type=Path, help="Offline results CSV")
@@ -303,6 +344,7 @@ def main() -> None:
     now = datetime.now(timezone.utc)
     ratings = json.loads(args.ratings.read_text(encoding="utf-8"))
     online_model = json.loads(args.online_model.read_text(encoding="utf-8")) if args.online_model else None
+    state_space = json.loads(args.state_space.read_text(encoding="utf-8")) if args.state_space else None
     if online_model and online_model.get("generatedAtUtc"):
         if parse_time(online_model["generatedAtUtc"]) > now:
             raise ValueError("online training artifact is newer than archived forecast")
@@ -312,7 +354,8 @@ def main() -> None:
     else:
         days = [now.astimezone(LOCAL).date() + timedelta(days=i) for i in range(2)]
         scoreboards = [retrieve_fixture(day) for day in days]
-    forecast = forecast_scheduled(scoreboards, ratings, now, online_model=online_model)
+    forecast = forecast_scheduled(scoreboards, ratings, now, online_model=online_model,
+                                  state_space=state_space)
     if args.finals_csv:
         finals_text = args.finals_csv.read_text(encoding="utf-8-sig")
     else:

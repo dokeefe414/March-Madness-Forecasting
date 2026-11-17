@@ -26,3 +26,7 @@ web/playwright-report/
 web/public/current/2027-games.json
 web/public/current/2027-online-model.json
 web/public/current/refresh-status.json
+
+# 2027 v0.8 generated game picker and experimental state model files
+web/public/current/upcoming.json
+web/public/current/2027-state-space.json

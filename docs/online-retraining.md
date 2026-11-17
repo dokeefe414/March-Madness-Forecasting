@@ -69,3 +69,10 @@ CI tests date-order exclusions, same-day leakage, before-date training counts, p
 - A schedule timestamp is not a certified actual tipoff time; missing or ambiguous cross-provider program identity still prevents a pick.
 - Automatically fitting a new learner is not evidence that it is active. Verify `mode` in the published JSON. Do not describe a shadow model as the operational predictor.
 - This is one bounded model class with fixed hyperparameters. Genuinely new ML methods and cross-season learning need separate leakage-safe research and validation.
+
+
+## v0.8 independent forward-pick activation gate
+
+The earlier chronological 160/10 minimum training and 120 games/12 days Brier bootstrap comparison remains necessary, but now **cannot alone promote a trained model**. The scheduled `forecast.retrain --ledger web/public/forecasts` command reads the public immutable snapshot/settlement archive, counts the earliest first-published forecast of each ESPN event, and requires **at least 40 unique actually settled games** that had both Elo and the shadow logistic probabilities frozen before listed tipoff. Their paired forward Brier must improve by >=0.002 for the learned model to become operational.
+
+The `forwardValidation` public report has status, paired game count, Elo and challenger Brier, comparison gain and reason. It may remain `shadow` for an extended time. A wrong pick is never manually corrected in the archive or used for today's features; only new previous-day source results enter the next fitted model. This is *not* guaranteed improved accuracy. Full distinctions between historical-date scores and publicly archived forward picks: [forward performance](forward-performance.md).

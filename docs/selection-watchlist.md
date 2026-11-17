@@ -53,3 +53,8 @@ The group lineage uses ESPN team IDs while our schedule uses stats.ncaa.org scho
 The public source bundle currently has **32 verified D-I conferenceGroupIds** but only **31 NCAA conference display-name strings**. Grouping by `conference` text was needlessly lossy and kept the field in `insufficient-coverage`. The correction requires `divisionConferenceGroupId` assigned by the verified season-2027 D-I group membership source and keys `by_conference` by that explicit ID. Team cards continue to show NCAA human-readable labels, with source group IDs available for audit. A simulation with 32 unique group IDs and 31 shared display labels remains eligible for an **unofficial** 76-team power watchlist. No missing league is guessed or created.
 
 Tests explicitly verify the 32-ID/31-label case, gate absent groups, require D-I status and preserve exactly 32 conference-proxy plus 44 strength-based at-large candidates. This change does not predict conference tournament winners or official bids.
+
+
+## v0.8 explicitly hypothetical neutral matchup and upset lens
+
+Field Watch now lets a user compare a selected provisional power-list program against any other source-linked provisional field or bubble candidate. The lens shows two-sided *neutral-court Elo strength* probabilities and the chance the **lower-rated** side wins that hypothetical match. It never asserts a real tournament pairing, NCAA selection/seed odds, automatic-bid qualification, or a bracket path. Existing 32 source-conference coverage and individual D-I identity requirements remain required for displaying the 76-team power-only watchlist. Real fixtures and the reason for each regular-season prediction belong to [Game Center](game-center.md).

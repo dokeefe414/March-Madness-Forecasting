@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 type Model = {
   mode:"active"|"shadow"|"baseline";reason:string;trainedThroughDate:string|null;
+  forwardValidation?:{pairedGames:number;minPairedGames:number;promote:boolean;status:string;reason:string};
   trainingGames:number;evaluationGames:number;evaluationDays:number;
   walkForward:{eloBrier:number|null;onlineLogisticBrier:number|null;
                modelBrierGain:number|null;dayBlockGain95:number[]|null}|null;
@@ -36,6 +37,9 @@ export default function OnlineLearning(){
       <div><small>HELD-OUT ELO BRIER ↓</small><strong>{report.walkForward?.eloBrier?.toFixed(4)??"—"}</strong><span>Identical evaluated fixtures</span></div>
       <div><small>TRAINED MODEL BRIER ↓</small><strong>{report.walkForward?.onlineLogisticBrier?.toFixed(4)??"—"}</strong><span>Fitted only to preceding days</span></div>
     </div>
+    {report.forwardValidation&&<div className="fp-online-gate"><strong>ACTIVATION REQUIRES LIVE FORWARD VALIDATION</strong>
+      <span>{report.forwardValidation.pairedGames}/{report.forwardValidation.minPairedGames||40} paired settled pretipoff game forecasts</span>
+      <small>{report.forwardValidation.promote?"Forward evidence passed.":"Retrospective improvement alone cannot promote the model."}</small></div>}
     <div className="online-learning-bottom"><p><strong>{report.mode==="active"?"Validated candidate can serve eligible future picks.":"Elo remains the operating forecast."}</strong> {report.reason}. {report.walkForward?.dayBlockGain95?
       "95% date-block Brier gain interval: "+report.walkForward.dayBlockGain95.map(v=>v.toFixed(4)).join(" to ")+".":"Independent day-block interval not yet available."}</p>
       <a href={url} target="_blank" rel="noreferrer">MODEL REPORT ↗</a></div>

@@ -7,6 +7,7 @@ import { matchupProbability, type RatingsDataset } from "../lib/models";
 import FullBracketLab from "./FullBracketLab";
 import ResearchLab from "./ResearchLab";
 import LiveSeason from "./LiveSeason";
+import GameCenter from "./GameCenter";
 import SelectionLab from "./SelectionLab";
 import ForecastTracker from "./ForecastTracker";
 
@@ -22,7 +23,7 @@ type TournamentArchive = {
   seeds: Record<string, string>;
   games: Array<{ day?: number; round?: string; winnerId: string; loserId: string; winnerScore: number; loserScore: number }>;
 };
-type Tab = "current" | "selection" | "predictions" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
+type Tab = "games" | "current" | "selection" | "predictions" | "rankings" | "compare" | "bracket" | "research" | "history" | "method";
 type Sort = "rank" | "momentum" | "wins";
 
 function percent(value: number): string {
@@ -71,7 +72,7 @@ export default function Dashboard() {
   const [archive, setArchive] = useState<TournamentArchive | null>(null);
   const [archiveStatus, setArchiveStatus] = useState<"idle" | "loading" | "error">("idle");
   const sortedTeams = useMemo(() => [...data.teams].sort((a, b) => b.projectedRating - a.projectedRating), [data]);
-  const [tab, setTab] = useState<Tab>("current");
+  const [tab, setTab] = useState<Tab>("games");
   // SSR markup may be visible before React attaches navigation handlers.
   // A deterministic hydration signal lets browser tests avoid lost clicks.
   const [hydrated,setHydrated] = useState(false);
@@ -142,12 +143,12 @@ export default function Dashboard() {
     <main data-hydrated={hydrated?"yes":"no"}>
       <div className="site-shell">
         <header className="site-header">
-          <button className="brand" onClick={() => setTab("current")} aria-label="March Forecast home">
+          <button className="brand" onClick={() => setTab("games")} aria-label="March Forecast home">
             <span className="brand-mark">M<span>F</span></span>
             <span className="brand-title">MARCH<span>FORECAST</span></span>
           </button>
           <nav aria-label="Main navigation" className="desktop-nav">
-            {([["current", "2027 Pulse"], ["selection", "Field Watch"], ["predictions", "Picks Ledger"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
+            {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
               <button key={id} className={tab === id ? "nav-link active" : "nav-link"} onClick={() => setTab(id)}>{label}</button>
             ))}
           </nav>
@@ -155,7 +156,7 @@ export default function Dashboard() {
         </header>
 
         <div className="mobile-nav" aria-label="Page sections">
-          {([["current", "2027 Pulse"], ["selection", "Field Watch"], ["predictions", "Picks Ledger"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
+          {([["games", "Find a Game"], ["current", "2027 Pulse"], ["predictions", "Accuracy & Picks"], ["selection", "Field Watch"], ["rankings", "Historical"], ["compare", "Matchups"], ["bracket", "Bracket"], ["research", "Research"], ["history", "Archive"], ["method", "About"]] as [Tab, string][]).map(([id, label]) => (
             <button key={id} className={tab === id ? "mobile-link active" : "mobile-link"} onClick={() => setTab(id)}>{label}</button>
           ))}
         </div>
@@ -217,6 +218,7 @@ export default function Dashboard() {
             {loadStatus === "error" && <span className="year-status error">Could not load historical season.</span>}
           </div>
         )}
+        {tab === "games" && <GameCenter onOpenAccuracy={()=>setTab("predictions")}/>}
         {tab === "current" && <LiveSeason/>}
         {tab === "selection" && <SelectionLab/>}
         {tab === "predictions" && <ForecastTracker/>}

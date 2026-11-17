@@ -30,11 +30,15 @@ jobs:
       - name: Chronologically retrain current-season model before fixture snapshot
         env:
           PYTHONPATH: research
-        run: python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json
+        run: python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --ledger web/public/forecasts --out web/public/current/2027-online-model.json
+      - name: Recompute source-linked causal state-space challenger for audit
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.state_space --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-state-space.json
       - name: Snapshot future ESPN fixtures only and settle past NCAA finals
         env:
           PYTHONPATH: research
-        run: python -m forecast.snapshot --ratings web/public/current/2027.json --online-model web/public/current/2027-online-model.json --out-dir web/public/forecasts
+        run: python -m forecast.snapshot --ratings web/public/current/2027.json --online-model web/public/current/2027-online-model.json --state-space web/public/current/2027-state-space.json --out-dir web/public/forecasts
       - name: Audit source timestamps, forecast buffer and score arithmetic
         env:
           PYTHONPATH: research

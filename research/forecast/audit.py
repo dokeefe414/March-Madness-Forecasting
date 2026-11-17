@@ -73,6 +73,12 @@ def audit_ledger(folder: Path) -> dict:
             if not (math.isfinite(p) and math.isfinite(q) and 0 < p < 1
                     and 0 < q < 1 and abs(p + q - 1) < 0.00001):
                 raise ValueError(f"Invalid probability complement: {key}")
+            for field in ("baselineHomeWinProbability","challengerHomeWinProbability",
+                          "stateSpaceHomeWinProbability"):
+                if pred.get(field) is not None:
+                    candidate=float(pred[field])
+                    if not math.isfinite(candidate) or not 0<candidate<1:
+                        raise ValueError(f"Unscorable frozen challenger probability: {key}")
             original[key] = (snap, pred)
     scored: list[dict] = []
     seen: set[str] = set()
@@ -122,6 +128,11 @@ def audit_ledger(folder: Path) -> dict:
         "winnerAccuracy": round(sum(float(r["winnerCorrect"]) for r in scored)/len(scored),6) if scored else None,
     }
     if index is not None:
+        if index.get("uniqueGames") is not None:
+            from .performance import summarize_forward
+            expected=summarize_forward([s for _,s in sources],scored)
+            if index["uniqueGames"]!=expected:
+                raise ValueError("Unique-game forward scoring differs from immutable evidence")
         if index.get("scores") != metrics:
             raise ValueError("Public index metrics disagree with immutable settlement entries")
         snapshot_summary = index.get("snapshots", [])

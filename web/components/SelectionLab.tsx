@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { RatingsDataset, Team } from "../lib/models";
+import {matchupProbability} from "../lib/models";
 
 type WatchTeam = {teamId:string; name:string; conference:string; projectedRating:number; wins:number;
  losses:number; games:number; category:string; powerRank:number|null; sampleBand:string;illustrativeSeedRange?:number[]|null;conferenceGroupId?:string};
@@ -19,6 +20,7 @@ export default function SelectionLab(){
   const [search,setSearch] = useState("");
   const [conference,setConference] = useState("all");
   const [detailId,setDetailId] = useState("");
+  const [compareId,setCompareId] = useState("");
   useEffect(()=>{
     let alive = true;
     fetch(basePath+"/current/2027.json").then(r=>{
@@ -46,6 +48,12 @@ export default function SelectionLab(){
         (conference==="all" || t.conference===conference));
   },[watch,filter,search,conference]);
   const selected = (watch?.teams||[]).concat(watch?.bubble||[]).find(t=>t.teamId===detailId)||candidates[0];
+  const scenarios = (watch?.teams||[]).concat(watch?.bubble||[]);
+  const opponent = scenarios.find(t=>t.teamId===compareId) ||
+                   scenarios.find(t=>t.teamId!==selected?.teamId);
+  const scenarioReady = Boolean(selected&&opponent&&selected.teamId!==opponent.teamId);
+  const neutralChance = scenarioReady ? matchupProbability(selected!.projectedRating,opponent!.projectedRating):null;
+  const upsetChance = neutralChance!=null ? Math.min(neutralChance,1-neutralChance):null;
   const confMatched = data?.divisionCoverage?.divisionIConfirmed || 0;
   const confCount = watch?.matchedConferences || 0;
   const preview = useMemo(()=>{
@@ -106,6 +114,24 @@ export default function SelectionLab(){
           </aside>
         </div>
       </>}
+      {watch?.status==="ready"&&<section className="selection-lens">
+        <div className="selection-lens-copy"><span className="section-kicker">TOURNAMENT RESEARCH / NO INVENTED FIELD</span>
+          <h3>Explore the <em>upset.</em></h3>
+          <p>Compare any two **provisional** power-list programs at a neutral venue. This is a hypothetical strength scenario, not a real 2027 tournament bracket, matchup, seed, or probability of making the field.</p>
+        </div>
+        <div className="selection-lens-controls">
+          <div><small>FOCUSED PROGRAM</small><strong>{selected?.name||"Choose a program above"}</strong><span>Power position: {selected?.powerRank||"Bubble"} · rating {selected?.projectedRating?.toFixed(0)||"—"}</span></div>
+          <label>HYPOTHETICAL OPPONENT<select aria-label="Choose hypothetical tournament opponent" value={opponent?.teamId||""} onChange={e=>setCompareId(e.target.value)}>
+            {scenarios.filter(t=>t.teamId!==selected?.teamId).map(t=><option key={t.teamId} value={t.teamId}>{t.name} · {t.category==="near-power-cutline"?"Bubble":"Power "+t.powerRank}</option>)}
+          </select></label>
+          {neutralChance!=null&&opponent?<div className="selection-lens-result">
+            <div><small>{selected?.name} WIN CHANCE</small><strong>{(neutralChance*100).toFixed(1)}%</strong></div>
+            <div><small>{opponent.name} WIN CHANCE</small><strong>{((1-neutralChance)*100).toFixed(1)}%</strong></div>
+            <div className="selection-lens-meter"><div style={{width:(neutralChance*100).toFixed(1)+"%"}}/></div>
+            <p>Lower-rated team winning this **hypothetical** pairing: <strong>{(upsetChance!*100).toFixed(1)}%</strong>. Both odds are neutral-site Elo scenarios, not calibrated committee seeding outcomes. Early-season samples and uncertain team eligibility matter.</p>
+          </div>:<p>Pick two different verified provisional programs to explore.</p>}
+        </div>
+      </section>}
       <div className="selection-foot"><span className="feature-kicker">CONFERENCE-LINKED SOURCE LEADERS</span>
         <p>These are the highest-rated programs independently linked to source Division I membership and the NCAA 2027 directory. They are not officially qualified.</p>
         <div className="selection-preview">{preview.map((t,i)=><div key={t.teamId}><span>{String(i+1).padStart(2,"0")}</span><strong>{t.name}</strong><small>{t.conference||"—"}</small><b>{t.projectedRating.toFixed(0)}</b></div>)}</div>
