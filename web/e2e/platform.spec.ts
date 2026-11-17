@@ -7,14 +7,16 @@ async function section(page: import("@playwright/test").Page, label:string) {
   await button.click();
 }
 
-test("v0.6 workspaces navigate without synthetic predictions",async ({page},testInfo)=>{
+test("v0.8 game-first workspaces navigate without synthetic predictions",async ({page},testInfo)=>{
   await page.goto("/");
   await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+  await expect(page.getByRole("heading",{name:/Game intelligence/i})).toBeVisible();
+  await section(page,"2027 Pulse");
   await expect(page.getByRole("heading",{name:/Current pulse/i})).toBeVisible();
   await section(page,"Field Watch");
   await expect(page.getByRole("heading",{name:/Field watchlist/i})).toBeVisible();
   await expect(page.getByText(/ZERO LOCKS YET/i)).toBeVisible();
-  await section(page,"Picks Ledger");
+  await section(page,"Accuracy & Picks");
   await expect(page.getByRole("heading",{name:/Prediction ledger/i})).toBeVisible();
   await expect(page.getByText(/NO HINDSIGHT/i)).toBeVisible();
   await section(page,"Research");
@@ -35,7 +37,7 @@ test("v0.6 workspaces navigate without synthetic predictions",async ({page},test
 
 test("at supported breakpoints, no viewport-wide horizontal overflow",async ({page},testInfo)=>{
   await page.goto("/");
-  for (const name of ["Field Watch","Picks Ledger","Research","Historical","Bracket"]) {
+  for (const name of ["Find a Game","2027 Pulse","Accuracy & Picks","Field Watch","Research","Historical","Bracket"]) {
     await section(page,name);
     await page.waitForTimeout(120);
     const size=await page.evaluate(()=>({
@@ -49,8 +51,25 @@ test("at supported breakpoints, no viewport-wide horizontal overflow",async ({pa
 
 test("core page has no critical WCAG violations",async ({page})=>{
   await page.goto("/");
-  await section(page,"Field Watch");
+  await section(page,"Find a Game");
   const result=await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"]).analyze();
   const severe=result.violations.filter(v=>v.impact==="critical");
   expect(severe.map(v=>v.id+": "+v.description)).toEqual([]);
+});
+
+test("game finder has accessible search, fixture details and honest empty outcomes",async ({page})=>{
+  await page.goto("/");
+  await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+  await expect(page.getByRole("heading",{name:/Game intelligence/i})).toBeVisible();
+  await expect(page.getByLabel("Search upcoming games")).toBeVisible();
+  await expect(page.getByLabel("Hypothetical team A")).toBeVisible();
+  await expect(page.getByLabel("Hypothetical team B")).toBeVisible();
+  // In CI, there may be no external fixture file; do not invent a probability.
+  const data=await page.locator(".gc-fixture").count();
+  if(data){
+    await page.locator(".gc-fixture").first().click();
+    await expect(page.locator(".gc-detail")).toBeVisible();
+  }else{
+    await expect(page.locator(".gc-unmatched").or(page.locator(".premium-empty")).first()).toBeVisible();
+  }
 });
