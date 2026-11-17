@@ -57,3 +57,7 @@ If the release disappears, contains inconsistent scores, is empty, exceeds size 
 The published `pregameDiagnostics` object reports `evaluatedGames`, `brier`, `accuracy`, `coinFlipBrier=0.25`, method and caveat. These values are accumulated **before each regular-season game updates Elo**, and they come from actual final scores in the published source. This is a retrospective chronological *pre-game backtest*, **not** an audited history of probabilities posted publicly prior to tipoff. As in the historical Kaggle source, same-day real tipoff order may be unavailable. The interface clearly labels this limitation.
 
 `forecast.core.EloEngine` tracks both pregame Brier and winner accuracy; `forecast.live` serializes them for the web. No fabricated win/loss streak chart or unobserved performance statistic is displayed.
+
+### Date-format compatibility (deployment incident, Nov 16, 2026)
+
+The first v0.5 deployment intentionally failed before publication because the real schedule release contained U.S. calendar dates such as `11/07/2026`, while the initial parser expected ISO dates. `parse_source_date` now accepts **explicit ISO `YYYY-MM-DD` and U.S. `MM/DD/YYYY`** formats, normalizes both to a Python `date`, and rejects ambiguous/unknown date styles instead of guessing. A hermetic test now includes the observed U.S. format. This fixes the source-format mismatch without bypassing any cutoff or quality validation.
