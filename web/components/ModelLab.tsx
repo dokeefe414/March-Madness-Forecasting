@@ -199,7 +199,7 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
          <span>{r.date.slice(5)}</span></div>;
      }):<p>No previous-date sample has been published yet.</p>}</div>
    </div>
-   <p className="ml-footer">Every candidate's forward result depends on the independent before-tipoff archive and later final-status verification. A lower historical Brier does not guarantee improvement on tomorrow's games. The date-ordered logistic gate and separate public forward gate can reject or demote a model automatically. <a href="https://github.com/dokeefe414/March-Madness-Forecasting/blob/main/docs/v09-model-validation.md" target="_blank" rel="noreferrer">READ THE SOURCE AND MATH ↗</a></p>
+   <p className="ml-footer">Every candidate's forward result depends on the independent before-tipoff archive and later final-status verification. A lower historical Brier does not guarantee improvement on tomorrow's games. The date-ordered logistic gate and separate public forward gate can reject or demote a model automatically. <a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27/blob/main/docs/v09-model-validation.md" target="_blank" rel="noreferrer">READ THE SOURCE AND MATH ↗</a></p>
    </>}
  </section>;
 }
