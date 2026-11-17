@@ -1,10 +1,11 @@
 "use client";
 import { useEffect,useMemo,useState } from "react";
+import ForwardScorecard from "./ForwardScorecard";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 type Pick = {eventId:string;scheduledStartUtc:string;scheduledEasternDate:string;home:string;away:string;homeTeamId:string;awayTeamId:string;homeWinProbability:number;neutralSite:boolean;model:string;modelId?:string|null;modelTrainingThroughDate?:string|null};
 type Snapshot = {id:string;generatedAtUtc:string;count:number;predictions:Pick[]};
 type Settled = {predictionKey:string;snapshotId:string;eventId:string;forecastAtUtc:string;scheduledStartUtc:string;home:string;away:string;homeScore:number;awayScore:number;predictedHome:number;observedHome:number;brier:number;winnerCorrect:number;logLoss:number};
-type Ledger = {schemaVersion:number;generatedAtUtc:string;snapshots:Snapshot[];settlements:Settled[];scores:{settledPredictions:number;brier:number|null;logLoss:number|null;winnerAccuracy:number|null};warning:string};
+type Ledger = {schemaVersion:number;generatedAtUtc:string;snapshots:Snapshot[];settlements:Settled[];scores:{settledPredictions:number;brier:number|null;logLoss:number|null;winnerAccuracy:number|null};uniqueGames?:React.ComponentProps<typeof ForwardScorecard>["report"];warning:string};
 type Mode = "all"|"scheduled"|"settled";
 const pct = (n:number)=>(100*n).toFixed(1)+"%";
 function DateDisplay({iso}:{iso:string}){return <time dateTime={iso}>{new Date(iso).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZone:"America/New_York"})} ET</time>}
@@ -49,6 +50,7 @@ export default function ForecastTracker(){
       <a className="button-outline" href="https://github.com/dokeefe414/March-Madness-Forecasting/actions/workflows/archive-pregame.yml" target="_blank" rel="noreferrer">VIEW FORECAST ARCHIVER ↗</a></div>:
       <>
         <div className="source-status"><span className="status-bullet"/><div><strong>PUBLIC GITHUB AUDIT TRAIL</strong><span>Latest index <DateDisplay iso={ledger.generatedAtUtc}/> · {ledger.snapshots.length} saved capture runs · exact-time provenance</span></div><a href="https://github.com/dokeefe414/March-Madness-Forecasting/tree/main/web/public/forecasts" target="_blank" rel="noreferrer">VERIFY SOURCE FILES ↗</a></div>
+        <ForwardScorecard report={ledger.uniqueGames}/>
         <div className="mini-metrics"><div><small>PRE-TIPOFF PICKS</small><strong>{all.length}</strong><span>Latest archived runs shown</span></div>
           <div><small>SETTLED PICKS</small><strong>{scores?.settledPredictions||0}</strong><span>Against NCAA final scores</span></div>
           <div><small>OUT-OF-SAMPLE BRIER</small><strong>{scores?.brier!=null?scores.brier.toFixed(4):"—"}</strong><span>50/50 reference 0.2500</span></div>
