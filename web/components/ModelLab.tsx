@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 import ModelEvidence from "./ModelEvidence";
 import ResearchVisualization from "./ResearchVisualization";
+import ScoreResearchEvidence from "./ScoreResearchEvidence";
 
 const base=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Paired={pairedGames:number;pairedDates:number;baselineEloBrier:number|null;
