@@ -191,6 +191,17 @@ test("v1.1 model lab labels new challengers as retrospective, not public picks",
 });
 
 test("v1.2 team intelligence deep links and game evidence page exist",async ({page})=>{
+ // Hermetic source-backed mock: the repository does not commit generated
+ // /current artifacts (they are built by the Pages publication workflow).
+ const team=(id:string,name:string,rating:number)=>({teamId:id,name,rank:1,rating,projectedRating:rating,trend:4,wins:6,losses:2,history:[1500,rating],conference:"Example League",conferenceVerified:true,
+   opponentAverageElo:1490,adjOff100:109,adjDef100:97,pacePossessions:67});
+ const retrievedAtUtc="2026-11-17T12:00:00Z";
+ await page.route("**/current/2027.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   season:2027,mode:"current",retrievedAtUtc,teams:[team("ncaa-duke","Duke",1550),team("ncaa-unc","North Carolina",1510)]})}));
+ await page.route("**/current/2027-games.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   season:2027,retrievedAtUtc,games:[{id:"game-1",date:"2026-11-16",home:"Duke",away:"North Carolina",homeScore:78,awayScore:72}]})}));
+ await page.route("**/current/upcoming.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   games:[{eventId:"next-1",homeTeamId:"ncaa-duke",awayTeamId:"ncaa-unc",home:"Duke",away:"North Carolina",scheduledStartUtc:new Date(Date.now()+3*86400000).toISOString(),homeWinProbability:.6}]})}));
  await page.goto("/?view=teams");
  await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
  await expect(page.getByRole("heading",{name:/TEAM INTELLIGENCE/i})).toBeVisible();
