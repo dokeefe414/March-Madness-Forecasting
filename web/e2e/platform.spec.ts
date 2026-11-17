@@ -458,7 +458,7 @@ test("v1.8 five primary tabs and More preserve every original deep link",async (
  await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
  const nav=page.locator(".mf-simple-nav:visible").first();
  await expect(nav).toBeVisible();
- await expect(nav.locator("> button")).toHaveCount(5);
+ await expect(nav.locator(":scope > button")).toHaveCount(5);
  await expect(nav.locator(".mf-more summary")).toBeVisible();
  await section(page,"Archive");
  await expect(page).toHaveURL(/view=history/);
