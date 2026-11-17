@@ -101,7 +101,7 @@ def _metrics(rows:list[dict],kind:str)->dict:
 def evaluate(games:list[dict],ratings:dict,now:datetime|None=None)->dict:
     now=now or datetime.now(timezone.utc)
     if now.tzinfo is None:raise ValueError("Evaluation time must be timezone-aware")
-    if ratings.get("season")!=2027 or ratings.get("mode")!="current":
+    if not isinstance(ratings,dict) or ratings.get("season")!=2027 or ratings.get("mode")!="current":
         raise ValueError("Source data must be current NCAA 2027")
     if len(games)!=ratings.get("regularSeasonGames"):
         raise ValueError("Game source count differs from rating source")
