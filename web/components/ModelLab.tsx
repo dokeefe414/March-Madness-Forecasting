@@ -22,6 +22,8 @@ type State={ratingRetrievedAtUtc:string;mode:string;evaluatedGames:number;
   brier:number|null;eloSameDayBrier:number|null;adaptiveBrier:number|null;
   adaptiveAccuracy:number|null;driftWatchTeams:number;
   recentSevenDatesBrier:{elo:number|null;fixedStateSpace:number|null;adaptiveStateSpace:number|null;games:number}};
+type Challenger={mode:string;evaluatedGames:number;evaluatedDates:number;ratingRetrievedAtUtc:string;methods:Record<string,{games:number;brier:number|null;accuracy:number|null;logLoss:number|null}>;methodNotes:string[];policy:string};
+type Drift={status:string;settledUniqueGames:number;windowGames:number;priorBrier:number|null;recentBrier:number|null;brierDelta:number|null;alert:boolean;reason:string};
 type Health={status:string;archivedPredictions:number;lastArchiveUtc:string|null;
   ageHours:number|null;settledUniqueGames:number;message:string;sourceWarnings:string[]};
 function brier(v:number|null|undefined){return v==null?"—":v.toFixed(4)}
@@ -47,6 +49,8 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
  const [opponent,setOpponent]=useState<Opponent|null>(null);
  const [state,setState]=useState<State|null>(null);
  const [health,setHealth]=useState<Health|null>(null);
+ const [challengers,setChallengers]=useState<Challenger|null>(null);
+ const [drift,setDrift]=useState<Drift|null>(null);
  const [loaded,setLoaded]=useState(false);
  const [focused,setFocused]=useState(groups[0].name);
  useEffect(()=>{
@@ -58,10 +62,10 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
    Promise.all([
      get("/forecasts/index.json"),get("/current/2027-online-model.json"),
      get("/current/2027-opponents.json"),get("/current/2027-state-space.json"),
-     get("/current/archive-health.json"),
-   ]).then(([i,o,p,s,h])=>{
+     get("/current/archive-health.json"),get("/current/challengers.json"),get("/current/drift.json"),
+   ]).then(([i,o,p,s,h,c,d])=>{
       if(!live)return;
-      setIndex(i);setOnline(o);setOpponent(p);setState(s);setHealth(h);setLoaded(true);
+      setIndex(i);setOnline(o);setOpponent(p);setState(s);setHealth(h);setChallengers(c);setDrift(d);setLoaded(true);
    });
    return()=>{live=false};
  },[]);
@@ -154,6 +158,31 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
         <p>{online?.reason??"Model artifact not yet published."} Separate live-pick activation also requires prior pretipoff paired evidence.</p>
      </div>
    </div>
+   <section className="v11-research" aria-label="Additional independently evaluated model challengers">
+      <div className="ml-intro"><span className="section-kicker">NEW / CAUSAL CHALLENGER BENCHMARK</span>
+        <h2>Bayesian & <em>residual learning.</em></h2>
+        <p>Strict previous-date replay. New challengers are research-only: this is not proof of better public pregame accuracy. All three probabilities below are scored on the same dated games.</p></div>
+      {challengers&&challengers.ratingRetrievedAtUtc===opponent?.retrievedAtUtc?
+        <div className="v11-model-grid">{([
+          ["elo","ELO REFERENCE"],["bayesianShrinkage","BAYESIAN SHRINKAGE"],["onlineResidualStumps","ONLINE GRADIENT STUMPS"]
+        ] as const).map(([key,label])=><div key={key}>
+           <small>{label}</small><strong>{brier(challengers.methods[key]?.brier)}</strong>
+           <span>{pct(challengers.methods[key]?.accuracy)} correct · {challengers.methods[key]?.games||0} identical games</span>
+        </div>)}</div>:
+        <p className="ml-warning">No complete matching-source Bayesian and residual challenger report is published yet.</p>}
+      <p className="ml-footer">Shrinkage uses a 1500 Elo prior and attenuates uncertain early-season probabilities; residual stumps update only after their game's date. Neither can be automatically promoted. See the v1.1 validation documentation.</p>
+   </section>
+   <section className="v11-drift" aria-label="Prospective forecast drift review">
+      <div><span className="section-kicker">LIVE FIRST-PICK ERROR WATCH / NO HINDSIGHT</span>
+        <h2>Is the model <em>drifting?</em></h2>
+        <p>{drift?.reason||"Awaiting sourced forward-drift report."}</p></div>
+      <div className="v11-drift-data">
+        <div><small>PRIOR 25-GAME BRIER</small><strong>{brier(drift?.priorBrier)}</strong></div>
+        <div><small>LATEST 25-GAME BRIER</small><strong>{brier(drift?.recentBrier)}</strong></div>
+        <div><small>CHANGE / HIGHER IS WORSE</small><strong>{drift?.brierDelta==null?"—":(drift.brierDelta>0?"+":"")+drift.brierDelta.toFixed(4)}</strong></div>
+      </div>
+      <p className="ml-footer">{drift?.status==="review"?"Review recommended; no automatic retuning.":"Review begins only after 50 actual independently settled first picks."} An error increase is descriptive, not automatically statistical evidence of distribution shift.</p>
+   </section>
    <div className="ml-recent">
      <div><span className="section-kicker">04 / THE MOST RECENT OPPONENT EXPERIMENT</span>
        <h3>Game-day <em>performance.</em></h3>
