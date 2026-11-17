@@ -18,7 +18,7 @@ def games(count=85):
         b=teams[(i+1+i//6)%6]
         if a==b:b=teams[(i+3)%6]
         output.append({"id":str(i),"date":(start+timedelta(days=i)).isoformat(),
-                       "home":a,"away":b,"homeScore":70+(i%17),"awayScore":62+(i%13)})
+                       "home":a,"away":b,"homeScore":(68 if i%3==0 else 80)+(i%7),"awayScore":(79 if i%3==0 else 65)+(i%5)})
     return output
 def ratings(rows):
     return {"mode":"current","season":2027,"regularSeasonGames":len(rows),
