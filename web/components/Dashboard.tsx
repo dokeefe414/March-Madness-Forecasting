@@ -218,7 +218,7 @@ export default function Dashboard() {
             {loadStatus === "error" && <span className="year-status error">Could not load historical season.</span>}
           </div>
         )}
-        {tab === "games" && <GameCenter/>}
+        {tab === "games" && <GameCenter onOpenAccuracy={()=>setTab("predictions")}/>}
         {tab === "current" && <LiveSeason/>}
         {tab === "selection" && <SelectionLab/>}
         {tab === "predictions" && <ForecastTracker/>}

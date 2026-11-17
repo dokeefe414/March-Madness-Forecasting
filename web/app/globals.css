@@ -435,3 +435,9 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 .fp-calib-bar b{bottom:2px;background:#8db7f4}
 .fp-key-a{color:#a4ffd4;font-weight:900}.fp-key-b{color:#8db7f4;font-weight:900}
 @media(max-width:930px){.fp-analysis{grid-template-columns:1fr}}
+
+/* Explicit Game Center → actual first-pick accuracy navigation */
+.gc-accuracy-cta{align-self:flex-start;background:#acffd1;border:1px solid #d8ffe9;border-radius:8px;color:#0a302a;font-size:11px;font-weight:900;
+ letter-spacing:.9px;padding:11px 15px;cursor:pointer;transition:transform .15s ease,background .15s ease}
+.gc-accuracy-cta:hover,.gc-accuracy-cta:focus-visible{background:#deffec;transform:translateY(-1px)}
+@media(prefers-reduced-motion:reduce){.gc-accuracy-cta{transition:none}.gc-accuracy-cta:hover{transform:none}}

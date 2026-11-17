@@ -49,7 +49,7 @@ function ProfilePanel({profile,side}:{profile:Profile;side:"HOME"|"AWAY"}){
   </div>;
 }
 
-export default function GameCenter(){
+export default function GameCenter({onOpenAccuracy}:{onOpenAccuracy?:()=>void}){
   const [schedule,setSchedule]=useState<Schedule|null>(null);
   const [ratings,setRatings]=useState<RatingsDataset|null>(null);
   const [forward,setForward]=useState<Forward|null>(null);
@@ -110,7 +110,8 @@ export default function GameCenter(){
       <aside className="gc-hero-score"><small>REAL FORWARD FORECAST ACCURACY</small><strong>{forward?.score.accuracy!=null?percent(forward.score.accuracy):"—"}</strong>
         <span>{forward?.settledUniqueGames||0} uniquely settled future games</span>
         <p>{!forward?.settledUniqueGames?"Not a historical backtest. This percentage starts when real pretipoff predictions have settled.":"Every actual game counts once; repeated snapshots cannot inflate accuracy."}</p>
-        <a href="#gc-accuracy-notes">HOW THIS IS MEASURED ↓</a>
+        {onOpenAccuracy?<button className="gc-accuracy-cta" onClick={onOpenAccuracy}>OPEN ACCURACY & PICKS ↗</button>:
+          <a href="#gc-accuracy-notes">HOW THIS IS MEASURED ↓</a>}
       </aside>
     </div>
     <div className="gc-intro"><div><span className="section-kicker">01 / THE VERIFIED SCHEDULE</span><h2>Pick a <span>game.</span></h2>
