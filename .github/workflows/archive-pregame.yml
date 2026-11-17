@@ -30,7 +30,7 @@ jobs:
       - name: Chronologically retrain current-season model before fixture snapshot
         env:
           PYTHONPATH: research
-        run: python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json
+        run: python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --ledger web/public/forecasts --out web/public/current/2027-online-model.json
       - name: Recompute source-linked causal state-space challenger for audit
         env:
           PYTHONPATH: research

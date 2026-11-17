@@ -44,7 +44,7 @@ jobs:
       - name: Retrain 2027 logistic model on earlier game dates and walk-forward score
         env:
           PYTHONPATH: research
-        run: python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --out web/public/current/2027-online-model.json
+        run: python -m forecast.retrain --games web/public/current/2027-games.json --ratings web/public/current/2027.json --ledger web/public/forecasts --out web/public/current/2027-online-model.json
       - name: Fit causal Kalman-style latent team strength and evaluate prior days
         env:
           PYTHONPATH: research

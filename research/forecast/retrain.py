@@ -22,6 +22,7 @@ from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
+from .performance import summarize_forward
 
 from .advanced import sigmoid
 from .core import TeamState, forecast_rating, matchup_probability
@@ -96,7 +97,40 @@ def _bootstrap(days: list[tuple[str, list[float]]], samples: int = 500) -> list[
     return [round(measures[int(.025*samples)],6), round(measures[int(.975*samples)-1],6)]
 
 
-def build_report(games: list[dict], ratings: dict, now: datetime | None = None) -> dict:
+def score_archived_forward(root: Path | None) -> dict:
+    """Check already frozen earliest actual predictions; do not tune from misses.
+
+    Shadow candidate and baseline must be probabilities frozen for the same
+    fixture in the original *before-tipoff* Git artifact. Each game is counted
+    once. The training gate is conservative until 40 genuine settled pairs.
+    """
+    if root is None:
+        return {"status":"not-requested","pairedGames":0,"promote":False,
+                "reason":"No immutable live-game archive was provided"}
+    snapshots=[]
+    settlements=[]
+    for file in sorted((root/"snapshots").glob("*.json")):
+        snapshots.append(json.loads(file.read_text(encoding="utf-8")))
+    for file in sorted((root/"settlements").glob("*.json")):
+        settlements.extend(json.loads(file.read_text(encoding="utf-8"))["results"])
+    summary=summarize_forward(snapshots,settlements)
+    compare=summary["shadowComparison"]
+    paired=compare["pairedGames"]
+    gain=compare["challengerBrierGain"]
+    # Never train/adjust coefficients by the result of the one game we missed.
+    allowed=paired>=40 and gain is not None and gain>=.002
+    return {"status":"eligible" if allowed else "insufficient-evidence",
+            "pairedGames":paired,"minPairedGames":40,
+            "eloBrier":compare["eloBrier"],
+            "challengerBrier":compare["challengerBrier"],
+            "challengerBrierGain":gain,"promote":allowed,
+            "reason":("Earlier live predictions and true source finals justify continued evaluation"
+                      if allowed else "Keep Elo for actual picks until >=40 unique settled, paired pretipoff comparisons show Brier gain >=0.002"),
+            "note":"Each ESPN event uses its earliest source-archived forecast. This is forward monitoring, not immediate adjustment after a single miss."}
+
+
+def build_report(games: list[dict], ratings: dict, now: datetime | None = None,
+                 forward_evidence: dict | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
         raise ValueError("training clock requires timezone")
@@ -174,9 +208,13 @@ def build_report(games: list[dict], ratings: dict, now: datetime | None = None) 
     trained_brier = sum(v["trainedBrier"] for v in validation)/len(validation) if validation else None
     ci = _bootstrap(differences)
     gain = baseline_brier-trained_brier if validation else None
-    promoted = (len(validation)>=MIN_EVAL_GAMES and len(differences)>=MIN_EVAL_DAYS
+    chronological_pass = (len(validation)>=MIN_EVAL_GAMES and len(differences)>=MIN_EVAL_DAYS
                 and gain is not None and gain >= MIN_BRIER_GAIN
                 and ci is not None and ci[0]>0)
+    # The candidate cannot become an operational public pick solely because
+    # retrospective replay looks attractive. Require first real publication.
+    forward_evidence = forward_evidence or score_archived_forward(None)
+    promoted = chronological_pass and forward_evidence.get("promote") is True
     model_id = hashlib.sha256(json.dumps({
         "through":max(grouped), "weights":weights, "count":len(examples),
         "sourceRetrieved": ratings["retrievedAtUtc"]
@@ -184,8 +222,10 @@ def build_report(games: list[dict], ratings: dict, now: datetime | None = None) 
     return {
         "schemaVersion":SCHEMA,"type":"current-season-chronological-logistic",
         "season":2027,"mode":"active" if promoted else "shadow",
-        "reason":("Chronological Brier advantage passes day-block confidence gate"
-                  if promoted else "Elo remains operational until evidence passes fixed promotion gates"),
+        "reason":("Chronological and independent real pregame Brier gates passed"
+                  if promoted else "Elo remains operational until retrospective AND real first-pick forward evidence passes both gates"),
+        "chronologicalGatePassed":chronological_pass,
+        "forwardValidation":forward_evidence,
         "modelId":model_id,"modelWeights":[round(x,9) for x in weights],
         "ratingRetrievedAtUtc":ratings["retrievedAtUtc"],
         "lastIncludedResultDate":ratings["lastGameDate"],
@@ -240,12 +280,14 @@ def main() -> None:
     parser.add_argument("--games",type=Path,default=Path("web/public/current/2027-games.json"))
     parser.add_argument("--ratings",type=Path,default=Path("web/public/current/2027.json"))
     parser.add_argument("--out",type=Path,default=Path("web/public/current/2027-online-model.json"))
+    parser.add_argument("--ledger",type=Path,help="Read-only frozen public forecast archive for independent forward activation gate")
     args=parser.parse_args()
     gamefile=json.loads(args.games.read_text(encoding="utf-8"))
     ratings=json.loads(args.ratings.read_text(encoding="utf-8"))
     if gamefile.get("season")!=2027 or gamefile.get("retrievedAtUtc")!=ratings.get("retrievedAtUtc"):
         raise ValueError("training source does not match the published ratings snapshot")
-    report=build_report(gamefile["games"],ratings)
+    report=build_report(gamefile["games"],ratings,
+                        forward_evidence=score_archived_forward(args.ledger))
     args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
     print(f"Chronologically retrained on {report['trainingGames']} prior-day games, "
