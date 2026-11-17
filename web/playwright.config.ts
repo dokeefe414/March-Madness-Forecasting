@@ -5,6 +5,8 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
+  // Avoid duplicate Next compilations and simultaneous mobile/desktop hydration.
+  workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["list"],["html",{open:"never",outputFolder:"playwright-report"}]] : "list",
   use: {
@@ -18,9 +20,11 @@ export default defineConfig({
     {name:"chromium-mobile", use:{...devices["Desktop Chrome"], viewport:{width:390,height:844}}},
   ],
   webServer: {
-    command: "npm run dev -- --port 3100",
+    // Test the same static artifact delivered by GitHub Pages, not the Turbopack
+    // dev HMR server (which can fail WebSocket handshakes under CI).
+    command: "npm run build && python3 -m http.server 3100 --bind 127.0.0.1 --directory out",
     url: "http://127.0.0.1:3100",
-    timeout: 120_000,
+    timeout: 180_000,
     reuseExistingServer: !process.env.CI,
   },
 });
