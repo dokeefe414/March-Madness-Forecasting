@@ -21,6 +21,7 @@ class Game:
     winner_score: int
     loser_score: int
     winner_location: str = "N"  # Kaggle WLoc: H, A, N
+    contest_id: str = ""  # Optional 2027 source contest identifier; legacy games remain unchanged
 
 
 @dataclass

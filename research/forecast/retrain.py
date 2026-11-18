@@ -4,7 +4,7 @@ This model predicts outcomes for game day D using ONLY sourced results from
 days < D. We freeze all same-day feature vectors before updating any Elo
 strengths, because the source provides dates but not verifiable tipoff times.
 
-The model is a regularized logistic residual correction to ordinary Elo:
+The model is a regularized logistic residual correction to source-aware Elo:
   P(home) = sigmoid(log(10) * (Elo_home + 65 - Elo_away)/400 + w · x)
   x = (Elo gap /400, bounded projected-form gap /30,
        Laplace-smoothed win-percentage gap, home-intercept=1).
@@ -26,6 +26,7 @@ from .performance import summarize_forward
 
 from .advanced import sigmoid
 from .core import TeamState, forecast_rating, matchup_probability
+from .game_aware_elo import margin_multiplier
 
 EASTERN = ZoneInfo("America/New_York")
 MIN_TRAIN_GAMES = 160
@@ -69,11 +70,10 @@ def train(examples: list[tuple[tuple[float, float, float, float], int]],
     return weights
 
 
-def _update(states: dict[str, TeamState], game: dict) -> None:
+def _update(states: dict[str, TeamState], game: dict, change: float) -> None:
+    """Apply a previously computed prior-date frozen margin-aware movement."""
     home, away = states[game["home"]], states[game["away"]]
     y = int(game["homeScore"] > game["awayScore"])
-    p = matchup_probability(home.rating, away.rating, 65)
-    change = 24*(y-p)
     home.rating += change
     away.rating -= change
     home.wins += y
@@ -201,15 +201,22 @@ def build_report(games: list[dict], ratings: dict, now: datetime | None = None,
                                    "trainedBrier":round((candidate-y)**2,8)})
             differences.append((day,diffs))
         examples.extend((x,y) for x,y,_,_ in day_examples)
-        # AFTER all pre-day predictions. Match EloEngine's deterministic
-        # same-day ordering by winner/loser team identity, not contest ID.
-        # Either ordering is only an approximation without tipoff timestamps.
+        # Preserve the identical source-aware Elo rule as forecast.live.
+        # Calculate *all* movements before applying any same-date outcome:
+        # the source has no trustworthy intraday tipoff sequence.
         def elo_order(g: dict) -> tuple[str, str, str]:
-            winner = g["home"] if g["homeScore"] > g["awayScore"] else g["away"]
-            loser = g["away"] if winner == g["home"] else g["home"]
-            return (winner.casefold(), loser.casefold(), g["id"])
+            a,b=g["home"].casefold(),g["away"].casefold()
+            return (min(a,b), max(a,b), str(g["id"]))
+        movements = []
         for g in sorted(batch, key=elo_order):
-            _update(states,g)
+            h,a=states[g["home"]],states[g["away"]]
+            p=matchup_probability(h.rating,a.rating,65)
+            y=int(g["homeScore"]>g["awayScore"])
+            mov=abs(g["homeScore"]-g["awayScore"])
+            change=24*margin_multiplier(mov)*(y-p)
+            movements.append((g,change))
+        for g,change in movements:
+            _update(states,g,change)
         played_days+=1
     weights = train(examples)
     baseline_brier = sum(v["baselineBrier"] for v in validation)/len(validation) if validation else None
@@ -265,7 +272,7 @@ def build_report(games: list[dict], ratings: dict, now: datetime | None = None,
         "caveats":[
             "Source game dates have no independently verified tipoff time. Every game on a given date is evaluated before same-day Elo updates.",
             "Retrospective rolling-day scores are not proof of public pregame predictions. Only the separate immutable prediction ledger provides that evidence.",
-            "No current-date result is used in training; incomplete or provisional upstream scoreboards can still require correction.",
+            "No current-date result is used in training; margin-aware Elo updates match the public current-season replay; incomplete or provisional upstream scoreboards can still require correction.",
             "Promoted weight parameters are a 2027 regular-season model, not an NCAA tournament seeding or bracket model.",
         ],
     }

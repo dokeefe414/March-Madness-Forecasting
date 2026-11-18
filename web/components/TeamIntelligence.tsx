@@ -51,9 +51,16 @@ export default function TeamIntelligence(){
        ["RECORD",team.wins+"–"+team.losses],
        ["CURRENT ELO",team.rating.toFixed(0)],
        ["FORM / TREND",(team.trend>=0?"+":"")+team.trend.toFixed(1)],
-       ["AVG OPPONENT ELO",team.opponentAverageElo?.toFixed(0)||"—"]
+       ["AVG OPPONENT ELO AT GAME",team.opponentAverageEloAtGame?.toFixed(0)||team.opponentAverageElo?.toFixed(0)||"—"],
+       ["LAST GAME ELO Δ",team.eloLastGameChange==null?"—":(team.eloLastGameChange>=0?"+":"")+team.eloLastGameChange.toFixed(1)]
      ].map(([k,v])=><div key={k}><small>{k}</small><strong>{v}</strong></div>)}</div>
-     <div className="v12-card"><h3>ELO TRAJECTORY</h3><Trend values={team.history||[]}/><p className="v12-subtle">Recorded games drive this source-backed rating curve. No injury or roster information is inferred.</p></div>
+     <div className="v12-card"><h3>GAME-BY-GAME ELO CHANGES</h3>
+       <p className="v12-subtle">Every accepted score changes both teams' ratings. Updates use the opponent's rating before that game, designated home advantage and a capped score-margin multiplier. The classic Elo control is {team.classicElo?.toFixed(1)??"unavailable"}; this game-aware rating is {team.rating.toFixed(1)}. Neither is an official NCAA ranking.</p>
+       {(team.eloRecentChanges||[]).map(r=><div className="v12-result" key={r.contestId||r.date+r.opponent}><span>{r.date} · {r.result} vs {r.opponent} · {r.margin>0?"+":""}{r.margin} pts · Opp. pregame Elo {r.opponentEloBefore.toFixed(0)}</span><b>{r.eloChange>=0?"+":""}{r.eloChange.toFixed(2)} Elo</b></div>)}
+       {!team.eloRecentChanges?.length&&<p className="v12-subtle">No rating updates have been sourced for this program.</p>}
+       <p className="v12-subtle">Game-score source can be delayed and lacks authoritative neutral-site and injury details; ratings rebuild on scheduled publication, not instantly after the buzzer.</p>
+     </div>
+     <div className="v12-card"><h3>ELO TRAJECTORY</h3><Trend values={team.history||[]}/><p className="v12-subtle">Recorded games drive this source-backed rating curve. Each calendar date is evaluated before that day's scores are used to update Elo; published historical forecasts remain unchanged.</p></div>
      <div className="v12-stats">{[
        ["ADJUSTED OFFENSE",team.adjOff100?.toFixed(1)??"—"],
        ["ADJUSTED DEFENSE",team.adjDef100?.toFixed(1)??"—"],

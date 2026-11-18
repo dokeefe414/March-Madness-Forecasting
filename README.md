@@ -5,18 +5,30 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v2.0%20Basketball%20Intelligence-a6ffce)
+![Version](https://img.shields.io/badge/release-v2.1%20Game--Aware%20Elo-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
 ### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting26-27/)
 
-[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v2.1 — Every scored game moves Elo, with opponent strength and capped scoring margin
+
+**Automatically recomputed after every source refresh:** Each accepted 2026–27 score changes both teams' published Elo, using the **opponent's previous rating**, the source-designated home/away context, and the **actual score margin**. The update is zero-sum and caps blowout influence: effective `K = 24 × (0.85 + 0.65 × min(1, log(1 + margin) / log(26)))`, so a 25-point win and a 50-point win have the same capped multiplier. Every contest has an auditable signed Elo movement, source ID, pregame rating and date. The team page shows the last five changes and each opponent's Elo *at game time*, instead of misusing the opponent's later rating.
+
+**More useful without leaking future results:** All games on one calendar date receive probabilities from the ratings **at the start of that date**; afterwards, their individual rating updates are applied. The source lacks verifiable true same-day tipoff order, so this is more defensible than pretending the CSV sort order is actual game time. The regularized logistic challenger now updates its internal team histories with the **same** source-aware Elo rule; historical tournament baselines and immutable pretipoff forecasts remain preserved.
+
+**Prove improvement, don't assume it:** Both classic Elo and margin-aware Elo are replayed on identical previous-date games. The season dashboard shows their paired Brier errors, accuracy and improvement (which can be negative). This heuristic is not automatically better; do not interpret retrospective accuracy as live-first-pick success. Injury/lineup/travel data, authoritative neutral-site status and universal verified possessions are **not** in the score feed and are not invented. Game scores can also lag publication. Ratings update on the site's scheduled refreshes, **not instantaneously at each buzzer**.
+
+Details: [game-aware Elo equations, update receipts and limitations](docs/game-aware-elo.md) · [current-season source contract](docs/current-season.md) · [nightly source/retraining pipeline](docs/online-retraining.md).
 
 ---
 

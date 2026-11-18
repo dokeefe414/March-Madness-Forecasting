@@ -53,6 +53,22 @@ class PregameAuditTests(unittest.TestCase):
         self.assertEqual(report["coverage"]["notScheduled"], 1)
         self.assertEqual(report["timeBufferMinutes"], 15)
 
+    def test_game_aware_elo_version_is_frozen_without_relabeling_old_picks(self):
+        fixture = [{"events": [game("ESPN-1", "2026-11-17T01:00:00Z")]}]
+        original = forecast_scheduled(fixture, RATINGS, NOW)["predictions"][0]
+        self.assertEqual(original["model"], "as-of regular-season Elo")
+        self.assertIsNone(original["ratingMethodVersion"])
+        updated = forecast_scheduled(
+            fixture,
+            {**RATINGS, "eloMethodology":{"version":"source-aware-game-elo-v1"}},
+            NOW
+        )["predictions"][0]
+        self.assertEqual(updated["model"], "source-aware margin Elo v2.1")
+        self.assertEqual(updated["ratingMethodVersion"], "source-aware-game-elo-v1")
+        self.assertNotEqual(updated["model"], original["model"])
+        # Only a new forecast receives the new version; existing JSON is immutable.
+        self.assertEqual(original["model"], "as-of regular-season Elo")
+
     def test_future_ratings_rejected_and_invalid_time(self):
         wrong = {**RATINGS, "retrievedAtUtc": "2026-11-17T00:00:00Z"}
         with self.assertRaisesRegex(ValueError, "future"):

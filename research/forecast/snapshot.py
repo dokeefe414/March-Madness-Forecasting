@@ -219,8 +219,11 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                         "adaptiveStateSpaceHomeWinProbability":adaptive_probability,
                     },weight)
             p=challenger if selected else baseline
+            elo_version = (ratings.get("eloMethodology") or {}).get("version")
             model_name=("chronologically validated in-season logistic"
-                        if selected else "as-of regular-season Elo")
+                        if selected else "source-aware margin Elo v2.1"
+                        if elo_version == "source-aware-game-elo-v1"
+                        else "as-of regular-season Elo")
             unique[event_id] = {
                 "eventId": event_id, "scheduledStartUtc": starts.isoformat().replace("+00:00", "Z"),
                 "scheduledEasternDate": starts.astimezone(LOCAL).date().isoformat(),
@@ -229,6 +232,7 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 "homeWinProbability": round(p, 7),
                 "awayWinProbability": round(1-p, 7),
                 "neutralSite": neutral, "model": model_name,
+                "ratingMethodVersion":elo_version,
                 "baselineHomeWinProbability":round(baseline,7),
                 "challengerHomeWinProbability":round(challenger,7) if challenger is not None else None,
                 "stateSpaceHomeWinProbability":round(state_probability,7) if state_probability is not None else None,

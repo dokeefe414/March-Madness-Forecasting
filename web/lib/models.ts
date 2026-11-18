@@ -15,6 +15,11 @@ export type Team = {
   pointsAgainstPerGame?: number;
   marginPerGame?: number;
   opponentAverageElo?: number;
+  opponentAverageEloAtGame?: number;
+  classicElo?: number;
+  eloLastGameDate?: string | null;
+  eloLastGameChange?: number | null;
+  eloRecentChanges?: Array<{contestId:string;date:string;opponent:string;result:"W"|"L";margin:number;eloChange:number;opponentEloBefore:number}>;
   conference?: string | null;
   conferenceVerified?: boolean;
   divisionIConfirmed?: boolean | null;
@@ -68,6 +73,9 @@ export type RatingsDataset = {
   selectionWatchlist?: unknown;
   historicalCalibration?: {temperature:number;blendWeight:number;trainedThroughSeason:number;source:string;caveat:string};
   pregameDiagnostics?: {evaluatedGames: number; brier: number; accuracy: number; coinFlipBrier: number; method: string; caveat: string};
+  eloComparison?: {evaluatedGames:number;enhancedBrier:number|null;classicBrier:number|null;enhancedAccuracy:number|null;classicAccuracy:number|null;enhancedBrierGain:number|null;method:string;caveat:string};
+  eloMethodology?: {version:string;kFactor:number;recordedHomeAdvantage:number;marginCapPoints:number;priorDateFrozen:boolean;policy:string;unavailable:string};
+  recentEloUpdates?: Array<{contestId:string;date:string;winner:string;loser:string;scoreMargin:number;winnerEloChange:number;loserEloChange:number}>;
 };
 
 export type TitleResult = { teamId: string; titleProbability: number };
