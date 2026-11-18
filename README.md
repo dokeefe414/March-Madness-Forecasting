@@ -20,6 +20,20 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ---
 
+## v1.9 — Verified prediction performance, first-pick score research and faster game navigation
+
+The [Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) page now has an original-first-pick accuracy center: **daily and weekly winners, Brier, paired Elo-vs-shadow experiments, source-verified settlement status, delayed-game triage, and actual margin/total error only once an original archived score prediction settles**. Pending is never mislabeled an incorrect pick; unverifiable final scores are withheld.
+
+**Research scoring is now captured before future tipoffs.** New archived predictions can contain an optional research-only projected home/away score, signed margin, total and source provenance based on actual opponent-adjusted possession rates where verified, or a clearly labeled scoring-mean fallback. Older first-pick records are never retroactively filled in. Its future score accuracy is evaluated independently of active Elo winner probability, and cannot be presented as a sportsbook line or a validated live interval.
+
+The [Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) now shows the selected favorite and research-model agreement at a glance, with a direct jump to the detailed matchup. All historical and model-research pages remain accessible through the simplified five-tab + More navigation.
+
+**Scientific guardrails:** Only the earliest immutable pretipoff forecast for an ESPN event and an independently matched ESPN/NCAA final can contribute to outcomes. Original winner probabilities, the live model selection policy, and existing immutable snapshots and settlements remain untouched. Comparisons use paired original games with date-block uncertainty, and no candidate is automatically promoted.
+
+Read [v1.9 verified accuracy and scoring methodology](docs/v19-verified-accuracy-and-score-research.md). Tests cover source identity, chronology, score-data abstention, pending status and no retroactive evaluation.
+
+---
+
 ## v1.8 — Better historical models, probability reliability and simpler navigation
 
 **The app now has only five primary navigation destinations:** **Find a Game**, **Teams**, **Bracket**, **Accuracy & Picks**, and **Model Lab**. All seven other workspaces remain available under the organized **More** menu (This Season / History & Research); every existing `?view=` deep link still works, with a breadcrumb and Back to Games shortcut. Mobile no longer duplicates multiple rows of competing tab bars.
