@@ -32,6 +32,34 @@ META_YEARS=3
 BRIER_MARGIN=0.001
 MODEL_NAMES=("elo","logistic","boosted","calibratedTrendElo","scoreDistribution","priorShrinkage")
 BOOTSTRAP_SEED=20027
+STACK_WEIGHTS=(0.,.15,.30,.45)
+STACK_MIN_PRIOR_YEARS=5
+STACK_LOOKBACK_YEARS=8
+STACK_MIN_GAIN=.002
+
+def choose_prior_year_stack(prior:list[dict])->tuple[str,float]:
+    """Predeclare a convex history-only stack; NEVER inspect current-year labels.
+
+    Optimize on the most recent eight already-tested tournament years. Require
+    five independently out-of-time years before any nonzero component enters.
+    The complexity penalty makes it difficult to switch on a candidate based
+    on a tiny historical advantage or short-term luck.
+    """
+    seasons=sorted({r["season"] for r in prior})
+    if len(seasons)<STACK_MIN_PRIOR_YEARS:return ("elo",0.)
+    seen=set(seasons[-STACK_LOOKBACK_YEARS:])
+    train=[r for r in prior if r["season"] in seen]
+    base=sum((r["elo"]-r["y"])**2 for r in train)/len(train)
+    options=[("elo",0.,base)]
+    for name in MODEL_NAMES:
+        if name=="elo":continue
+        for weight in STACK_WEIGHTS[1:]:
+            brier=sum(((1-weight)*r["elo"]+weight*r[name]-r["y"])**2 for r in train)/len(train)
+            complexity=.001*(weight/.45)**2
+            if base-brier>=STACK_MIN_GAIN:
+                options.append((name,weight,brier+complexity))
+    candidate=min(options,key=lambda x:(x[2],x[1],MODEL_NAMES.index(x[0])))
+    return candidate[:2]
 
 def features(row:HistoricalGame, label_oriented:bool=False)->Features:
     direction=2*row.side_a_won-1 if label_oriented else 1
@@ -106,6 +134,7 @@ def evaluate(rows:list[HistoricalGame],manifest:dict,min_prior:int=MIN_PRIOR)->d
             options=[name for name in MODEL_NAMES if name!="elo" and loss(name)+BRIER_MARGIN<baseline]
             selected=min(options,key=lambda name:(loss(name),MODEL_NAMES.index(name))) if options else "elo"
         else:selected="elo"
+        stack_source,stack_weight=choose_prior_year_stack(held_out)
         current=[]
         for r in groups[year]:
             f=features(r)
@@ -121,11 +150,16 @@ def evaluate(rows:list[HistoricalGame],manifest:dict,min_prior:int=MIN_PRIOR)->d
             })
         for x in current:
             x["nestedChampion"]=x[selected]
+            x["priorYearStack"]=(1-stack_weight)*x["elo"]+stack_weight*x[stack_source]
         yearly.append({"season":year,"trainedThroughSeason":years[idx-1],
             "trainingSeasons":idx,"previousOosSeasons":len(prior_years),
             "championSelectedBeforeResults":selected,
+            "stackChosenBeforeResults":stack_source,
+            "stackWeightChosenBeforeResults":stack_weight,
+            "stackPriorOutOfTimeSeasons":len(prior_years),
             "modelScores":{m:_evaluate(current,m) for m in MODEL_NAMES},
-            "nestedChampion":_evaluate(current,"nestedChampion")})
+            "nestedChampion":_evaluate(current,"nestedChampion"),
+            "priorYearStack":_evaluate(current,"priorYearStack")})
         all_rows.extend(current)
         year_blocks.append(current)
         held_out.extend(current)
@@ -136,6 +170,10 @@ def evaluate(rows:list[HistoricalGame],manifest:dict,min_prior:int=MIN_PRIOR)->d
         "evaluatedSeasons":len(yearly),"heldOutGames":len(all_rows),
         "models":{name:_evaluate(all_rows,name) for name in MODEL_NAMES},
         "nestedChampion":_evaluate(all_rows,"nestedChampion"),
+        "priorYearStack":_evaluate(all_rows,"priorYearStack"),
+        "priorYearStackGainVsElo":round(
+            _evaluate(all_rows,"elo")["brier"]-_evaluate(all_rows,"priorYearStack")["brier"],6),
+        "priorYearStackGain95":_bootstrap_by_year(year_blocks,"priorYearStack"),
         "nestedGainVsElo":round(_evaluate(all_rows,"elo")["brier"]-_evaluate(all_rows,"nestedChampion")["brier"],6),
         "nestedGainYearBlock95":_bootstrap_by_year(year_blocks,"nestedChampion"),
         "modelGainYearBlock95":{name:_bootstrap_by_year(year_blocks,name) for name in MODEL_NAMES if name!="elo"},
@@ -145,6 +183,11 @@ def evaluate(rows:list[HistoricalGame],manifest:dict,min_prior:int=MIN_PRIOR)->d
             "minimumPriorOosSelectionSeasons":META_YEARS,
             "minimumBrierGainForSelection":BRIER_MARGIN,
             "candidateNames":list(MODEL_NAMES),
+            "stackCandidateWeights":list(STACK_WEIGHTS),
+            "stackLookbackYears":STACK_LOOKBACK_YEARS,
+            "stackMinimumOutOfTimeYears":STACK_MIN_PRIOR_YEARS,
+            "stackMinimumPriorBrierGain":STACK_MIN_GAIN,
+            "stackPolicy":"Prior OOS years only; one candidate blended with Elo, complexity penalized, scored on an entirely later tournament season.",
             "noAutomaticProductionPromotion":True},
         "safety":{
             "livePredictionsModified":False,
@@ -154,6 +197,7 @@ def evaluate(rows:list[HistoricalGame],manifest:dict,min_prior:int=MIN_PRIOR)->d
             "No genuine date-stamped historical possessions or Four Factors exist in the pinned snapshots; no such features were manufactured.",
             "The tournament bracket field and seed are not used for winner prediction; teams' pre-tournament ratings are source-derived.",
             "Model selection is nested by season but repeated development on these historical test years can still overfit.",
+            "New historical stacking is prequential, not a fit to the currently scored test year; retrospective reuse across releases still demands external confirmation.",
             "No candidate is promoted to the current live Elo forecast."]}
 def main():
     p=argparse.ArgumentParser(description=__doc__)
