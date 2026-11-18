@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
-import { buildHistoricalField, buildFieldFromSlots, simulateFullBracket, SEED_ORDER, REGIONS } from "../lib/fullBracket.ts";
+import { buildHistoricalField, buildFieldFromSlots, simulateFullBracket, firstRoundUpsetCandidates, SEED_ORDER, REGIONS } from "../lib/fullBracket.ts";
 
 function makeField(extra: number) {
   let id = 0;
@@ -88,4 +88,28 @@ test("rating sensitivity preserves original field and yields deterministic paire
             original.find(r=>r.teamId===target.teamId)!.champion,
             "A stronger team should not lose title probability under common random numbers");
   assert.ok(Math.abs(newResult.reduce((s,r)=>s+r.champion,0)-1)<1e-9);
+});
+
+test("v2.0 title Monte Carlo intervals, field-wide wins and sourced seed-line upset scenarios",()=>{
+ for(const extra of [0,1,4,12]){
+   const field=makeField(extra);
+   const runs=2400;
+   const forecasts=simulateFullBracket(field,runs,141);
+   assert.equal(forecasts.length,64+extra);
+   const sumExpected=forecasts.reduce((acc,r)=>acc+r.expectedWins,0);
+   // In each realized tournament: 63 main bracket wins + 1 for every play-in.
+   assert.ok(Math.abs(sumExpected-(63+extra))<.025, "Expected total playoff wins must equal completed games");
+   for(const team of forecasts){
+     assert.ok(team.championMonteCarlo95[0]<=team.champion+1e-12);
+     assert.ok(team.championMonteCarlo95[1]>=team.champion-1e-12);
+     assert.ok(team.championMonteCarlo95[0]>=0&&team.championMonteCarlo95[1]<=1);
+     assert.ok(team.expectedWins>=0&&team.expectedWins<=7);
+   }
+   const upsets=firstRoundUpsetCandidates(field);
+   assert.equal(upsets.length,32-extra,"Do not invent outcomes from unresolved play-in slots");
+   assert.ok(upsets.every(x=>x.underdogSeed>x.favoriteSeed));
+   assert.ok(upsets.every(x=>x.underdogWinProbability>0&&x.underdogWinProbability<1));
+   assert.deepEqual(forecasts,simulateFullBracket(field,runs,141));
+   assert.deepEqual(upsets,firstRoundUpsetCandidates(field));
+ }
 });
