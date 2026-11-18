@@ -47,7 +47,8 @@ def _optional_factors(row:dict)->dict|None:
     if not set(FACTOR_COLS).issubset(row):return None
     vals={name:_finite(row[name],0,300) for name in FACTOR_COLS}
     if any(x is None for x in vals.values()):return None
-    if vals["fga"]<30 or vals["fgm"]>vals["fga"] or vals["fg3m"]>vals["fgm"]:
+    if (vals["fga"]<30 or vals["fgm"]>vals["fga"] or
+        vals["fg3m"]>vals["fgm"] or vals["orb"]>vals["fga"]-vals["fgm"]+3):
         return None
     return vals
 
@@ -155,7 +156,7 @@ class TeamStats:
         if not self.factors:return None
         return sum(self.factors[-8:])/len(self.factors[-8:])
 
-    def update(self,box:dict,opponent_elo:float,day:str)->None:
+    def update(self,box:dict,opponent_box:dict,opponent_elo:float,day:str)->None:
         self.poss+=box["poss"]
         self.off+=box["off"]*box["poss"]/100
         self.defence+=box["def"]*box["poss"]/100
@@ -169,7 +170,9 @@ class TeamStats:
             fga=facts["fga"]
             efg=(facts["fgm"]+.5*facts["fg3m"])/fga
             tov=facts["tov"]/max(30.,box["poss"])
-            orb=facts["orb"]/max(1.,facts["orb"]+facts["drb"])
+            other=opponent_box.get("factors")
+            if other is None:return
+            orb=facts["orb"]/max(1.,facts["orb"]+other["drb"])
             ftr=facts["fta"]/fga
             self.factors.append(efg-tov+.2*orb+.1*ftr)
 
@@ -288,8 +291,8 @@ def evaluate(games:list[dict],ratings:dict,boxes:dict,now:datetime|None=None)->d
             ratings_state[r["home"]]+=delta
             ratings_state[r["away"]]-=delta
             if r["box"] is not None:
-                stats[r["home"]].update(r["box"]["homeBox"],r["preAwayElo"],day)
-                stats[r["away"]].update(r["box"]["awayBox"],r["preHomeElo"],day)
+                stats[r["home"]].update(r["box"]["homeBox"],r["box"]["awayBox"],r["preAwayElo"],day)
+                stats[r["away"]].update(r["box"]["awayBox"],r["box"]["homeBox"],r["preHomeElo"],day)
         # Training changes can only affect a future date, never today's fit.
         last_weights=None
     baseline=_summary(tested,"elo")
