@@ -34,7 +34,7 @@ class ModelChampionshipTests(unittest.TestCase):
         self.assertTrue(math.isfinite(m["logLoss"]),k)
 
  def test_test_year_answers_do_not_change_selection_or_preceding_results(self):
-    sample=[r for r in self.games if r.season<=1993]
+    sample=[r for r in self.games if r.season<=1994]
     old=evaluate(sample,self.manifest)
     latest=max(r.season for r in sample)
     changed=[replace(r,side_a_won=1-r.side_a_won,
