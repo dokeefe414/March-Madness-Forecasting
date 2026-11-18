@@ -452,7 +452,7 @@ def main() -> None:
     if args.box_out:
         box_report = source_game_boxes(games, verified["box_csv"], output["retrievedAtUtc"])
         args.box_out.parent.mkdir(parents=True, exist_ok=True)
-        args.box_out.write_text(json.dumps(box_report, indent=2) + "\\n", encoding="utf-8")
+        args.box_out.write_text(json.dumps(box_report, indent=2) + "\n", encoding="utf-8")
     if args.games_out:
         args.games_out.parent.mkdir(parents=True, exist_ok=True)
         args.games_out.write_text(json.dumps({
