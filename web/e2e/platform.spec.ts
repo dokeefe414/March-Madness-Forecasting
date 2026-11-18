@@ -603,7 +603,7 @@ test("v2.0 saves followed teams only in this browser and surfaces their future s
 
 test("v2.0 model championship distinguishes genuine box coverage and held-out ML evidence",async ({page})=>{
  const m=(brier:number)=>({games:2270,brier,logLoss:.63,accuracy:.67});
- const names=["elo","logistic","boosted","calibratedTrendElo","scoreDistribution","bayesianShrinkage"];
+ const names=["elo","logistic","boosted","calibratedTrendElo","scoreDistribution","priorShrinkage"];
  const models=Object.fromEntries(names.map((name,i)=>[name,m(.225-i*.002)]));
  await page.route("**/research/historical-data-manifest.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
    sourceCommit:"pinned-source-test",historicalIndexSha256:"hash",includedSeasons:40,
