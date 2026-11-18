@@ -5,7 +5,7 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v1.3%20Research%20%26%20Brackets-a6ffce)
+![Version](https://img.shields.io/badge/release-v1.9%20Verified%20Accuracy-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
