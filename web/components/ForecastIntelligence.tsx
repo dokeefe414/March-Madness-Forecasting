@@ -194,7 +194,7 @@ export default function ForecastIntelligence(){
              <ScoreComparison baseline={historical?.models.elo.brier} candidate={historical?.priorYearStack.brier}
                baselineLabel="Prior-year Elo" candidateLabel="Historical stack"/>
              <div className="fi-delta"><span>MEASURED BRIER GAIN</span><strong>{gain(historical?.priorYearStackGainVsElo)}</strong></div>
-             <small>{historical?.heldOutGames??0} unseen historical tournament games. Season-block interval: {historical?.priorYearStackGain95?.map(x=>number(x,5)).join(" to ")??"not enough years"}.</small>
+             <small>{count(historical?.heldOutGames)} unseen historical tournament games. Season-block interval: {historical?.priorYearStackGain95?.map(x=>number(x,5)).join(" to ")??"not enough years"}.</small>
            </>}
            <p className="fi-proof-warning">A negative gain means the new approach performed worse. No gain is guaranteed. Earlier-date replay is not actual archived pregame success.</p>
          </div>
