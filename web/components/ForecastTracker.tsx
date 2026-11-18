@@ -55,6 +55,7 @@ export default function ForecastTracker(){
       <>
         <div className="source-status"><span className="status-bullet"/><div><strong>PUBLIC GITHUB AUDIT TRAIL</strong><span>Latest index <DateDisplay iso={ledger.generatedAtUtc}/> · {ledger.snapshots.length} saved capture runs · exact-time provenance</span></div><a href="https://github.com/dokeefe414/March-Madness-Forecasting26-27/tree/main/web/public/forecasts" target="_blank" rel="noreferrer">VERIFY SOURCE FILES ↗</a></div>
         <ForwardScorecard report={ledger.uniqueGames}/>
+        <AccuracyDashboard/>
         <PickResults/>
         <SettlementHealth/>
         <OperationsCenter/>
