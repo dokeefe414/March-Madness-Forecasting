@@ -68,16 +68,19 @@ def _rows(folder:Path,now:datetime)->list[dict]:
     confirmed={}
     for path in sorted((folder/"settlements").glob("*.json")):
         item=json.loads(path.read_text(encoding="utf-8"))
+        published=item.get("generatedAtUtc")
         for row in item["results"]:
             key=row["predictionKey"]
-            if key in confirmed and confirmed[key]!=row:raise ValueError("Conflicting immutable final")
-            confirmed[key]=row
+            if key in confirmed and confirmed[key]["row"]!=row:raise ValueError("Conflicting immutable final")
+            confirmed[key]={"row":row,"settlementAtUtc":published}
     rows=[]
     cutoff=now.astimezone(EASTERN).date().isoformat()
     for event,(_,snap,pred) in originals.items():
         original_key=snap["snapshotId"]+":"+event
-        settled=confirmed.get(original_key)
-        if settled is None or settled["actualResultDate"]>=cutoff:continue
+        verified=confirmed.get(original_key)
+        if verified is None:continue
+        settled=verified["row"]
+        if settled["actualResultDate"]>=cutoff:continue
         # An externally supplied score or a post-tipoff shadow must never
         # qualify for retrospective parameter fitting or forward promotion.
         try:
@@ -99,7 +102,8 @@ def _rows(folder:Path,now:datetime)->list[dict]:
         rows.append({"eventId":event,"date":settled["actualResultDate"],"y":y,
                      "frozenEnsemble":frozen,
                      "elo":baseline,"research":formula["researchMeanHomeWinProbability"],
-                     "originalAtUtc":snap["generatedAtUtc"]})
+                     "originalAtUtc":snap["generatedAtUtc"],
+                     "settlementAtUtc":verified["settlementAtUtc"]})
     rows.sort(key=lambda row:(row["date"],row["eventId"]))
     return rows
 
@@ -127,7 +131,9 @@ def prequential_adaptive_weights(samples:list[dict])->dict:
     """Prequential shrinkage: choose weights from fully PRIOR scored dates.
 
     These are reconstructed research probabilities from components originally
-    frozen before tipoff. They are NOT claimed as publicly published adaptive
+    frozen before tipoff, using settlement publication timestamps to reject
+    earlier-date results that were not yet verified as of forecast creation.
+    They are NOT claimed as publicly published adaptive
     forecasts, or eligible for direct model promotion.
     """
     by_day=defaultdict(list)
@@ -135,24 +141,43 @@ def prequential_adaptive_weights(samples:list[dict])->dict:
         by_day[row["date"]].append(row)
     history=[];evaluated=[];changes=[];prior_weight=None
     for day in sorted(by_day):
-        dates={r["date"] for r in history}
-        if len(history)>=MIN_TRAIN and len(dates)>=MIN_DATE_BLOCKS:
-            baseline=_brier(history,0.)
+        # Some prior-date results are verified only many days later.
+        # They must not be fitted into a forecast made BEFORE that verification.
+        current=by_day[day]
+        try:
+            asof=min(datetime.fromisoformat(r["originalAtUtc"].replace("Z","+00:00"))
+                     for r in current)
+        except (KeyError,TypeError,ValueError):
+            # No verified publication clock: no scientific as-of replay.
+            continue
+        known=[]
+        for r in history:
+            stamp=r.get("settlementAtUtc")
+            if not isinstance(stamp,str):continue
+            try:
+                settled_at=datetime.fromisoformat(stamp.replace("Z","+00:00"))
+                if settled_at.tzinfo is not None and settled_at<asof:known.append(r)
+            except ValueError:
+                continue
+        dates={r["date"] for r in known}
+        if len(known)>=MIN_TRAIN and len(dates)>=MIN_DATE_BLOCKS:
+            baseline=_brier(known,0.)
             options=[]
             for w in WEIGHTS:
-                b=_brier(history,w)
+                b=_brier(known,w)
                 # Predeclared small complexity penalty and improvement floor.
                 if w==0 or baseline-b>=MIN_GAIN:
                     options.append((b+.0005*(w/.4)**2,w))
             selected=min(options)[1] if options else 0.
             if prior_weight is None or selected!=prior_weight:
                 changes.append({"asOfDate":day,"weight":selected,
-                    "trainedFromPriorGames":len(history),"priorDates":len(dates)})
+                    "trainedFromPriorGames":len(known),"priorDates":len(dates),
+                    "lastKnownSettlementAtUtc":max(r["settlementAtUtc"] for r in known)})
             prior_weight=selected
-            for r in by_day[day]:
+            for r in current:
                 evaluated.append({**r,"adaptiveWeight":selected,
                     "adaptive":(1-selected)*r["elo"]+selected*r["research"]})
-        history.extend(by_day[day])
+        history.extend(current)
     if not evaluated:
         return {"mode":"research-only","evaluatedGames":0,"evaluatedDates":0,
             "eloBrier":None,"adaptiveBrier":None,"brierGain":None,
