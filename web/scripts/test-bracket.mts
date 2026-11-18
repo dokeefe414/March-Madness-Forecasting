@@ -106,7 +106,7 @@ test("v2.0 title Monte Carlo intervals, field-wide wins and sourced seed-line up
      assert.ok(team.expectedWins>=0&&team.expectedWins<=7);
    }
    const upsets=firstRoundUpsetCandidates(field);
-   assert.equal(upsets.length,32-extra,"Do not invent outcomes from unresolved play-in slots");
+   assert.equal(upsets.length,32-Math.ceil(extra/2),"Do not invent outcomes from unresolved play-in matchups");
    assert.ok(upsets.every(x=>x.underdogSeed>x.favoriteSeed));
    assert.ok(upsets.every(x=>x.underdogWinProbability>0&&x.underdogWinProbability<1));
    assert.deepEqual(forecasts,simulateFullBracket(field,runs,141));
