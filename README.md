@@ -5,7 +5,7 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v1.3%20Research%20%26%20Brackets-a6ffce)
+![Version](https://img.shields.io/badge/release-v1.9%20Verified%20Accuracy-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
@@ -17,6 +17,20 @@
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v1.9 — Verified prediction performance, first-pick score research and faster game navigation
+
+The [Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) page now has an original-first-pick accuracy center: **daily and weekly winners, Brier, paired Elo-vs-shadow experiments, source-verified settlement status, delayed-game triage, and actual margin/total error only once an original archived score prediction settles**. Pending is never mislabeled an incorrect pick; unverifiable final scores are withheld.
+
+**Research scoring is now captured before future tipoffs.** New archived predictions can contain an optional research-only projected home/away score, signed margin, total and source provenance based on actual opponent-adjusted possession rates where verified, or a clearly labeled scoring-mean fallback. Older first-pick records are never retroactively filled in. Its future score accuracy is evaluated independently of active Elo winner probability, and cannot be presented as a sportsbook line or a validated live interval.
+
+The [Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) now shows the selected favorite and research-model agreement at a glance, with a direct jump to the detailed matchup. All historical and model-research pages remain accessible through the simplified five-tab + More navigation.
+
+**Scientific guardrails:** Only the earliest immutable pretipoff forecast for an ESPN event and an independently matched ESPN/NCAA final can contribute to outcomes. Original winner probabilities, the live model selection policy, and existing immutable snapshots and settlements remain untouched. Comparisons use paired original games with date-block uncertainty, and no candidate is automatically promoted.
+
+Read [v1.9 verified accuracy and scoring methodology](docs/v19-verified-accuracy-and-score-research.md). Tests cover source identity, chronology, score-data abstention, pending status and no retroactive evaluation.
 
 ---
 

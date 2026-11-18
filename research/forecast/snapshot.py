@@ -27,6 +27,7 @@ from .live import SOURCE_URL, final_games, fetch_csv
 from .retrain import validate_for_pick, probability as online_probability
 from .forward_ensemble import candidate as ensemble_candidate, validate_for_fixture as validate_ensemble
 from .performance import summarize_forward
+from .score_shadow import score_shadow
 
 ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard"
 LOCAL = ZoneInfo("America/New_York")
@@ -236,6 +237,7 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
                 "ensembleHomeWinProbability":(ensemble_result["homeWinProbability"] if ensemble_result else None),
                 "ensembleComponentCount":(ensemble_result["componentCount"] if ensemble_result else None),
                 "ensembleResearchWeight":(ensemble_result["weight"] if ensemble_result else None),
+                "researchScoreProjection":score_shadow(home,away),
                 "modelId": selected.get("modelId") if selected else None,
                 "modelTrainingThroughDate": selected.get("trainedThroughDate") if selected else None,
                 "match": "exact canonical NCAA name to ESPN team location/display",
@@ -254,6 +256,7 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
             "Missing/ambiguous ESPN ↔ NCAA name matches are excluded, never guessed.",
             "ESPN scheduled start may change; this records its as-of state, not proof of the actual tip-off.",
             "Every actual and experimental probability is frozen before the listed start; challenger and state-space scenarios are not automatically promoted.",
+            "Future score projections are independently frozen research estimates. Older snapshots are never retroactively populated.",
             "Only forecasts generated before reported start (with 15-minute buffer) are stored.",
         ],
     }

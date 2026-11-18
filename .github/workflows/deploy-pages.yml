@@ -91,6 +91,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.operations --ledger web/public/forecasts --out web/public/current/operations.json
+      - name: Publish immutable-first-pick daily, weekly and experimental score accuracy research
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.accuracy_research --ledger web/public/forecasts --out web/public/current/accuracy-research.json
       - name: Build independently auditable settlement backlog report
         env:
           PYTHONPATH: research

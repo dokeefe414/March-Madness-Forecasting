@@ -508,3 +508,60 @@ test("v1.8 historical probabilistic study displays calibrated models and empiric
  await study.getByText("See yearly forecasts, learned weights, and scoring error").click();
  await expect(study).toContainText("2025");
 });
+
+test("v1.9 source-verified forward accuracy dashboard with honestly pending games and paired Brier",async ({page})=>{
+ const rows=[
+  {model:"Frozen ensemble",pairedGames:0,pairedDays:0,eloBrier:null,candidateBrier:null,
+   eloAccuracy:null,candidateAccuracy:null,brierGain:null,dateBlockGain95:null,reviewEligible:false,autoPromoted:false},
+  {model:"Online logistic challenger",pairedGames:0,pairedDays:0,eloBrier:null,candidateBrier:null,
+   eloAccuracy:null,candidateAccuracy:null,brierGain:null,dateBlockGain95:null,reviewEligible:false,autoPromoted:false}
+ ];
+ await page.route("**/current/accuracy-research.json",route=>route.fulfill({
+  contentType:"application/json",body:JSON.stringify({
+   schemaVersion:1,mode:"first-pick-forward-research",generatedAtUtc:"2026-11-17T20:00:00Z",
+   archiveGeneratedAtUtc:"2026-11-17T19:00:00Z",
+   immutableFirstPicks:142,verifiedUniqueFinals:0,pendingUniqueGames:142,
+   pendingByStatus:{"upcoming":139,"recent-start":3,"awaiting-final":0,"delayed-review":0},
+   pendingReview:[],overall:{games:0,brier:null,accuracy:null,logLoss:null},
+   daily:[],weekly:[],pairedComparisons:rows,
+   frozenScoreResults:{games:0,marginMAE:null,totalMAE:null,homeScoreMAE:null,awayScoreMAE:null,byMethod:[]},
+   verification:{independentESPNFinalRequired:true,matchingNCAAScoreRequired:true,
+     esponFinalsInspectedInLastArchive:0,sourceWarnings:[],observedScheduleChanges:[]},
+   reviewOnly:true,autoPromoted:false})}));
+ await page.goto("/?view=predictions");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const panel=page.getByRole("region",{name:"Verified real-game prediction performance center"});
+ await expect(panel).toContainText("142");
+ await expect(panel).toContainText("No source-verified finals have settled yet");
+ await expect(panel).toContainText("Frozen ensemble");
+ await expect(panel).toContainText("No original pregame-frozen score projection");
+ await panel.getByRole("button",{name:"Weekly"}).click();
+ await expect(panel.getByRole("button",{name:"Weekly"})).toHaveAttribute("aria-pressed","true");
+ await panel.getByText("Source verification and delayed-game review").click();
+ await expect(panel).toContainText("No original unmatched games currently exceed");
+});
+test("v1.9 verified daily records and frozen score error remain separate from research backtests",async ({page})=>{
+ await page.route("**/current/accuracy-research.json",route=>route.fulfill({
+  contentType:"application/json",body:JSON.stringify({
+   schemaVersion:1,mode:"first-pick-forward-research",generatedAtUtc:"2026-11-19T18:00:00Z",
+   archiveGeneratedAtUtc:"2026-11-19T17:00:00Z",
+   immutableFirstPicks:10,verifiedUniqueFinals:3,pendingUniqueGames:7,
+   pendingByStatus:{"upcoming":2,"recent-start":1,"awaiting-final":4,"delayed-review":0},
+   pendingReview:[],overall:{games:3,brier:.19,accuracy:2/3,logLoss:.55},
+   daily:[{period:"2026-11-18",games:3,brier:.19,accuracy:2/3,logLoss:.55,upsets:1}],
+   weekly:[{period:"2026-W47",games:3,brier:.19,accuracy:2/3,logLoss:.55,upsets:1}],
+   pairedComparisons:[{model:"Frozen ensemble",pairedGames:2,pairedDays:1,eloBrier:.19,candidateBrier:.17,
+     eloAccuracy:.5,candidateAccuracy:1,brierGain:.02,dateBlockGain95:null,reviewEligible:false,autoPromoted:false}],
+   frozenScoreResults:{games:1,marginMAE:6.4,totalMAE:14.3,homeScoreMAE:3,awayScoreMAE:4.1,byMethod:[]},
+   verification:{independentESPNFinalRequired:true,matchingNCAAScoreRequired:true,
+      esponFinalsInspectedInLastArchive:8,sourceWarnings:[],observedScheduleChanges:[]},
+   reviewOnly:true,autoPromoted:false})}));
+ await page.goto("/?view=predictions");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const panel=page.getByRole("region",{name:"Verified real-game prediction performance center"});
+ await expect(panel).toContainText("66.7%");
+ await expect(panel).toContainText("2026-11-18");
+ await expect(panel).toContainText("0.1700");
+ await expect(panel).toContainText("6.40");
+ await expect(panel).toContainText("14.30");
+});

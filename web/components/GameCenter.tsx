@@ -144,6 +144,17 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
   const selected=rows.find(x=>x.eventId===selectedId)||
                  (archivedGame?undefined:rows[0]);
   const alreadyStarted=Boolean(selected&&now&&new Date(selected.scheduledStartUtc).getTime()<=now);
+  const availableShadows=selected?([
+    ["Online logistic",selected.challengerHomeWinProbability],
+    ["State space",selected.stateSpaceHomeWinProbability],
+    ["Opponent adjusted",selected.opponentAdjustedHomeWinProbability],
+    ["Adaptive state space",selected.adaptiveStateSpaceHomeWinProbability],
+    ["Experimental ensemble",selected.ensembleHomeWinProbability],
+  ] as Array<[string,number|null|undefined]>).filter((p):p is [string,number]=>
+    typeof p[1]==="number"&&Number.isFinite(p[1])&&p[1]>0&&p[1]<1):[];
+  const shadowDisagreements=selected?.homeWinProbability==null?0:availableShadows.filter(([,p])=>
+    (p>.5)!==(selected.homeWinProbability!>.5) && p!==.5&&selected.homeWinProbability!==.5).length;
+
   const canCompare=ratings?.teams?.length && a&&b&&a!==b;
   const left=ratings?.teams.find(t=>t.teamId===a);
   const right=ratings?.teams.find(t=>t.teamId===b);
@@ -188,6 +199,13 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
         <p className="gc-archive-health">ARCHIVE {archiveHealth?.status?.toUpperCase()||"UNVERIFIED"} · {archiveHealth?.message||"Public archive status has not been verified."}</p>
       </aside>
     </div>
+    {selected?.status==="ready"&&selected.homeWinProbability!=null&&
+      <div className="v19-game-glance" aria-label="Selected game quick prediction summary">
+        <div><small>SELECTED MATCHUP</small><strong>{selected.away} at {selected.home}</strong><span>{when(selected.scheduledStartUtc)}</span></div>
+        <div><small>ORIGINAL PUBLIC WINNER MODEL</small><strong>{selected.homeWinProbability>=.5?selected.home:selected.away} {percent(Math.max(selected.homeWinProbability,1-selected.homeWinProbability))}</strong><span>{selected.model||"Elo"} · {alreadyStarted?"Previously scheduled, not live in-game odds":"Source-frozen matchup at last update"}</span></div>
+        <div><small>RESEARCH MODEL AGREEMENT</small><strong>{availableShadows.length?availableShadows.length-shadowDisagreements+"/"+availableShadows.length+" agree":"Not enough signals"}</strong><span>{shadowDisagreements>0?"Research models disagree on the favorite; see comparison below":"Agreement alone does not prove accuracy"}</span></div>
+        <a href="#gc-match-detail">View this game's full breakdown ↓</a>
+      </div>}
     <nav className="daily-shortcuts" aria-label="Explore March Forecast">
       <a href="#daily-desk">TODAY'S GAMES ↓</a>
       <button type="button" onClick={onOpenAccuracy}>ACCURACY & PICKS ↗</button>
