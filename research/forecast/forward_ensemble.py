@@ -123,12 +123,71 @@ def _date_interval(rows:list[dict],weight:float,reps:int=700)->list[float]|None:
     draws.sort()
     return [round(draws[int(.025*reps)],6),round(draws[int(.975*reps)-1],6)]
 
+def prequential_adaptive_weights(samples:list[dict])->dict:
+    """Prequential shrinkage: choose weights from fully PRIOR scored dates.
+
+    These are reconstructed research probabilities from components originally
+    frozen before tipoff. They are NOT claimed as publicly published adaptive
+    forecasts, or eligible for direct model promotion.
+    """
+    by_day=defaultdict(list)
+    for row in samples:
+        by_day[row["date"]].append(row)
+    history=[];evaluated=[];changes=[];prior_weight=None
+    for day in sorted(by_day):
+        dates={r["date"] for r in history}
+        if len(history)>=MIN_TRAIN and len(dates)>=MIN_DATE_BLOCKS:
+            baseline=_brier(history,0.)
+            options=[]
+            for w in WEIGHTS:
+                b=_brier(history,w)
+                # Predeclared small complexity penalty and improvement floor.
+                if w==0 or baseline-b>=MIN_GAIN:
+                    options.append((b+.0005*(w/.4)**2,w))
+            selected=min(options)[1] if options else 0.
+            if prior_weight is None or selected!=prior_weight:
+                changes.append({"asOfDate":day,"weight":selected,
+                    "trainedFromPriorGames":len(history),"priorDates":len(dates)})
+            prior_weight=selected
+            for r in by_day[day]:
+                evaluated.append({**r,"adaptiveWeight":selected,
+                    "adaptive":(1-selected)*r["elo"]+selected*r["research"]})
+        history.extend(by_day[day])
+    if not evaluated:
+        return {"mode":"research-only","evaluatedGames":0,"evaluatedDates":0,
+            "eloBrier":None,"adaptiveBrier":None,"brierGain":None,
+            "gainDateBlock95":None,"weightChanges":[],"latestPastWeight":None,
+            "policy":"Withheld until enough uniquely settled earlier-date pregame component predictions exist."}
+    e=sum((r["elo"]-r["y"])**2 for r in evaluated)/len(evaluated)
+    a=sum((r["adaptive"]-r["y"])**2 for r in evaluated)/len(evaluated)
+    # The generic interval helper takes a blended research+Elo weight;
+    # resample the ACTUAL prequential adaptive probabilities instead.
+    groups=defaultdict(list)
+    for r in evaluated:
+        groups[r["date"]].append((r["elo"]-r["y"])**2-(r["adaptive"]-r["y"])**2)
+    interval=None
+    if len(groups)>=MIN_DATE_BLOCKS and len(evaluated)>=MIN_VALIDATION:
+        rng=random.Random(20278);days=sorted(groups);draws=[]
+        for _ in range(700):
+            blocks=[groups[days[rng.randrange(len(days))]] for _ in days]
+            vals=[v for block in blocks for v in block]
+            draws.append(sum(vals)/len(vals))
+        draws.sort()
+        interval=[round(draws[17],6),round(draws[681],6)]
+    return {"mode":"research-only","evaluatedGames":len(evaluated),
+        "evaluatedDates":len(groups),"eloBrier":round(e,6),
+        "adaptiveBrier":round(a,6),"brierGain":round(e-a,6),
+        "gainDateBlock95":interval,"weightChanges":changes[-20:],
+        "latestPastWeight":prior_weight,
+        "policy":"On game date D, choose a convex Elo/research weight using only source-verified earlier settled original-component games. Freeze D before fitting on it. Reconstructed prequential research, not a released public first pick; no auto-promotion."}
+
 def build_report(folder:Path,source_ratings:dict,now:datetime|None=None)->dict:
     now=now or datetime.now(timezone.utc)
     if now.tzinfo is None:raise ValueError("Timezone-aware clock required")
     if source_ratings.get("season")!=2027 or source_ratings.get("mode")!="current" or not source_ratings.get("retrievedAtUtc"):
         raise ValueError("Expected verified current 2027 source metadata")
     samples=_rows(folder,now)
+    adaptive=prequential_adaptive_weights(samples)
     dates=sorted({r["date"] for r in samples})
     # Never split through a single date: every contest on one game date
     # is in the same train or holdout block. No shuffled random CV.
@@ -179,10 +238,12 @@ def build_report(folder:Path,source_ratings:dict,now:datetime|None=None)->dict:
       "prospectiveGatePassed":bool(prospective_ready),
       "scientificReviewEligible":bool(eligible),"promoteAutomatically":False,
       "candidateWeights":list(WEIGHTS),
+      "prequentialAdaptive":adaptive,
       "policy":"Research weight tuning uses older independently verified first-pick frozen component probabilities and a later date-block holdout. Scientific review additionally requires at least 100 independently settled ORIGINAL frozen ensemble forecasts on 12 dates with positive date-block 95% evidence. No auto-promotion.",
       "caveats":["One fixed holdout selection is a monitoring diagnostic, not an unbiased repeated external evaluation after continued research.",
                  "The reconstructed prior-component holdout is retrospective recalibration, not original frozen ensemble outcomes. Only archivedPortfolio* fields constitute genuinely prospective portfolio scoring.",
                  "The mean combines heterogeneous models; correlations and missing component coverage can reduce realized accuracy.",
+                 "Prequential weight research is scored retrospectively on recombined original frozen components and is NOT the exact original frozen adaptive ensemble; only archivedPortfolio* is true first-pick ensemble evidence.",
                  "Unavailable or invalid source features withhold a candidate rather than silently switching to a falsely advertised ensemble."]
     }
 
