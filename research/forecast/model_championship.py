@@ -7,7 +7,7 @@ fitted using only season < Y; selection uses earlier OUT-OF-TIME years only.
 
 Candidates are source-aligned for every fixture: Elo, earlier-season logistic
 regression, gradient-boosted decision stumps, previous-season calibrated
-trend-Elo, Gaussian margin model, and conservative Bayesian shrinkage.
+trend-Elo, Gaussian margin model, and conservative Prior-based Elo shrinkage.
 Historical NCAA tournament results are labels only.
 
 This is an observational historical tournament benchmark, NOT an actual
@@ -30,7 +30,7 @@ from .historical_probabilistic import _ridge,_estimate,_variance,_normal_cdf
 MIN_PRIOR=5
 META_YEARS=3
 BRIER_MARGIN=0.001
-MODEL_NAMES=("elo","logistic","boosted","calibratedTrendElo","scoreDistribution","bayesianShrinkage")
+MODEL_NAMES=("elo","logistic","boosted","calibratedTrendElo","scoreDistribution","priorShrinkage")
 BOOTSTRAP_SEED=20027
 
 def features(row:HistoricalGame, label_oriented:bool=False)->Features:
@@ -117,7 +117,7 @@ def evaluate(rows:list[HistoricalGame],manifest:dict,min_prior:int=MIN_PRIOR)->d
                 "boosted":gbdt.probability(f),
                 "calibratedTrendElo":probability_of_winner(r.projected_difference,temp),
                 "scoreDistribution":_normal_cdf(_estimate(r,margin_model,"margin")/sigma),
-                "bayesianShrinkage":probability_of_winner(r.elo_difference*.8),
+                "priorShrinkage":probability_of_winner(r.elo_difference*.8),
             })
         for x in current:
             x["nestedChampion"]=x[selected]
