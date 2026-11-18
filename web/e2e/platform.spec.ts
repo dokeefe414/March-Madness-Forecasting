@@ -590,7 +590,7 @@ test("v2.0 saves followed teams only in this browser and surfaces their future s
  await panel.getByRole("combobox",{name:"Choose a team to follow"}).selectOption("test-h");
  await panel.getByRole("button",{name:/Follow team/i}).click();
  await expect(panel).toContainText("UP NEXT FOR YOUR TEAMS");
- await expect(panel.getByRole("button",{name:/Home School at/})).toBeVisible();
+ await expect(panel.getByRole("button",{name:/Away School at Home School/})).toBeVisible();
  await panel.getByRole("button",{name:"Only my teams"}).click();
  await expect(panel.getByRole("button",{name:"Only my teams"})).toHaveAttribute("aria-pressed","true");
  await page.reload();
@@ -645,6 +645,5 @@ test("v2.0 simulated bracket shows expected wins, Monte Carlo interval and only 
  await expect(page.getByText("MC TITLE SAMPLING BAND (95%)")).toBeVisible();
  const summary=page.getByText(/First-round upset watch/i);
  await summary.click();
- const details=page.getByRole("group",{name:"Historical field model upset scenarios"});
  await expect(page.locator(".v20-upset-item").first()).toBeVisible();
 });
