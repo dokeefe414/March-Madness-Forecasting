@@ -149,7 +149,7 @@ export function simulateFullBracket(field: BracketField, runs = 5000, randomSeed
   const counts = new Map<string, BracketResult>(field.entrants.map((t) => [t.teamId, {
     teamId: t.teamId, name: t.name, region: t.region, seed: t.seed,
     round32: 0, sweet16: 0, elite8: 0, final4: 0, titleGame: 0,
-    champion: 0, openingRoundWin: null, expectedWins:0, championMonteCarlo95:[0,0],
+    champion: 0, openingRoundWin: null, expectedWins:0, championMonteCarlo95:[0,0] as [number,number],
   }]));
   const pick = (a: BracketTeam, b: BracketTeam) => rng() < chance(a, b) ? a : b;
   for (let run = 0; run < runs; run++) {
