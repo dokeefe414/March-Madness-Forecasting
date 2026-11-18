@@ -7,6 +7,7 @@ import EnsembleEvidence from "./EnsembleEvidence";
 import HistoricalEvidence from "./HistoricalEvidence";
 import ProbabilisticResearch from "./ProbabilisticResearch";
 import ModelChampionship from "./ModelChampionship";
+import ForecastIntelligence from "./ForecastIntelligence";
 
 const base=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Paired={pairedGames:number;pairedDates:number;baselineEloBrier:number|null;
@@ -84,9 +85,9 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
  const sourceMatch=opponent?.retrievedAtUtc&&state?.ratingRetrievedAtUtc ?
     opponent.retrievedAtUtc===state.ratingRetrievedAtUtc : null;
  return <section className="content-section ml" id="model-lab">
-   <div className="ml-hero"><div><span className="section-kicker">MODEL LAB 1.3 / PROVE IT ON THE NEXT GAME</span>
+   <div className="ml-hero"><div><span className="section-kicker">MODEL LAB 2.2 / SOURCE-AWARE LEARNING</span>
       <h1>WHICH MODEL <em>EARNS THE PICK?</em></h1>
-      <p>Five forecasting approaches, one transparent standard: compare against Elo on the same games, never relabel historical replay as public pretipoff accuracy, and never chase a loss with hindsight.</p>
+      <p>Historical stacks, verified efficiency signals and date-adaptive ensembles, one transparent standard: compare against Elo on the same games, never relabel historical replay as public pretipoff accuracy, and never chase a loss with hindsight.</p>
       <div className="ml-hero-ctas">
         <button onClick={onOpenGames} type="button">FIND A REAL GAME ↗</button>
         <button className="subtle" onClick={onOpenAccuracy} type="button">OPEN ACCURACY & PICKS ↗</button>
@@ -97,6 +98,7 @@ export default function ModelLab({onOpenGames,onOpenAccuracy}:{onOpenGames?:()=>
         <small>ARCHIVE {health?.status?.replaceAll("-"," ").toUpperCase()||"NOT VERIFIED"}</small>
       </aside></div>
    {!loaded?<p className="premium-empty" role="status">Reading source-linked experiment and archive reports…</p>:<>
+   <ForecastIntelligence/>
    <div className="ml-metrics">
       <div><small>OPPONENT-AWARE RETROSPECTIVE GAMES</small><strong>{opponent?.games?.toLocaleString()??"—"}</strong><span>Same-day-frozen experiments</span></div>
       <div><small>KALMAN RETROSPECTIVE GAMES</small><strong>{state?.evaluatedGames?.toLocaleString()??"—"}</strong><span>Two Gaussian variants / identical fixtures</span></div>

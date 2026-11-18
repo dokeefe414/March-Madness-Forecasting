@@ -647,3 +647,69 @@ test("v2.0 simulated bracket shows expected wins, Monte Carlo interval and only 
  await summary.click();
  await expect(page.locator(".v20-upset-item").first()).toBeVisible();
 });
+
+
+test("v2.2 source-aligned Forecast Studio switches real research evidence and remains mobile readable",async ({page})=>{
+  // Hermetic test fixtures demonstrate UI contracts, not public real scores.
+  const retrieved="2026-11-18T15:00:00Z";
+  const json=(o:unknown)=>({contentType:"application/json",body:JSON.stringify(o)});
+  await page.route("**/current/2027.json",r=>r.fulfill(json({
+    mode:"current",season:2027,retrievedAtUtc:retrieved,lastGameDate:"2026-11-17",
+    regularSeasonGames:200,teams:[],
+  })));
+  await page.route("**/current/efficiency-research.json",r=>r.fulfill(json({
+    mode:"research-only",season:2027,retrievedAtUtc:retrieved,
+    boxStatus:"matched",acceptedPriorDateGames:200,pairedPriorDateBoxGames:120,
+    fourFactorSourceGames:0,eligibleWithPriorStats:90,evaluatedGames:60,evaluatedDates:8,
+    metrics:{elo:{games:60,brier:.231,accuracy:.65},
+      efficiencyResidual:{games:60,brier:.225,accuracy:.66},
+      brierGainVsElo:.006,dateBlockGain95:[-.01,.022]},
+    featureNames:["intercept"],auditPerDate:[],
+  })));
+  await page.route("**/current/forward-ensemble.json",r=>r.fulfill(json({
+    mode:"shadow",sourceRetrievedAtUtc:retrieved,pairedSettledGames:140,
+    archivedPortfolioGames:140,archivedPortfolioBrierGain:.01,
+    prequentialAdaptive:{evaluatedGames:56,evaluatedDates:8,eloBrier:.24,
+      adaptiveBrier:.23,brierGain:.01,gainDateBlock95:[-.02,.03],
+      latestPastWeight:.2,weightChanges:[]},
+  })));
+  await page.route("**/research/model-championship.json",r=>r.fulfill(json({
+    mode:"historical-only",evaluatedSeasons:34,heldOutGames:2000,
+    models:{elo:{games:2000,brier:.21}},nestedChampion:{games:2000,brier:.208},
+    priorYearStack:{games:2000,brier:.209},priorYearStackGainVsElo:.001,
+    priorYearStackGain95:[-.006,.009],yearByYear:[],
+  })));
+  await page.route("**/current/accuracy-research.json",r=>r.fulfill(json({
+    immutableFirstPicks:65,verifiedUniqueFinals:60,
+    overall:{games:60,brier:.21,accuracy:.683333},
+    calibrationDiagnostics:{status:"observing",games:60,
+      expectedCalibrationError:.05,bins:[
+       {confidenceRange:"50-60%",games:14,meanPredicted:.55,realizedCorrect:.58},
+       {confidenceRange:"60-70%",games:13,meanPredicted:.65,realizedCorrect:.64},
+       {confidenceRange:"70-80%",games:12,meanPredicted:.75,realizedCorrect:.72},
+       {confidenceRange:"80-90%",games:12,meanPredicted:.85,realizedCorrect:.83},
+       {confidenceRange:"90-100%",games:9,meanPredicted:.93,realizedCorrect:.89}]},
+    byRatingVersion:[{version:"source-aware-game-elo-v1",games:30,
+      brier:.205,accuracy:.7,latestGameDate:"2026-11-17"}],
+  })));
+  await page.goto("/?view=models");
+  const workbench=page.locator(".fi-workbench");
+  await expect(workbench).toBeVisible();
+  await expect(page.locator(".fi-signal")).toHaveCount(4);
+  await expect(page.locator(".fi")).toContainText("BETTER SIGNALS.");
+  await expect(page.locator(".fi")).toContainText("60");
+  await expect(workbench).toContainText("Efficiency learner");
+  await expect(workbench).toContainText("+0.0060");
+  await page.getByRole("button",{name:"Adaptive ensemble"}).click();
+  await expect(workbench).toContainText("Adaptive research mix");
+  await expect(workbench).toContainText("56");
+  await page.getByRole("button",{name:"Historical stack"}).click();
+  await expect(workbench).toContainText("Historical stack");
+  await expect(workbench).toContainText("2,000");
+  await expect(page.locator(".fi-calibration-row")).toHaveCount(5);
+  await expect(page.locator(".fi-monitor")).toContainText("0.0500");
+  const widths=await page.evaluate(()=>({
+    outer:document.documentElement.scrollWidth,viewport:document.documentElement.clientWidth,
+  }));
+  expect(widths.outer,"new workbench causes horizontal overflow").toBeLessThanOrEqual(widths.viewport+3);
+});

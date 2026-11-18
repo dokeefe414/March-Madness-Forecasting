@@ -68,16 +68,19 @@ def _rows(folder:Path,now:datetime)->list[dict]:
     confirmed={}
     for path in sorted((folder/"settlements").glob("*.json")):
         item=json.loads(path.read_text(encoding="utf-8"))
+        published=item.get("generatedAtUtc")
         for row in item["results"]:
             key=row["predictionKey"]
-            if key in confirmed and confirmed[key]!=row:raise ValueError("Conflicting immutable final")
-            confirmed[key]=row
+            if key in confirmed and confirmed[key]["row"]!=row:raise ValueError("Conflicting immutable final")
+            confirmed[key]={"row":row,"settlementAtUtc":published}
     rows=[]
     cutoff=now.astimezone(EASTERN).date().isoformat()
     for event,(_,snap,pred) in originals.items():
         original_key=snap["snapshotId"]+":"+event
-        settled=confirmed.get(original_key)
-        if settled is None or settled["actualResultDate"]>=cutoff:continue
+        verified=confirmed.get(original_key)
+        if verified is None:continue
+        settled=verified["row"]
+        if settled["actualResultDate"]>=cutoff:continue
         # An externally supplied score or a post-tipoff shadow must never
         # qualify for retrospective parameter fitting or forward promotion.
         try:
@@ -99,7 +102,8 @@ def _rows(folder:Path,now:datetime)->list[dict]:
         rows.append({"eventId":event,"date":settled["actualResultDate"],"y":y,
                      "frozenEnsemble":frozen,
                      "elo":baseline,"research":formula["researchMeanHomeWinProbability"],
-                     "originalAtUtc":snap["generatedAtUtc"]})
+                     "originalAtUtc":snap["generatedAtUtc"],
+                     "settlementAtUtc":verified["settlementAtUtc"]})
     rows.sort(key=lambda row:(row["date"],row["eventId"]))
     return rows
 
@@ -123,12 +127,92 @@ def _date_interval(rows:list[dict],weight:float,reps:int=700)->list[float]|None:
     draws.sort()
     return [round(draws[int(.025*reps)],6),round(draws[int(.975*reps)-1],6)]
 
+def prequential_adaptive_weights(samples:list[dict])->dict:
+    """Prequential shrinkage: choose weights from fully PRIOR scored dates.
+
+    These are reconstructed research probabilities from components originally
+    frozen before tipoff, using settlement publication timestamps to reject
+    earlier-date results that were not yet verified as of forecast creation.
+    They are NOT claimed as publicly published adaptive
+    forecasts, or eligible for direct model promotion.
+    """
+    by_day=defaultdict(list)
+    for row in samples:
+        by_day[row["date"]].append(row)
+    history=[];evaluated=[];changes=[];prior_weight=None
+    for day in sorted(by_day):
+        # Some prior-date results are verified only many days later.
+        # They must not be fitted into a forecast made BEFORE that verification.
+        current=by_day[day]
+        try:
+            asof=min(datetime.fromisoformat(r["originalAtUtc"].replace("Z","+00:00"))
+                     for r in current)
+        except (KeyError,TypeError,ValueError):
+            # No verified publication clock: no scientific as-of replay.
+            continue
+        known=[]
+        for r in history:
+            stamp=r.get("settlementAtUtc")
+            if not isinstance(stamp,str):continue
+            try:
+                settled_at=datetime.fromisoformat(stamp.replace("Z","+00:00"))
+                if settled_at.tzinfo is not None and settled_at<asof:known.append(r)
+            except ValueError:
+                continue
+        dates={r["date"] for r in known}
+        if len(known)>=MIN_TRAIN and len(dates)>=MIN_DATE_BLOCKS:
+            baseline=_brier(known,0.)
+            options=[]
+            for w in WEIGHTS:
+                b=_brier(known,w)
+                # Predeclared small complexity penalty and improvement floor.
+                if w==0 or baseline-b>=MIN_GAIN:
+                    options.append((b+.0005*(w/.4)**2,w))
+            selected=min(options)[1] if options else 0.
+            if prior_weight is None or selected!=prior_weight:
+                changes.append({"asOfDate":day,"weight":selected,
+                    "trainedFromPriorGames":len(known),"priorDates":len(dates),
+                    "lastKnownSettlementAtUtc":max(r["settlementAtUtc"] for r in known)})
+            prior_weight=selected
+            for r in current:
+                evaluated.append({**r,"adaptiveWeight":selected,
+                    "adaptive":(1-selected)*r["elo"]+selected*r["research"]})
+        history.extend(current)
+    if not evaluated:
+        return {"mode":"research-only","evaluatedGames":0,"evaluatedDates":0,
+            "eloBrier":None,"adaptiveBrier":None,"brierGain":None,
+            "gainDateBlock95":None,"weightChanges":[],"latestPastWeight":None,
+            "policy":"Withheld until enough uniquely settled earlier-date pregame component predictions exist."}
+    e=sum((r["elo"]-r["y"])**2 for r in evaluated)/len(evaluated)
+    a=sum((r["adaptive"]-r["y"])**2 for r in evaluated)/len(evaluated)
+    # The generic interval helper takes a blended research+Elo weight;
+    # resample the ACTUAL prequential adaptive probabilities instead.
+    groups=defaultdict(list)
+    for r in evaluated:
+        groups[r["date"]].append((r["elo"]-r["y"])**2-(r["adaptive"]-r["y"])**2)
+    interval=None
+    if len(groups)>=MIN_DATE_BLOCKS and len(evaluated)>=MIN_VALIDATION:
+        rng=random.Random(20278);days=sorted(groups);draws=[]
+        for _ in range(700):
+            blocks=[groups[days[rng.randrange(len(days))]] for _ in days]
+            vals=[v for block in blocks for v in block]
+            draws.append(sum(vals)/len(vals))
+        draws.sort()
+        interval=[round(draws[17],6),round(draws[681],6)]
+    return {"mode":"research-only","evaluatedGames":len(evaluated),
+        "evaluatedDates":len(groups),"eloBrier":round(e,6),
+        "adaptiveBrier":round(a,6),"brierGain":round(e-a,6),
+        "gainDateBlock95":interval,"weightChanges":changes[-20:],
+        "latestPastWeight":prior_weight,
+        "policy":"On game date D, choose a convex Elo/research weight using only source-verified earlier settled original-component games. Freeze D before fitting on it. Reconstructed prequential research, not a released public first pick; no auto-promotion."}
+
 def build_report(folder:Path,source_ratings:dict,now:datetime|None=None)->dict:
     now=now or datetime.now(timezone.utc)
     if now.tzinfo is None:raise ValueError("Timezone-aware clock required")
     if source_ratings.get("season")!=2027 or source_ratings.get("mode")!="current" or not source_ratings.get("retrievedAtUtc"):
         raise ValueError("Expected verified current 2027 source metadata")
     samples=_rows(folder,now)
+    adaptive=prequential_adaptive_weights(samples)
     dates=sorted({r["date"] for r in samples})
     # Never split through a single date: every contest on one game date
     # is in the same train or holdout block. No shuffled random CV.
@@ -179,10 +263,12 @@ def build_report(folder:Path,source_ratings:dict,now:datetime|None=None)->dict:
       "prospectiveGatePassed":bool(prospective_ready),
       "scientificReviewEligible":bool(eligible),"promoteAutomatically":False,
       "candidateWeights":list(WEIGHTS),
+      "prequentialAdaptive":adaptive,
       "policy":"Research weight tuning uses older independently verified first-pick frozen component probabilities and a later date-block holdout. Scientific review additionally requires at least 100 independently settled ORIGINAL frozen ensemble forecasts on 12 dates with positive date-block 95% evidence. No auto-promotion.",
       "caveats":["One fixed holdout selection is a monitoring diagnostic, not an unbiased repeated external evaluation after continued research.",
                  "The reconstructed prior-component holdout is retrospective recalibration, not original frozen ensemble outcomes. Only archivedPortfolio* fields constitute genuinely prospective portfolio scoring.",
                  "The mean combines heterogeneous models; correlations and missing component coverage can reduce realized accuracy.",
+                 "Prequential weight research is scored retrospectively on recombined original frozen components and is NOT the exact original frozen adaptive ensemble; only archivedPortfolio* is true first-pick ensemble evidence.",
                  "Unavailable or invalid source features withhold a candidate rather than silently switching to a falsely advertised ensemble."]
     }
 

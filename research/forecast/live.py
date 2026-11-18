@@ -27,6 +27,7 @@ from .efficiency import BOX_URL, attach_efficiency, NEEDED as BOX_COLUMNS
 from .selection import build_watchlist
 from .division import GROUP_SEASONS_URL, TEAM_MEMBERSHIP_URL, ALIASES_URL, CROSSWALK_URL, parse_division_members, parse_ncaa_aliases, parse_ncaa_espn_ids, annotate_division
 from .dynamics import regime_features
+from .possession_research import source_game_boxes
 
 SOURCE_URL = (
     "https://github.com/sportsdataverse/sportsdataverse-data/releases/download/"
@@ -387,6 +388,7 @@ def main() -> None:
                         help="Earlier-season-only calibration report, if generated")
     parser.add_argument("--out", type=Path, default=Path("web/public/current/2027.json"))
     parser.add_argument("--games-out", type=Path, help="Save the exact accepted source games with snapshot timestamp for causal in-season training")
+    parser.add_argument("--box-out", type=Path, help="Save exact source-linked two-sided box-game rows, or honest unavailable status")
     args = parser.parse_args()
     if args.input:
         raw = args.input.read_bytes()
@@ -447,6 +449,10 @@ def main() -> None:
         }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+    if args.box_out:
+        box_report = source_game_boxes(games, verified["box_csv"], output["retrievedAtUtc"])
+        args.box_out.parent.mkdir(parents=True, exist_ok=True)
+        args.box_out.write_text(json.dumps(box_report, indent=2) + "\n", encoding="utf-8")
     if args.games_out:
         args.games_out.parent.mkdir(parents=True, exist_ok=True)
         args.games_out.write_text(json.dumps({

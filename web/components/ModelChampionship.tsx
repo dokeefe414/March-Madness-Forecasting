@@ -11,9 +11,11 @@ const models:[Model,string][]=[
 type Competition={schemaVersion:number;mode:"historical-only";sourceCommit:string;indexSha256:string;
  evaluatedSeasons:number;heldOutGames:number;models:Record<Model,Stat>;
  nestedChampion:Stat;nestedGainVsElo:number;nestedGainYearBlock95:number[]|null;
+ priorYearStack?:Stat;priorYearStackGainVsElo?:number;priorYearStackGain95?:number[]|null;
  modelGainYearBlock95:Partial<Record<Model,number[]|null>>;
  matchupTiers:Array<{label:string;elo:Stat;candidate:Stat}>;
  yearByYear:Array<{season:number;trainedThroughSeason:number;championSelectedBeforeResults:Model;
+ stackChosenBeforeResults?:Model;stackWeightChosenBeforeResults?:number;
  modelScores:Record<Model,Stat>;nestedChampion:Stat}>;
  modelSelection:{noAutomaticProductionPromotion:boolean};
  safety:{livePredictionsModified:boolean}};
@@ -72,6 +74,11 @@ export default function ModelChampionship(){
       <td>{n(contest.nestedChampion.logLoss)}</td>
       <td>{contest.nestedChampion.accuracy==null?"—":(100*contest.nestedChampion.accuracy!).toFixed(1)+"%"}</td></tr></tbody>
     </table></div>
+    {contest.priorYearStack&&<div className="v20-data-audit">
+      <h4>New: strictly prior-year adaptive historical ensemble</h4>
+      <p><strong>{n(contest.priorYearStack.brier)}</strong> historical stack Brier on <strong>{contest.priorYearStack.games}</strong> held-out tournament games, compared with Elo <strong>{n(contest.models.elo.brier)}</strong>. Its prior-out-of-time-selected convex combination is learned from only earlier evaluated seasons, and tested on each later year, never that year's tournament answers.</p>
+      <p>Brier improvement vs Elo: <strong>{contest.priorYearStackGainVsElo==null?"—":(contest.priorYearStackGainVsElo>=0?"+":"")+n(contest.priorYearStackGainVsElo,5)}</strong> · Paired year-block uncertainty: <strong>{contest.priorYearStackGain95?.map(x=>n(x,5)).join(" to ")||"insufficient seasons"}</strong>. Experimental only; no automatic live model change.</p>
+    </div>}
     <p className="v20-interval"><strong>Nested improvement over Elo:</strong> {contest.nestedGainVsElo>=0?"+":""}{n(contest.nestedGainVsElo,5)} Brier points.
       {" "}Year-block 95% descriptive interval: {contest.nestedGainYearBlock95?.map(v=>n(v,5)).join(" to ")||"Not enough seasons"}. If the range includes zero, the observed advantage is inconclusive.
     </p>
@@ -95,9 +102,10 @@ export default function ModelChampionship(){
     </div>
     <details className="v17-details"><summary>Year-by-year champion selection and test results</summary>
       <div className="v15-score-table-wrap"><table className="v15-score-table">
-       <thead><tr><th>TEST YEAR</th><th>TRAINED THROUGH</th><th>PRIOR-YEAR SELECTED</th><th>ELO BRIER</th><th>SELECTED BRIER</th></tr></thead>
+       <thead><tr><th>TEST YEAR</th><th>TRAINED THROUGH</th><th>PRIOR-YEAR SELECTED</th><th>PRIOR-TESTED STACK</th><th>ELO BRIER</th><th>SELECTED BRIER</th></tr></thead>
        <tbody>{contest.yearByYear.map(y=><tr key={y.season}><th>{y.season}</th><td>{y.trainedThroughSeason}</td>
          <td>{models.find(m=>m[0]===y.championSelectedBeforeResults)?.[1]||y.championSelectedBeforeResults}</td>
+         <td>{y.stackChosenBeforeResults?(y.stackChosenBeforeResults==="elo"?"Elo only":y.stackChosenBeforeResults+" "+((y.stackWeightChosenBeforeResults||0)*100).toFixed(0)+"%"):"—"}</td>
          <td>{n(y.modelScores.elo.brier)}</td><td>{n(y.nestedChampion.brier)}</td></tr>)}</tbody>
       </table></div>
     </details>
