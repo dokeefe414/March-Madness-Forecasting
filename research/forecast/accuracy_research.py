@@ -60,6 +60,33 @@ def _interval(pairs:list[dict],seed:int=19027)->list[float]|None:
     vals.sort()
     return [round(vals[17],6),round(vals[681],6)]
 
+def _calibration(rows:list[dict],field:str)->dict:
+    """Independent first-pick confidence reliability; empty means unknown."""
+    valid=[r for r in rows if r.get(field) is not None]
+    bins=[]
+    for i in range(5):
+        lo=.5+.1*i;hi=.5+.1*(i+1)
+        group=[r for r in valid
+               if lo<=max(r[field],1-r[field])<
+                  (hi if i<4 else 1.000001)]
+        if group:
+            expected=sum(max(r[field],1-r[field]) for r in group)/len(group)
+            observed=sum(float((r[field]>.5)==bool(r["observedHome"]))
+                         if r[field]!=.5 else .5 for r in group)/len(group)
+        else:expected=observed=None
+        bins.append({"confidenceRange":f"{int(lo*100)}-{int(hi*100)}%",
+          "games":len(group),"meanPredicted":round(expected,6) if expected is not None else None,
+          "realizedCorrect":round(observed,6) if observed is not None else None,
+          "gap":round(observed-expected,6) if observed is not None else None})
+    ece=sum((b["games"]/len(valid))*abs(b["gap"]) for b in bins if b["games"]) if valid else None
+    # A single low-volume reliability plot is not a calibrated distribution.
+    status=("insufficient-evidence" if len(valid)<50
+            else "observing")
+    return {"status":status,"games":len(valid),
+      "expectedCalibrationError":round(ece,6) if ece is not None else None,
+      "bins":bins,
+      "policy":"Descriptive confidence-band frequency for unique source-verified original first picks only; at least 50 needed for monitoring, not for an accuracy guarantee."}
+
 def derive(folder:Path,now:datetime|None=None)->dict:
     now=(now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     snapshots=[json.loads(p.read_text(encoding="utf-8")) for p in sorted((folder/"snapshots").glob("*.json"))]
@@ -125,6 +152,7 @@ def derive(folder:Path,now:datetime|None=None)->dict:
           "homeScore":h,"awayScore":a,
           "forecastAtUtc":snap["generatedAtUtc"],
           "official":official,"elo":baseline,**alternatives,
+          "ratingMethodVersion":pred.get("ratingMethodVersion") or "pre-v2.1-unversioned",
           "scoreShadow":shadow})
     outcomes.sort(key=lambda o:(o["day"],o["eventId"]))
     def group(rows:list[dict],field:str):
@@ -178,6 +206,16 @@ def derive(folder:Path,now:datetime|None=None)->dict:
         "sourceWarnings":health.get("sourceWarnings",[]),
         "observedScheduleChanges":health.get("observedScheduleChanges",[])},
       "overall":_metrics(outcomes,"official"),
+      "calibrationDiagnostics":_calibration(outcomes,"official"),
+      "eloCalibrationDiagnostics":_calibration(outcomes,"elo"),
+      "byRatingVersion":[{
+         "version":version,"firstPicks":len(items),
+         **_metrics(items,"official"),
+         "latestGameDate":max(r["day"] for r in items),
+         "calibrationStatus":_calibration(items,"official")["status"]
+       } for version,items in sorted((
+         (k,[r for r in outcomes if r["ratingMethodVersion"]==k])
+         for k in {r["ratingMethodVersion"] for r in outcomes}))],
       "daily":group(outcomes,"day"),
       "weekly":group(outcomes,"weekStart"),
       "pairedComparisons":comparisons,
@@ -186,6 +224,7 @@ def derive(folder:Path,now:datetime|None=None)->dict:
       "policy":"Only unique earliest source-timestamped predictions with independent ESPN final and matching NCAA score; frozen research shadow scores only when present at original tipoff. Never backfill or change an official pick.",
       "limitations":["An upcoming scheduled event is not known to have started or finished.",
         "A pending result is NOT a model loss, and a scheduled start does not independently verify a final.",
+        "Rating model versions are tracked separately; version-specific cohorts are nonrandom and cannot imply causal superiority without a paired forward evaluation.",
         "Paired model intervals require enough settled independent game dates; no claim follows from a small sample.",
         "Missing original frozen score predictions cannot be reconstructed after the result."]}
 def main():
