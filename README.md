@@ -5,18 +5,36 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v2.1%20Game--Aware%20Elo-a6ffce)
+![Version](https://img.shields.io/badge/release-v2.2%20Forecast%20Intelligence-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
 ### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting26-27/)
 
-[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [v2.2 forecasting intelligence](docs/v22-forecast-intelligence.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v2.2 — Forecast Intelligence: learn from the right games, earn better probabilities
+
+**Research depth upgraded without hiding any results.** The 2026–27 pipeline now saves a strictly source-matched, **two-sided NCAA team-box game artifact** for actual ORTG, DRTG and possession data. A new regularized efficiency model learns from opponent-adjusted team strengths, recent possession quality, schedule strength and rest, and uses optional shooting/rebounding/turnover/Four Factors only when actually sourced. Teams need three prior paired box games before their feature vector is eligible; all date-D results are embargoed until after that date's test predictions. When the optional data is missing, the research transparently abstains, and the existing live Elo keeps running.
+
+**Better prior-season training:** The established six-model historical tournament championship now also evaluates a conservative **prior-year-only stack**. Each historical test season uses a model and convex weight chosen from previous unseen tournament seasons, with a minimum evidence floor and season-block uncertainty. The original historical champion policy and all live current-season picks remain unchanged. We do not pretend historical team IDs or missing box data can be automatically transplanted into 2027.
+
+**Adaptive weighting without cheating:** The ensemble research now tests date-by-date blending weights learned only from earlier independently settled original-component predictions **whose final verification was published before the later forecast**. Reconstructed prequential research and genuinely frozen first-pick ensemble performance are deliberately labeled separately. Nothing is automatically promoted based on attractive retrospective results.
+
+**Live prediction-quality monitoring:** Original-first-pick confidence reliability bands, descriptive expected calibration error and separate Elo-formula-version results make overconfidence and genuine improvement easier to inspect. Pending source results remain pending—not incorrect. Older frozen probabilities are never rewritten.
+
+**Premium Forecast Studio:** The [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) gains a responsive editorial research cockpit with verified evidence counts, accessible tabs for efficiency/adaptive/historical experiments, paired Brier bars that show **negative as well as positive** gains, and actual first-pick calibration graphics. The core five-tab website navigation stays simple.
+
+**Automation remains hands-off:** The already configured nightly/catch-up GitHub Actions pipeline now generates `2027-box-games.json` and `efficiency-research.json` alongside the other models. This is a scheduled sourced-data refresh, **not** instantaneous buzzer-to-Elo processing. New models are research-only until genuine independently archived forward evidence warrants manual evaluation.
+
+[Read the v2.2 model equations, exact source contract, chronology guards, operating steps and UI specification](docs/v22-forecast-intelligence.md) · [Elo v2.1](docs/game-aware-elo.md) · [Daily automation](docs/v09-forecast-operations.md).
 
 ---
 
