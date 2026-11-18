@@ -87,6 +87,15 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
   const [teamFilter,setTeamFilter]=useState("");
   const [selectedId,setSelectedId]=useState("");
   const [showAll,setShowAll]=useState(false);
+  const [watchedTeams,setWatchedTeams]=useState<string[]>([]);
+  const [onlyWatched,setOnlyWatched]=useState(false);
+  const [watchTarget,setWatchTarget]=useState("");
+  useEffect(()=>{
+    try {
+      const stored=JSON.parse(window.localStorage.getItem("marchforecast-watchlist-v20")||"[]");
+      if(Array.isArray(stored))setWatchedTeams(stored.filter(x=>typeof x==="string").slice(0,12));
+    } catch {setWatchedTeams([]);}
+  },[]);
   const [a,setA]=useState("");
   const [b,setB]=useState("");
   const [now,setNow]=useState(0);
@@ -124,12 +133,25 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
     return()=>{alive=false};
   },[]);
   const eligible=useMemo(()=>schedule?.games||[],[schedule]);
+  function toggleWatch(id:string){
+    if(!ratings?.teams.some(t=>t.teamId===id))return;
+    setWatchedTeams(current=>{
+      const next=current.includes(id)?current.filter(t=>t!==id):current.length>=12?current:[...current,id];
+      try{window.localStorage.setItem("marchforecast-watchlist-v20",JSON.stringify(next))}catch{}
+      return next;
+    });
+  }
+  const watchedUpcoming=useMemo(()=>eligible.filter(g=>
+    (watchedTeams.includes(g.homeTeamId)||watchedTeams.includes(g.awayTeamId))&&
+    (!now||Date.parse(g.scheduledStartUtc)>now)).sort((a,b)=>a.scheduledStartUtc.localeCompare(b.scheduledStartUtc)).slice(0,6),
+    [eligible,watchedTeams,now]);
   const availableDays=useMemo(()=>[...new Set(eligible.map(x=>x.scheduledEasternDate))].sort(),[eligible]);
   const rows=useMemo(()=>eligible.filter(x=>(day==="all"||x.scheduledEasternDate===day) &&
       (!teamFilter||x.homeTeamId===teamFilter||x.awayTeamId===teamFilter) &&
+      (!onlyWatched||watchedTeams.includes(x.homeTeamId)||watchedTeams.includes(x.awayTeamId)) &&
       (showAll||!now||new Date(x.scheduledStartUtc).getTime()>now) &&
       (x.home+" "+x.away).toLowerCase().includes(search.toLowerCase())),
-    [eligible,search,day,showAll,now,teamFilter]);
+    [eligible,search,day,showAll,now,teamFilter,onlyWatched,watchedTeams]);
   // Never display an expired source capture as a currently upcoming pick.
   // Started games remain inspectable only when the user explicitly enables it.
   const settledGames=useMemo(()=>{
@@ -233,6 +255,39 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
         </select></label>
         <label className="gc-check"><input type="checkbox" checked={showAll} onChange={e=>setShowAll(e.target.checked)}/> Include started since last refresh</label>
       </div>
+      <section className="v20-watchlist" aria-label="Your favorite teams and upcoming games">
+        <div className="v20-watch-header">
+          <div><strong>MY TEAMS</strong><p>Follow up to 12 teams for quick matchups. Saved only in your browser—not linked to an account.</p></div>
+          <label>CHOOSE TEAM
+            <select aria-label="Choose a team to follow" value={watchTarget} onChange={e=>setWatchTarget(e.target.value)}>
+              <option value="">Select a school…</option>
+              {[...(ratings?.teams||[])].sort((a,b)=>a.name.localeCompare(b.name)).map(t=>
+                <option key={t.teamId} value={t.teamId}>{t.name}</option>)}
+            </select>
+          </label>
+          <button type="button" disabled={!watchTarget||(!watchedTeams.includes(watchTarget)&&watchedTeams.length>=12)}
+            onClick={()=>watchTarget&&toggleWatch(watchTarget)}>
+            {watchedTeams.includes(watchTarget)?"Remove team":"☆ Follow team"}
+          </button>
+          <button type="button" className={onlyWatched?"active":""} aria-pressed={onlyWatched}
+            onClick={()=>setOnlyWatched(v=>!v)}>Only my teams</button>
+        </div>
+        {watchedTeams.length>0?<div className="v20-watch-chips">
+          {watchedTeams.filter(id=>ratings?.teams.some(t=>t.teamId===id)).map(id=>
+            <button type="button" key={id} onClick={()=>toggleWatch(id)}
+              aria-label={"Unfollow "+(ratings?.teams.find(t=>t.teamId===id)?.name||id)}>
+              ★ {ratings?.teams.find(t=>t.teamId===id)?.name} <span aria-hidden="true">×</span>
+            </button>)}
+        </div>:<p className="v12-subtle">No teams followed yet. Select a school above or star a team from a matchup report.</p>}
+        {watchedUpcoming.length>0?<div className="v20-watch-games">
+          <strong>UP NEXT FOR YOUR TEAMS</strong>
+          {watchedUpcoming.map(g=><button type="button" key={g.eventId} onClick={()=>{
+            setDay("all");setTeamFilter("");setSearch("");setOnlyWatched(false);choose(g.eventId);
+          }}>
+            <span>{when(g.scheduledStartUtc)}</span><b>{g.away} at {g.home}</b><span>{g.status==="ready"?"View forecast ↗":"Fixture listed / model pending"}</span>
+          </button>)}
+        </div>:watchedTeams.length>0?<p className="v12-subtle">No future source-listed games for followed teams in the published schedule. This does not mean they have no later games.</p>:null}
+      </section>
       {schedule.sourceWarnings?.length?<p className="gc-warning" role="status">ESPN schedule partly unavailable; listed games may be incomplete. No missing schedule is filled in.</p>:null}
       {schedule.generatedAtUtc&&now-Date.parse(schedule.generatedAtUtc)>36*60*60*1000&&<p className="gc-warning" role="status">
          The published fixture snapshot is older than 36 hours. Details may have changed. Check the archive-health monitor before treating a percentage as current.
@@ -256,6 +311,12 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
             <div className="gc-detail-cap"><span>MODEL MATCHUP REPORT / ESPN {selected.eventId}</span><span>{when(selected.scheduledStartUtc)}</span></div>
             <div className="gc-quick-actions">
               <button type="button" onClick={copyGameLink}>{copied?"LINK COPIED ✓":"COPY GAME ANALYSIS LINK ↗"}</button>
+               <button type="button" onClick={()=>toggleWatch(selected.homeTeamId)}>
+                 {watchedTeams.includes(selected.homeTeamId)?"★":"☆"} {watchedTeams.includes(selected.homeTeamId)?"Unfollow":"Follow"} {selected.home}
+               </button>
+               <button type="button" onClick={()=>toggleWatch(selected.awayTeamId)}>
+                 {watchedTeams.includes(selected.awayTeamId)?"★":"☆"} {watchedTeams.includes(selected.awayTeamId)?"Unfollow":"Follow"} {selected.away}
+               </button>
               {onOpenModels&&<button type="button" onClick={onOpenModels}>COMPARE FORECASTING MODELS ↗</button>}
             </div>
             <div className="gc-matchup-title"><div><small>ROAD</small><h3>{selected.away}</h3><span>{selected.awayProfile.wins}–{selected.awayProfile.losses}</span></div>
