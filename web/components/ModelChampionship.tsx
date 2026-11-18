@@ -2,11 +2,11 @@
 import {useEffect,useState} from "react";
 const base=process.env.NEXT_PUBLIC_BASE_PATH||"";
 type Stat={games:number;brier:number|null;logLoss:number|null;accuracy:number|null};
-type Model="elo"|"logistic"|"boosted"|"calibratedTrendElo"|"scoreDistribution"|"bayesianShrinkage";
+type Model="elo"|"logistic"|"boosted"|"calibratedTrendElo"|"scoreDistribution"|"priorShrinkage";
 const models:[Model,string][]=[
  ["elo","Original Elo"],["logistic","Regularized logistic"],
  ["boosted","Gradient-boosted stumps"],["calibratedTrendElo","Prior-year trend Elo"],
- ["scoreDistribution","Scoring-margin probability"],["bayesianShrinkage","Shrunken Elo"]
+ ["scoreDistribution","Scoring-margin probability"],["priorShrinkage","Prior-shrunk Elo"]
 ];
 type Competition={schemaVersion:number;mode:"historical-only";sourceCommit:string;indexSha256:string;
  evaluatedSeasons:number;heldOutGames:number;models:Record<Model,Stat>;
