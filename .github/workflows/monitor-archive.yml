@@ -2,9 +2,10 @@ name: Monitor before-tipoff prediction archive freshness
 on:
   workflow_dispatch:
   schedule:
-    # After the 09:07/16:07 Eastern archival runs and 10:17/17:17 Pages refreshes.
-    # Raises a visible GitHub Actions failure if the archive is missing or old.
-    - cron: "35 11,18 * 1,2,3,4,11,12 *"
+    # After overnight 02:07/06:07 and daytime 09:07/16:07 archives.
+    # 07:35 catches missed overnight settlement before the morning visit.
+    # 11:35 and 18:35 protect morning and afternoon captures.
+    - cron: "35 7,11,18 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
 permissions:
   contents: read
