@@ -22,7 +22,7 @@ jobs:
       - name: Check missing or stale archive (never invent win percentage)
         env:
           PYTHONPATH: research
-        run: python -m forecast.archive_health --ledger web/public/forecasts --require-recent --max-age-hours 26
+        run: python -m forecast.archive_health --ledger web/public/forecasts --require-recent --max-age-hours 6
       - name: Verify original predictions and recorded score arithmetic
         env:
           PYTHONPATH: research
