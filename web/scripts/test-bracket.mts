@@ -113,3 +113,32 @@ test("v2.0 title Monte Carlo intervals, field-wide wins and sourced seed-line up
    assert.deepEqual(upsets,firstRoundUpsetCandidates(field));
  }
 });
+
+test("v2.0 bracket exposes finite expected wins, valid title Monte Carlo intervals and four-round totals",()=>{
+ const field=makeField(4);
+ const n=3000;
+ const samples=simulateFullBracket(field,n,211);
+ assert.equal(samples.length,68);
+ const expected=samples.reduce((sum,x)=>sum+x.expectedWins,0);
+ // All 4 opening games plus 63 main-draw elimination games are counted.
+ assert.ok(Math.abs(expected-67)<.01, "expected championship games sum "+expected);
+ for(const item of samples){
+   assert.ok(Number.isFinite(item.expectedWins));
+   assert.ok(item.expectedWins>=0&&item.expectedWins<=7);
+   assert.ok(item.championMonteCarlo95[0]<=item.champion);
+   assert.ok(item.champion<=item.championMonteCarlo95[1]);
+   assert.ok(item.championMonteCarlo95[0]>=0&&item.championMonteCarlo95[1]<=1);
+ }
+ const again=simulateFullBracket(field,n,211);
+ assert.deepEqual(samples,again);
+});
+test("v2.0 model-based upset list never invents play-in winner or changes original field",()=>{
+ const field=makeField(4);
+ const upsets=firstRoundUpsetCandidates(field);
+ assert.equal(upsets.length,28);
+ assert.ok(upsets.every(x=>x.underdogSeed>x.favoriteSeed));
+ assert.ok(upsets.every(x=>x.underdogWinProbability>0&&x.underdogWinProbability<1));
+ assert.ok(upsets.every((x,i)=>i===0||upsets[i-1].underdogWinProbability>=x.underdogWinProbability));
+ assert.deepEqual(upsets,firstRoundUpsetCandidates(field));
+ assert.equal(field.entrants.length,68);
+});
