@@ -1,10 +1,13 @@
 name: Archive real pre-tipoff forecasts
 on:
   schedule:
-    # 9:07 a.m. ET: pregame archive, after overnight results.
-    # 4:07 p.m. ET: refresh prospective evening picks and source settlements.
+    # 2:07 a.m. ET: settle previously frozen picks after overnight games.
+    # 6:07 a.m. ET: recheck late West Coast finals and delayed NCAA results.
+    # 9:07 a.m. ET: capture current-day pregame picks and retry pending settlements.
+    # 4:07 p.m. ET: refresh future evening picks and settle available finals.
+    # A settled score is only published after ESPN STATUS_FINAL and matching NCAA scores.
     # Never retroactively labels a completed game a pregame forecast.
-    - cron: "7 9,16 * 1,2,3,4,11,12 *"
+    - cron: "7 2,6,9,16 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
   workflow_dispatch:
   push:
