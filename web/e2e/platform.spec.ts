@@ -647,3 +647,65 @@ test("v2.0 simulated bracket shows expected wins, Monte Carlo interval and only 
  await summary.click();
  await expect(page.locator(".v20-upset-item").first()).toBeVisible();
 });
+
+test("v2.0 model championship shows source-aware six-model leaderboard without imaginary Four Factors",async({page})=>{
+ await page.route("**/research/model-championship.json",route=>route.fulfill({
+  contentType:"application/json",body:JSON.stringify({
+   schemaVersion:1,mode:"historical-only",sourceCommit:"pinned-sample",indexSha256:"audit-sha",
+   evaluatedSeasons:35,heldOutGames:2270,
+   models:Object.fromEntries(["elo","logistic","boosted","calibratedTrendElo","scoreDistribution","bayesianShrinkage"]
+     .map(k=>[k,{games:2270,brier:k==="elo"?.223:.219,logLoss:.65,accuracy:.66}])),
+   nestedChampion:{games:2270,brier:.218,logLoss:.64,accuracy:.67},
+   nestedGainVsElo:.005,nestedGainYearBlock95:[-.001,.010],
+   modelGainYearBlock95:{boosted:[-.003,.009],logistic:[-.004,.008]},
+   matchupTiers:[],yearByYear:[{season:2025,trainedThroughSeason:2024,
+       championSelectedBeforeResults:"elo",modelScores:{elo:{brier:.23}},nestedChampion:{brier:.23}}],
+   modelSelection:{noAutomaticProductionPromotion:true},safety:{livePredictionsModified:false}
+  })}));
+ await page.route("**/research/historical-box-coverage.json",route=>route.fulfill({
+  contentType:"application/json",body:JSON.stringify({
+    sourceCommit:"pinned-sample",available:false,sourceGames:0,teamSeasons:0,
+    missingBoxSeasons:[1985,1986],sourceSha256:null,limitations:[]})}));
+ await page.route("**/research/historical-data-manifest.json",route=>route.fulfill({
+  contentType:"application/json",body:JSON.stringify({
+    sourceCommit:"pinned-sample",historicalIndexSha256:"audit-sha",
+    includedSeasons:40,includedGames:2585,excludedSeasons:[2020,2026],
+    omittedMissingRatedTeams:0,perSeason:[]})}));
+ await page.goto("/?view=models");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const champ=page.getByRole("region",{name:"Multi-model historical tournament championship"});
+ await expect(champ).toContainText("THE MODELS");
+ await expect(champ).toContainText("2,270");
+ await expect(champ).toContainText("Gradient-boosted stumps");
+ await expect(champ).toContainText("Not supplied.");
+ await champ.getByRole("button",{name:"Regularized logistic"}).click();
+ await expect(champ.getByRole("button",{name:"Regularized logistic"})).toHaveAttribute("aria-pressed","true");
+ await champ.getByText("Year-by-year champion selection and test results").click();
+ await expect(champ).toContainText("2025");
+});
+test("v2.0 favorite teams are local-only, filter upcoming fixtures, and persist after reload",async({page})=>{
+ await page.goto("/?view=games");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const watch=page.getByRole("region",{name:"Your favorite teams and upcoming games"});
+ await expect(watch).toBeVisible();
+ const selector=watch.getByRole("combobox",{name:"Choose a team to follow"});
+ await expect(selector).toBeVisible();
+ const entries=await selector.locator("option").all();
+ if(entries.length<=1)return;
+ const option=await entries[1].getAttribute("value");
+ if(!option)return;
+ await selector.selectOption(option);
+ await watch.getByRole("button",{name:"☆ Follow team"}).click();
+ await expect(watch.getByRole("button",{name:"Only my teams"})).toHaveAttribute("aria-pressed","false");
+ await watch.getByRole("button",{name:"Only my teams"}).click();
+ await expect(watch.getByRole("button",{name:"Only my teams"})).toHaveAttribute("aria-pressed","true");
+ await page.reload();
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const again=page.getByRole("region",{name:"Your favorite teams and upcoming games"});
+ await expect(again.getByRole("button",{name:/Unfollow /}).first()).toBeVisible();
+ const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem("marchforecast-watchlist-v20")||"[]"));
+ expect(stored).toContain(option);
+ await again.getByRole("button",{name:/Unfollow /}).first().click();
+ const cleared=await page.evaluate(()=>JSON.parse(localStorage.getItem("marchforecast-watchlist-v20")||"[]"));
+ expect(cleared).not.toContain(option);
+});
