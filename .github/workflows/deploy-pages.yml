@@ -7,16 +7,18 @@ on:
     workflows: ["Archive real pre-tipoff forecasts"]
     types: [completed]
   schedule:
-    # Nightly Eastern local time (EST/EDT, including daylight saving changes).
-    # Best-effort GitHub Actions trigger: actual execution can lag.
-    - cron: "0 1 * * *"
+    # Daily 2:47 a.m. Eastern site refresh, after the in-season 2:07 archive.
+    # Preserve year-round source/model/site rebuilds, including off-season.
+    # GitHub cron is best-effort, not a guaranteed exact start time.
+    - cron: "47 2 * * *"
       timezone: "America/New_York"
-    # Late-result catch-up after West Coast games, during basketball months.
-    - cron: "17 5 * 1,2,3,4,11,12 *"
+    # 6:47 a.m. Eastern in-season catch-up after the 6:07 archive:
+    # late West Coast scores and delayed independent final verification.
+    - cron: "47 6 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
-    # GitHub-token archival commits do not themselves trigger the Pages push
-    # workflow. Rebuild AFTER the 9:07/16:07 ET archive so public accuracy
-    # and model diagnostics reflect new immutable outcomes the SAME day.
+    # GitHub-token archival commits do not themselves trigger a push workflow.
+    # Backup site refreshes AFTER 9:07/16:07 archiving, and workflow_run
+    # also rebuilds promptly following any successful archive job.
     - cron: "17 10,17 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
 permissions:
