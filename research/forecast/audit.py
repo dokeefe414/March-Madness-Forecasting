@@ -79,6 +79,28 @@ def audit_ledger(folder: Path) -> dict:
                     candidate=float(pred[field])
                     if not math.isfinite(candidate) or not 0<candidate<1:
                         raise ValueError(f"Unscorable frozen challenger probability: {key}")
+            # New v1.9 score shadows are optional, but when a forecast is
+            # published the frozen source-backed points must be internally
+            # consistent. Earlier snapshots contain no score forecast.
+            projection = pred.get("researchScoreProjection")
+            if projection is not None:
+                if (not isinstance(projection,dict) or
+                    projection.get("schemaVersion")!=1 or
+                    projection.get("modelVersion")!="source-scoring-shadow-v1" or
+                    projection.get("method") not in ("opponent-adjusted-possessions","raw-scoring-means")):
+                    raise ValueError(f"Invalid frozen score model metadata: {key}")
+                try:
+                    home_points=float(projection["projectedHomeScore"])
+                    away_points=float(projection["projectedAwayScore"])
+                    margin=float(projection["projectedMargin"])
+                    total=float(projection["projectedTotal"])
+                except (KeyError,TypeError,ValueError) as exc:
+                    raise ValueError(f"Incomplete frozen score prediction: {key}") from exc
+                if (not all(math.isfinite(x) for x in (home_points,away_points,margin,total)) or
+                    not (0<home_points<200 and 0<away_points<200) or
+                    abs((home_points-away_points)-margin)>.11 or
+                    abs((home_points+away_points)-total)>.11):
+                    raise ValueError(f"Frozen score arithmetic mismatch: {key}")
             original[key] = (snap, pred)
     scored: list[dict] = []
     seen: set[str] = set()
