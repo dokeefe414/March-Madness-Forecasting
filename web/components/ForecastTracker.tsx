@@ -4,6 +4,7 @@ import ForwardScorecard from "./ForwardScorecard";
 import SettlementHealth from "./SettlementHealth";
 import OperationsCenter from "./OperationsCenter";
 import PickResults from "./PickResults";
+import AccuracyDashboard from "./AccuracyDashboard";
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 type Pick = {eventId:string;scheduledStartUtc:string;scheduledEasternDate:string;home:string;away:string;homeTeamId:string;awayTeamId:string;homeWinProbability:number;neutralSite:boolean;model:string;modelId?:string|null;modelTrainingThroughDate?:string|null};
 type Snapshot = {id:string;generatedAtUtc:string;count:number;predictions:Pick[]};
