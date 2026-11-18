@@ -16,11 +16,12 @@ import hashlib
 import io
 import json
 from collections import defaultdict
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from .core import EloEngine, Game
+from .core import Game
+from .game_aware_elo import GameAwareEloEngine, MARGIN_CAP, MARGIN_FLOOR, MARGIN_GAIN
 from .reference import TEAM_URL, parse_directory, annotate_teams
 from .efficiency import BOX_URL, attach_efficiency, NEEDED as BOX_COLUMNS
 from .selection import build_watchlist
@@ -113,10 +114,13 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
                   membership_csv: str | None = None,
                   alias_csv: str | None = None,
                   crosswalk_csv: str | None = None) -> dict:
-    """Fit transparent, reset-at-season-start Elo; derive descriptive margins."""
+    """Fit game-aware, bounded-margin Elo with strict same-date embargo."""
     if not games:
         raise ValueError("no completed 2026–27 games; refusing to publish false live rankings")
     now = retrieved_at or datetime.now(timezone.utc)
+    # Source-ID ordering, rather than winner-based ordering, is deterministic.
+    # Preserve the whole date as a unit for retrospective pregame evaluation.
+    games = sorted(games, key=lambda g: (g["date"], str(g["id"])))
     names = sorted({g["home"] for g in games} | {g["away"] for g in games}, key=str.casefold)
     name_to_id = {name: i + 1 for i, name in enumerate(names)}
     id_to_name = {i: name for name, i in name_to_id.items()}
@@ -134,6 +138,7 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
             winner_score=max(g["homeScore"], g["awayScore"]),
             loser_score=min(g["homeScore"], g["awayScore"]),
             winner_location="H" if home_win else "A",
+            contest_id=str(g["id"]),
         ))
         points[home_id][0] += g["homeScore"]
         points[home_id][1] += g["awayScore"]
@@ -141,9 +146,13 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
         points[away_id][1] += g["homeScore"]
         opponents[home_id].append(away_id)
         opponents[away_id].append(home_id)
-    # EloEngine sorts on (date, winner id, loser id), not actual tip-off;
-    # same-day order is an approximation, disclosed prominently below.
-    engine = EloEngine().fit(model_games, id_to_name)
+    # Every accepted result contributes exactly one opponent-strength- and
+    # venue-aware Elo movement, scaled by a capped logarithmic score margin.
+    # A matched classic Elo is replayed on the identical source games, with
+    # identical date-frozen pregame evaluation, to expose rather than hide risk.
+    engine = GameAwareEloEngine(margin_sensitive=True).fit(model_games, id_to_name)
+    classic = GameAwareEloEngine(margin_sensitive=False).fit(model_games, id_to_name)
+    paired_elo = engine.paired_summary(classic)
     public_ids = {
         team_id: "ncaa-" + hashlib.sha256(name.encode("utf-8")).hexdigest()[:12]
         for team_id, name in id_to_name.items()
@@ -153,6 +162,32 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
     for row in rows:
         internal_id = int(row["teamId"])
         row["teamId"] = public_ids[internal_id]
+        row["classicElo"] = round(classic.states[internal_id].rating, 1)
+        changes = engine.team_receipts.get(internal_id, [])
+        row["eloLastGameDate"] = (
+            (FIRST_DATE + timedelta(days=changes[-1]["dayNum"])).isoformat()
+            if changes else None
+        )
+        row["eloLastGameChange"] = (
+            round(changes[-1]["winnerDelta"] if changes[-1]["winnerId"] == internal_id
+                  else changes[-1]["loserDelta"], 2) if changes else None
+        )
+        row["eloRecentChanges"] = [
+            {
+                "contestId": receipt["contestId"],
+                "date":(FIRST_DATE + timedelta(days=receipt["dayNum"])).isoformat(),
+                "opponent":id_to_name[receipt["loserId"] if receipt["winnerId"] == internal_id
+                                      else receipt["winnerId"]],
+                "result":"W" if receipt["winnerId"] == internal_id else "L",
+                "margin":receipt["scoreMargin"] if receipt["winnerId"] == internal_id
+                         else -receipt["scoreMargin"],
+                "eloChange":round(receipt["winnerDelta"] if receipt["winnerId"] == internal_id
+                                  else receipt["loserDelta"], 2),
+                "opponentEloBefore":round(receipt["preLoserElo"] if receipt["winnerId"] == internal_id
+                                           else receipt["preWinnerElo"], 1),
+            }
+            for receipt in reversed(changes[-5:])
+        ]
         played = len(opponents[internal_id])
         row["pointsForPerGame"] = round(points[internal_id][0] / played, 2)
         row["pointsAgainstPerGame"] = round(points[internal_id][1] / played, 2)
@@ -162,6 +197,12 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
         row["opponentAverageElo"] = round(
             sum(rating_by_id[i] for i in opponents[internal_id]) / played, 1
         )
+        # Opponent strength as it existed BEFORE the game, not a look-ahead
+        # average of every opponent's final end-of-season rating.
+        row["opponentAverageEloAtGame"] = round(sum(
+            receipt["preLoserElo"] if receipt["winnerId"] == internal_id
+            else receipt["preWinnerElo"] for receipt in changes
+        ) / played, 1)
         row.update(regime_features(row["history"], row["rating"]))
     directory_report = {
         "source": TEAM_URL, "status": "unavailable", "matchedRatedTeams": 0,
@@ -205,7 +246,7 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
         "retrievedAtUtc": now.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
         "lastGameDate": games[-1]["date"],
         "cutoffDate": REGULAR_SEASON_CUTOFF.isoformat(),
-        "method": "Independent 2027 Elo (K=24, home=65) with bounded recent trend; uncalibrated for 2027",
+        "method": "Game-by-game source-aware Elo: K=24, home=65, bounded score margin weighting, opponent strength, and date-frozen evaluation; not yet prospectively validated",
         "sourceIdSpace": "NCAA team names (hashed IDs; NOT historical Kaggle IDs)",
         "isOfficialBracket": False,
         "pregameDiagnostics": {
@@ -213,9 +254,35 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
             "brier": round(engine.brier_score(), 6),
             "accuracy": round(engine.pregame_accuracy_score(), 6),
             "coinFlipBrier": 0.25,
-            "method": "Retrospective sequential Elo pregame evaluation before each game's update",
-            "caveat": "Not timestamped published pregame picks; same-day tip-off order is approximate.",
+            "method": "Retrospective Elo pregame evaluation using only prior-date ratings",
+            "caveat": "Not timestamped published pregame picks; same-day games are evaluated using start-of-day Elo because actual tipoff times are unavailable.",
         },
+        "eloComparison": paired_elo,
+        "eloMethodology": {
+            "version":"source-aware-game-elo-v1",
+            "kFactor":engine.k_factor,
+            "recordedHomeAdvantage":engine.home_advantage,
+            "marginCapPoints":MARGIN_CAP,
+            "marginMultiplierMin":MARGIN_FLOOR,
+            "marginMultiplierAtCap":MARGIN_FLOOR + MARGIN_GAIN,
+            "priorDateFrozen":True,
+            "ratingConservedZeroSum":True,
+            "policy":"Recompute all rated teams from every source-accepted game; expected win chance already includes game-time opponent Elo and recorded home designation; apply zero-sum, bounded score-margin updates to both teams.",
+            "unavailable":"True neutral-site status, injuries, travel and complete possession data cannot be inferred from this schedule feed.",
+        },
+        "recentEloUpdates": [
+            {
+                "contestId":r["contestId"],
+                "date":(FIRST_DATE + timedelta(days=r["dayNum"])).isoformat(),
+                "winner":id_to_name[r["winnerId"]],
+                "loser":id_to_name[r["loserId"]],
+                "scoreMargin":r["scoreMargin"],
+                "winnerEloChange":round(r["winnerDelta"],2),
+                "loserEloChange":round(r["loserDelta"],2),
+                "effectiveK":r["effectiveK"],
+            }
+            for r in engine.game_receipts[-25:]
+        ],
         "teams": rows,
         "identityCoverage": directory_report,
         "divisionCoverage": membership_report,
@@ -225,9 +292,11 @@ def build_current(games: list[dict], retrieved_at: datetime | None = None,
         "limitations": [
             "NCAA-source schedule is a third-party published snapshot, not an instantaneous live feed.",
             "This models available scored games, including possible non-Division-I opponents; no field selection.",
-            "Margin and opponent Elo are descriptive, not pace-adjusted or tournament-trained features.",
+            "Elo updates use observed score margin, game-time opponent strength and recorded home designation; no reliable true-neutral, injury, or travel signal is available.",
+            "Score-margin weighting is a bounded heuristic; paired earlier-date backtests do not prove stronger future predictions.",
             "Team identity uses NCAA names; no unverified joins to historic Kaggle IDs.",
-            "Same-day ordering is approximate; last game date and retrieval UTC do not certify real-time updates.",
+            "The published schedule feed may contain positive scores before an authoritative final; confirmed status is checked separately for prediction grading.",
+            "All same-day predictions use the previous day's ratings: true intraday tipoff ordering is unavailable; refresh follows GitHub/source schedules, not every buzzer.",
         ],
     }
 
