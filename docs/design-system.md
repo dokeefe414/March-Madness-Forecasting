@@ -83,3 +83,31 @@ The redesigned individual game panel provides team Elo history curves, source-ma
 Visual classes `.ml-*` cover the model showdown with paired-score Brier bars and cautious confidence bounds; `.ga-*` covers actual frozen game captures and postgame receipts; `.gc-recent-settled` brings finished results into the main view; `.gc-archive-health` shows the status of the independent archiver. CSS includes responsive layouts at 1130/930/830/700/620px and reduced-motion preferences. The new Playwright test fixtures are generated **only inside browser tests**, not committed as real sports data.
 
 [Full model comparison trust contract](v09-model-validation.md).
+
+
+## v2.2 / Forecast Intelligence cockpit (current design)
+
+Five main navigation destinations remain intact. The Model Lab hosts one new
+responsive Forecast Intelligence cockpit rather than adding more pages or tabs.
+
+**Visual:** dark forest/navy layered surfaces, transparent court grid,
+mint/cyan source evidence colors, high-contrast condensed numbers, bounded
+glowing verified-score orb, and small restrained 01–04 data-source stages.
+CSS is scoped under `.fi` in `web/app/globals.css` so old navigation,
+historical tables, matchup and mobile layouts remain intact.
+
+**Information hierarchy:** 1) genuinely verified forward picks and latest
+source-game date; 2) historical/source-box/adaptive/forward coverage counters;
+3) a three-choice interactive experiment workbench and identical-cohort Brier
+comparison; 4) source-settled original-pick calibration; 5) existing detailed
+Model Lab and historical tournament evidence. Negative Brier gains must not
+be styled as successful model promotions, and all unverified states display
+pending/missing text. Pair with [v2.2 scientific contract](v22-forecast-intelligence.md).
+
+**UI controls:** native buttons with `aria-pressed` for the workbench; metrics
+are text in addition to color-coded bars; chart rows preserve count and
+percentage labels; `aria-live` only for the workbench, not the whole page;
+visible `:focus-visible` outlines; reduced-motion safe; mobile grid at
+1100/730/490px breakpoints. Source retrieval mismatches withhold invalid
+research comparisons. Tests continue to run at the exact GitHub Pages project
+prefix, and browser navigation remains tied to the original five main tabs.
