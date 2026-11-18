@@ -2,7 +2,7 @@
 
 ## What runs automatically
 
-The 2027 NCAA-derived dataset refresh already runs at **1:00 a.m. Eastern daily**, plus **5:17 a.m. Eastern** in season. v0.7 adds a **fitted outcome model**, not merely an updating team-rating curve. The 9:07 a.m. Eastern pretipoff archival workflow also regenerates the ratings and model before storing future forecasts. GitHub Actions times are best-effort. A source outage must fail rather than invent games.
+The 2027 NCAA-derived dataset refresh already runs at **2:47 a.m. Eastern daily**, plus **6:47 a.m. Eastern** in season. v0.7 adds a **fitted outcome model**, not merely an updating team-rating curve. The 2:07, 6:07, 9:07 a.m. and 4:07 p.m. Eastern pretipoff archive/settlement workflow also regenerates the ratings and model before storing future forecasts. GitHub Actions times are best-effort. A source outage must fail rather than invent games.
 
 **Source files:** `research/forecast/live.py` now optionally emits every accepted game under `web/public/current/2027-games.json`; this exact input is timestamp-linked to the 2027 Elo snapshot. `research/forecast/retrain.py` emits `web/public/current/2027-online-model.json`. Both are regenerated on deployment, not committed as stale data. The latter is publicly inspectable in the current-season dashboard.
 
@@ -41,7 +41,7 @@ The trained challenger is `shadow` until **all** of the following are true:
 - Mean trained Brier beats baseline Elo on the same source fixtures by **at least 0.002**;
 - A deterministic 500-draw bootstrap resampling *game-date blocks* has a lower 95% Brier-improvement endpoint above zero.
 
-If insufficient evidence or worse performance, Elo stays operational. The job still retrains and publishes the candidate every run. If the gate later passes, `mode: active` permits the candidate for new **non-neutral future** picks. If it no longer passes, the next pretipoff snapshot returns to Elo; already archived probabilities remain immutable. No automatic use on neutral-site games (unvalidated venue shift). The report displays `evaluationGames`, `evaluationDays`, `modelBrierGain`, and `dayBlockGain95`; never claim a skill gain without its paired evaluation.
+If evidence is insufficient or worse, the current active Elo stays operational. The job still retrains and publishes the candidate every run. **A passing gate permits manual review only:** the code deliberately never sets the logistic model to `active` during scheduled runs. Previously archived probabilities remain immutable. The 2027 logistic baseline-state replay uses the same capped score-margin game updates as the current source-aware Elo, including the prior-date embargo. No automatic use on neutral-site games (unvalidated venue shift). The report displays `evaluationGames`, `evaluationDays`, `modelBrierGain`, and `dayBlockGain95`; never claim a skill gain without its paired evaluation.
 
 ## Real pretipoff picks and preserved provenance
 
@@ -73,7 +73,7 @@ CI tests date-order exclusions, same-day leakage, before-date training counts, p
 
 ## v0.8 independent forward-pick activation gate
 
-The earlier chronological 160/10 minimum training and 120 games/12 days Brier bootstrap comparison remains necessary, but now **cannot alone promote a trained model**. The scheduled `forecast.retrain --ledger web/public/forecasts` command reads the public immutable snapshot/settlement archive, counts the earliest first-published forecast of each ESPN event, and requires **at least 40 unique actually settled games** that had both Elo and the shadow logistic probabilities frozen before listed tipoff. Their paired forward Brier must improve by >=0.002 for the learned model to become operational.
+The earlier chronological 160/10 minimum training and 120 games/12 days Brier bootstrap comparison remains necessary, but now **cannot alone promote a trained model**. The scheduled `forecast.retrain --ledger web/public/forecasts` command reads the public immutable snapshot/settlement archive, counts the earliest first-published forecast of each ESPN event, and requires **at least 100 unique actually settled games** that had both Elo and the shadow logistic probabilities frozen before listed tipoff. Their paired forward Brier must improve by >=0.002, span at least 12 independent dates, and have a positive date-block lower 95% confidence bound for the model to become **eligible for review only**; it will not auto-replace Elo.
 
 The `forwardValidation` public report has status, paired game count, Elo and challenger Brier, comparison gain and reason. It may remain `shadow` for an extended time. A wrong pick is never manually corrected in the archive or used for today's features; only new previous-day source results enter the next fitted model. This is *not* guaranteed improved accuracy. Full distinctions between historical-date scores and publicly archived forward picks: [forward performance](forward-performance.md).
 
@@ -81,3 +81,8 @@ The `forwardValidation` public report has status, paired game count, Elo and cha
 ## v0.9 normal overnight adaptation and no miss-specific overfitting
 
 The operational Elo/logistic switch still requires the prior-date chronological gate **AND** actual, independently settled, earliest-publication pregame paired evidence. A wrong favorite cannot make the next prediction artificially perfect; only sourced outcomes dated **strictly before** the prediction's Eastern game date influence its training. The archive's new completed-status and exact-score final verification are required before a published miss enters prospective grading. A separate opponent margin-residual model and adaptive Kalman-style state-space challenger have been added as strictly **research-only** candidates with their own retrospective and genuinely forward paired Brier reports. See [new model mathematics](v09-model-validation.md) and [archive operations](v09-forecast-operations.md).
+
+
+## Source-aware Elo update parity (Nov 2026)
+
+The `forecast.retrain` replay calculates its daily score-margin-adjusted team-Elo changes from the exact same formula as `forecast.live`: baseline K=24, recorded home=65 Elo, and a capped logarithmic score margin factor. Every source date is evaluated before that date's changes are applied, and the date's updates are accumulated without leaking earlier-listed same-day results. This prevents training the logistic residual correction against a different classic Elo state than the one used for published current-season probabilities. See [game-aware Elo mathematics and limitations](game-aware-elo.md).
