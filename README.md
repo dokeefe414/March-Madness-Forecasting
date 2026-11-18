@@ -5,7 +5,7 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v1.9%20Verified%20Accuracy-a6ffce)
+![Version](https://img.shields.io/badge/release-v2.0%20Basketball%20Intelligence-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
@@ -17,6 +17,20 @@
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v2.0 — Basketball intelligence, historical model championship, richer brackets and My Teams
+
+**Six historically trained/tested challengers** now compete on the *same* source-pinned NCAA tournament games. The [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) shows Elo, regularized logistic regression, gradient-boosted decision stumps, earlier-year calibrated Elo, the regularized scoring-margin model, and a fixed prior-shrunk Elo control. Every evaluated tournament season is **unseen during fitting**; the nested champion is chosen only from **previously held-out earlier seasons**, with paired Brier/log loss/accuracy and season-block uncertainty. The active live model is unchanged.
+
+**Verified-feature pipeline:** `forecast.historical_box_store` can ingest actual NCAA event-level two-sided box scores to compute possessions, efficiency, eFG%, turnover rate, offensive rebounding, free-throw rate, pace and a descriptive strength-of-schedule proxy. It enforces source team IDs, before-tournament cutoffs, duplicate controls, plausible raw statistics and SHA-256 provenance. **Important: no full historical NCAA box-score file has been supplied in this repository, so the published coverage report honestly shows missing Four Factors rather than inventing them.** The current model championship trains on the previously verified pre-tournament Elo/win-loss features until source-complete possessions exist.
+
+**Brackets, beyond champion picks:** [Bracket Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=bracket) now shows expected tournament wins, 95% **simulation-sampling** intervals on championship probability, and clearly labeled first-round upset scenarios that do not guess play-in winners. Reproducible seeded Monte Carlo respects the actual historical 64/65/68 entrants (and can process a properly sourced future 76-team field). It does not claim to know the official 2027 field.
+
+**My Teams watchlist:** [Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) lets you follow up to 12 programs, quickly open their future listed ESPN fixtures, star/unstar either side of a matchup, and filter to your teams. Favorites are saved only in that browser, without a login or change to public forecasts. All five top-level navigation destinations and hidden legacy pages remain intact.
+
+**Production safety:** No modification to current active Elo, original pretipoff snapshots, source-verification settlement records, or archived historical predictions. Research is evaluated separately from genuinely frozen live first-picks. CI validates real historical seasons, data provenance, no-leakage model selection, bracket integrity and browser/mobile usability. See the [complete v2.0 implementation and math](docs/v20-basketball-intelligence.md).
 
 ---
 

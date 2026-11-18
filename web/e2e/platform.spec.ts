@@ -565,3 +565,85 @@ test("v1.9 verified daily records and frozen score error remain separate from re
  await expect(panel).toContainText("6.40");
  await expect(panel).toContainText("14.30");
 });
+
+test("v2.0 saves followed teams only in this browser and surfaces their future source-listed games",async ({page})=>{
+ const tipoff=new Date(Date.now()+4*86400000).toISOString();
+ const t=(id:string,name:string)=>({teamId:id,name,rank:1,rating:1520,
+  projectedRating:1520,trend:0,wins:8,losses:3,history:[1500,1520],
+  pointsForPerGame:77,pointsAgainstPerGame:69,
+  recentGames:[],ratingHistory:[1500,1520]});
+ const home=t("test-h","Home School"),away=t("test-a","Away School");
+ await page.route("**/current/2027.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   mode:"current",season:2027,teams:[home,away],retrievedAtUtc:new Date().toISOString()})}));
+ await page.route("**/current/upcoming.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   schemaVersion:1,generatedAtUtc:new Date().toISOString(),
+   coverage:{futureScheduled:1,eligibleForecasts:1,unmatchedOrAmbiguous:0},
+   games:[{eventId:"watch-1",scheduledStartUtc:tipoff,scheduledEasternDate:tipoff.slice(0,10),
+    neutralSite:true,status:"ready",home:home.name,away:away.name,
+    homeTeamId:home.teamId,awayTeamId:away.teamId,homeWinProbability:.63,
+    baselineHomeWinProbability:.63,model:"Elo",homeProfile:home,awayProfile:away,
+    factors:[],commonOpponents:[],headToHead:[]}]})}));
+ await page.goto("/?view=games");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const panel=page.getByRole("region",{name:"Your favorite teams and upcoming games"});
+ await expect(panel).toContainText("No teams followed yet");
+ await panel.getByRole("combobox",{name:"Choose a team to follow"}).selectOption("test-h");
+ await panel.getByRole("button",{name:/Follow team/i}).click();
+ await expect(panel).toContainText("UP NEXT FOR YOUR TEAMS");
+ await expect(panel.getByRole("button",{name:/Away School at Home School/})).toBeVisible();
+ await panel.getByRole("button",{name:"Only my teams"}).click();
+ await expect(panel.getByRole("button",{name:"Only my teams"})).toHaveAttribute("aria-pressed","true");
+ await page.reload();
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const restored=page.getByRole("region",{name:"Your favorite teams and upcoming games"});
+ await expect(restored.getByRole("button",{name:"Unfollow Home School"})).toBeVisible();
+ await restored.getByRole("button",{name:"Unfollow Home School"}).click();
+ await expect(restored).toContainText("No teams followed yet");
+});
+
+test("v2.0 model championship distinguishes genuine box coverage and held-out ML evidence",async ({page})=>{
+ const m=(brier:number)=>({games:2270,brier,logLoss:.63,accuracy:.67});
+ const names=["elo","logistic","boosted","calibratedTrendElo","scoreDistribution","priorShrinkage"];
+ const models=Object.fromEntries(names.map((name,i)=>[name,m(.225-i*.002)]));
+ await page.route("**/research/historical-data-manifest.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   sourceCommit:"pinned-source-test",historicalIndexSha256:"hash",includedSeasons:40,
+   includedGames:2585,missingSeasons:[],excludedSeasons:[],perSeason:[]})}));
+ await page.route("**/research/model-championship.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   schemaVersion:1,mode:"historical-only",sourceCommit:"pinned-source-test",indexSha256:"hash",
+   evaluatedSeasons:35,heldOutGames:2270,models,nestedChampion:m(.214),
+   nestedGainVsElo:.011,nestedGainYearBlock95:[-.002,.02],
+   modelGainYearBlock95:{boosted:[-.001,.009],logistic:[-.002,.008]},
+   matchupTiers:[],
+   yearByYear:[{season:2025,trainedThroughSeason:2024,championSelectedBeforeResults:"elo",
+     modelScores:models,nestedChampion:m(.22)}],
+   modelSelection:{noAutomaticProductionPromotion:true},
+   safety:{livePredictionsModified:false}})}));
+ await page.route("**/research/historical-box-coverage.json",route=>route.fulfill({contentType:"application/json",body:JSON.stringify({
+   sourceCommit:"pinned-source-test",available:false,sourceGames:0,teamSeasons:0,
+   missingBoxSeasons:[2023,2024,2025],sourceSha256:null,limitations:[]})}));
+ await page.goto("/?view=models");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const panel=page.getByRole("region",{name:"Multi-model historical tournament championship"});
+ await expect(panel).toContainText("2,270");
+ await expect(panel).toContainText("THE MODELS");
+ await expect(panel).toContainText("0.2140");
+ await expect(panel).toContainText("Not supplied.");
+ await panel.getByRole("button",{name:"Regularized logistic"}).click();
+ await expect(panel).toContainText("Prior");
+ await panel.getByText("Year-by-year champion selection and test results").click();
+ await expect(panel).toContainText("2025");
+});
+
+test("v2.0 simulated bracket shows expected wins, Monte Carlo interval and only resolved seed upsets",async ({page})=>{
+ await page.goto("/?view=bracket");
+ await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+ const button=page.getByRole("button",{name:/SIMULATE FULL FIELD/i});
+ await expect(button).toBeVisible({timeout:20000});
+ await page.locator(".sim-controls select").selectOption("1000");
+ await button.click();
+ await expect(page.getByText("EXPECTED TOURNAMENT WINS")).toBeVisible();
+ await expect(page.getByText("MC TITLE SAMPLING BAND (95%)")).toBeVisible();
+ const summary=page.getByText(/First-round upset watch/i);
+ await summary.click();
+ await expect(page.locator(".v20-upset-item").first()).toBeVisible();
+});

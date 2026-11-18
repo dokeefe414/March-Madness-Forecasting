@@ -55,6 +55,14 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.historical_probabilistic --web-dir web --out web/public/research/historical-probabilistic.json
+      - name: Publish honest source-audited historical Four Factors and possession data coverage
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.historical_box_store --web-dir web --out web/public/research/historical-box-coverage.json
+      - name: Publish historical six-model champion benchmark without modifying current model
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.model_championship --web-dir web --out web/public/research/model-championship.json
       - name: Validate and build 2027 NCAA-source results
         env:
           PYTHONPATH: research

@@ -43,6 +43,8 @@ export type BracketResult = {
   titleGame: number;
   champion: number;
   openingRoundWin: number | null;
+  expectedWins: number;
+  championMonteCarlo95: [number,number];
 };
 
 export const REGIONS = ["W", "X", "Y", "Z"] as const;
@@ -147,7 +149,7 @@ export function simulateFullBracket(field: BracketField, runs = 5000, randomSeed
   const counts = new Map<string, BracketResult>(field.entrants.map((t) => [t.teamId, {
     teamId: t.teamId, name: t.name, region: t.region, seed: t.seed,
     round32: 0, sweet16: 0, elite8: 0, final4: 0, titleGame: 0,
-    champion: 0, openingRoundWin: null,
+    champion: 0, openingRoundWin: null, expectedWins:0, championMonteCarlo95:[0,0] as [number,number],
   }]));
   const pick = (a: BracketTeam, b: BracketTeam) => rng() < chance(a, b) ? a : b;
   for (let run = 0; run < runs; run++) {
@@ -188,6 +190,43 @@ export function simulateFullBracket(field: BracketField, runs = 5000, randomSeed
     const result = { ...row };
     for (const metric of rounds) result[metric] /= runs;
     if (result.openingRoundWin !== null) result.openingRoundWin /= runs;
+    result.expectedWins = Number((result.round32 + result.sweet16 + result.elite8 +
+      result.final4 + result.titleGame + result.champion + (result.openingRoundWin || 0)).toFixed(4));
+    // Wilson 95% binomial sampling interval: uncertainty from FINITE simulation
+    // runs only, not posterior uncertainty about team strength or injuries.
+    const z=1.959963984540054, p=result.champion;
+    const denom=1+z*z/runs;
+    const center=(p+z*z/(2*runs))/denom;
+    const radius=z*Math.sqrt((p*(1-p)+z*z/(4*runs))/runs)/denom;
+    result.championMonteCarlo95=[Math.max(0,center-radius),Math.min(1,center+radius)];
     return result;
   }).sort((a, b) => b.champion - a.champion || a.name.localeCompare(b.name));
+}
+
+/** Seed-line upset candidates for fully sourced opening R64 matches only.
+ * Play-in slots cannot be guessed: missing entrants are explicitly excluded.
+ * This is a conditional MODEL probability based on pre-tournament Elo,
+ * NOT an independently calibrated tournament upset probability.
+ */
+export function firstRoundUpsetCandidates(field:BracketField):Array<{
+ underdogId:string;underdog:string;underdogSeed:number;favorite:string;
+ favoriteSeed:number;underdogWinProbability:number;region:string
+}> {
+ const valid=buildFieldFromSlots(field.season,field.regions);
+ const out:Array<{underdogId:string;underdog:string;underdogSeed:number;favorite:string;
+  favoriteSeed:number;underdogWinProbability:number;region:string}>=[];
+ for(const region of valid.regions){
+   for(let i=0;i<region.slots.length;i+=2){
+     const a=region.slots[i],b=region.slots[i+1];
+     // A two-entrant seed would require an opening game first; abstain.
+     if(a.teams.length!==1||b.teams.length!==1)continue;
+     const underdog=a.seed>b.seed?a.teams[0]:b.teams[0];
+     const favorite=a.seed<b.seed?a.teams[0]:b.teams[0];
+     out.push({underdogId:underdog.teamId,underdog:underdog.name,
+      underdogSeed:underdog.seed,favorite:favorite.name,favoriteSeed:favorite.seed,
+      underdogWinProbability:chance(underdog,favorite),region:region.code});
+   }
+ }
+ return out.sort((x,y)=>y.underdogWinProbability-x.underdogWinProbability ||
+      x.underdog.localeCompare(y.underdog));
 }

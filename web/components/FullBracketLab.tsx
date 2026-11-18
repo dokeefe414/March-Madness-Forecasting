@@ -7,7 +7,7 @@ import BracketBuilder from "./BracketBuilder";
 import BracketDuel from "./BracketDuel";
 import {fetchHistoricalJson} from "../lib/historicalAssets";
 import {
-  buildHistoricalField, simulateFullBracket, SEED_ORDER, type BracketArchive,
+  buildHistoricalField, simulateFullBracket, firstRoundUpsetCandidates, SEED_ORDER, type BracketArchive,
   type BracketField, type BracketResult,
 } from "../lib/fullBracket";
 
@@ -56,6 +56,7 @@ export default function FullBracketLab({ data,onOpenArchive }: { data: RatingsDa
     try { buildHistoricalField(archive, data.teams); return null; }
     catch (e) { return e instanceof Error ? e.message : "Could not reconstruct field."; }
   }, [archive, data, status]);
+  const upsetCandidates=useMemo(()=>field?firstRoundUpsetCandidates(field).slice(0,8):[],[field]);
   const leaders = results?.slice(0, 12) ?? [];
   const active = results?.find((team) => team.teamId === selectedTeam) ?? results?.[0];
 
@@ -148,15 +149,31 @@ export default function FullBracketLab({ data,onOpenArchive }: { data: RatingsDa
                     <div><span>{label}</span><strong>{fmt(active[key])}</strong></div>
                     <div className="sim-track"><div style={{width:fmt(active[key])}} /></div>
                   </div>)}
+                  <div className="v20-bracket-summary">
+                    <div><small>EXPECTED TOURNAMENT WINS</small><strong>{active.expectedWins.toFixed(2)}</strong></div>
+                    <div><small>MC TITLE SAMPLING BAND (95%)</small><strong>{fmt(active.championMonteCarlo95[0])}–{fmt(active.championMonteCarlo95[1])}</strong></div>
+                  </div>
                   {active.openingRoundWin !== null && <small>Opening Round win chance: {fmt(active.openingRoundWin)}</small>}
                 </div>}
               </div>
             </div>
           ) : <div className="premium-empty"><span className="empty-spark">✳</span><h3>RUN THE TOURNAMENT.</h3><p>The title probability leaderboard and every-round advancement paths will appear here.</p></div>}
+          <details className="v20-upsets" aria-label="Historical field model upset scenarios">
+            <summary>First-round upset watch · {upsetCandidates.length} seeded matchups</summary>
+            <p>Seed-based upsets in the <strong>real sourced historical field</strong>. Only fully resolved Round-of-64 opponents are shown; unplayed First Four winners are not invented. These are Elo-derived model estimates, not actual outcomes or betting odds.</p>
+            <div className="v20-upset-grid">
+              {upsetCandidates.map(x=><div key={x.underdogId} className="v20-upset-item">
+                <span>REGION {x.region} · #{x.underdogSeed} vs #{x.favoriteSeed}</span>
+                <strong>{x.underdog} over {x.favorite}</strong>
+                <b>{fmt(x.underdogWinProbability)}</b>
+              </div>)}
+              {!upsetCandidates.length&&<p>No fully sourced opening matchups are available for this field.</p>}
+            </div>
+          </details>
           <BracketBuilder key={"builder-"+data.season} field={field}/>
           <BracketDuel key={"duel-"+data.season} field={field}/>
           {results&&<BracketScenario key={data.season} field={field} runs={runs} seed={seed} baseline={results}/>}
-          <p className="source-note">Source: actual archived tournament seeds; team strength frozen before tournament play. Opening Round is modeled for historical 65/68 fields; the simulator also supports a future 76-team / 12-opening-game field when verified seed placements are available. Final Four region crossover uses an illustrative W–X / Y–Z pairing; actual year-specific national semifinal placement may differ. This is not the official 2027 field.</p>
+          <p className="source-note">Expected wins include any First Four win and subsequent round advances. Wilson 95% title bands reflect Monte Carlo sampling error only, not model calibration or uncertainty about team strength. Source: actual archived tournament seeds; team strength frozen before tournament play. Opening Round is modeled for historical 65/68 fields; the simulator also supports a future 76-team / 12-opening-game field when verified seed placements are available. Final Four region crossover uses an illustrative W–X / Y–Z pairing; actual year-specific national semifinal placement may differ. This is not the official 2027 field.</p>
         </>
       )}
     </section>

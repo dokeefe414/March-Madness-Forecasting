@@ -1007,3 +1007,52 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 .v19-game-glance>a{grid-column:1/-1;justify-self:start;color:#b6ffcc;font-weight:800;text-decoration:underline;font-size:11px;padding:4px 0}
 @media(max-width:900px){.v19-metrics,.v19-status{grid-template-columns:repeat(2,minmax(0,1fr))}.v19-game-glance{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.v19-score,.v19-game-glance{grid-template-columns:1fr}.v19-metrics strong{font-size:27px}.v19-accuracy{padding:14px}}
+
+/* v2.0: real-source historical challenger evidence and readable watchlist */
+.v20-championship{margin:25px 0;padding:clamp(16px,3vw,29px);border-radius:16px;border:1px solid #52806e;background:linear-gradient(150deg,#14353f,#102830);color:#edfff4}
+.v20-scorecards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:20px 0}
+.v20-scorecards>div{border:1px solid #4f756a;background:#0a2b38;padding:14px;min-width:0;border-radius:11px}
+.v20-scorecards small{display:block;font-size:9px;letter-spacing:.3px;font-weight:900;line-height:1.5;color:#b5d8c8}
+.v20-scorecards strong{font:900 clamp(25px,3vw,38px)/1.3 "Barlow Condensed",Impact,sans-serif;display:block;color:#f2fff6;margin-top:8px}
+.v20-interval{font-size:12px;line-height:1.75;border-left:3px solid #b3f6c9;background:#153a34;padding:14px;margin-top:17px}
+.v20-compare{border:1px solid #517b70;border-radius:12px;padding:15px;margin:20px 0}
+.v20-compare h4,.v20-data-audit h4{color:#e3fff1;font:900 24px "Barlow Condensed",Impact,sans-serif;margin:0 0 9px}
+.v20-compare p,.v20-data-audit p{line-height:1.7;color:#c4e0d2;font-size:12px}
+.v20-choices{display:flex;gap:7px;flex-wrap:wrap}
+.v20-choices button{border:1px solid #618f79;border-radius:8px;background:#173b3c;color:#d4f9e3;font-weight:800;padding:10px 12px;font-size:11px}
+.v20-choices button[aria-pressed=true]{background:#baffd0;color:#163525}
+.v20-data-audit{background:#112f32;border-left:4px solid #e2d6a9;border-radius:9px;padding:16px;margin:22px 0}
+.v20-data-audit code{color:#daffed}
+.v20-watchlist{border:1px solid #558974;border-radius:12px;background:linear-gradient(115deg,#183e3b,#0e3036);padding:clamp(13px,2.5vw,18px);margin:12px 0 20px;color:#e6f9ed}
+.v20-watch-header{display:flex;flex-wrap:wrap;align-items:end;gap:12px}
+.v20-watch-header>div{flex:1 1 250px}
+.v20-watch-header strong{font-size:13px;letter-spacing:.6px;color:#f1fff5}
+.v20-watch-header p{font-size:11px;line-height:1.6;color:#bfdecf;margin:7px 0 0}
+.v20-watch-header label{font-size:10px;font-weight:900;flex:0 1 250px;display:grid;gap:6px;color:#cbf2dd}
+.v20-watch-header select{width:100%;min-width:150px;border:1px solid #719d84;background:#0c2b33;border-radius:7px;padding:10px;color:#f3fff6;min-height:43px}
+.v20-watch-header button,.v20-watch-chips button{background:#164e44;border:1px solid #77ac91;border-radius:8px;color:#f1fff5;font-size:11px;font-weight:800;padding:11px;min-height:43px;cursor:pointer}
+.v20-watch-header button.active,.v20-watch-header button[aria-pressed=true]{background:#bdffd2;color:#0f3627}
+.v20-watch-header button:disabled{opacity:.5;cursor:not-allowed}
+.v20-watch-chips{display:flex;gap:7px;flex-wrap:wrap;margin:13px 0}
+.v20-watch-chips button{background:#275446;padding:8px 11px;min-height:36px}
+.v20-watch-chips button:hover{background:#416d56}
+.v20-watch-games{border-top:1px solid #4e8067;margin-top:12px;padding-top:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.v20-watch-games>strong{grid-column:1/-1;letter-spacing:.6px;font-size:10px;color:#cfffe2}
+.v20-watch-games button{border:1px solid #527966;border-radius:9px;background:#0f313a;padding:12px;text-align:left;display:flex;flex-direction:column;gap:5px;min-width:0;color:#e9fff1}
+.v20-watch-games button span{font-size:10px;color:#b2ddc7}
+.v20-watch-games button b{font-size:12px;line-height:1.4}
+.v20-watch-games button:hover,.v20-watch-games button:focus-visible{border-color:#aff5c8;background:#1d5046}
+.v20-bracket-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
+.v20-bracket-summary>div{border:1px solid #4e7e71;border-radius:8px;background:#14353d;padding:12px}
+.v20-bracket-summary small{display:block;font-size:9px;color:#afdfc6}
+.v20-bracket-summary strong{font:900 24px "Barlow Condensed",Impact,sans-serif;color:#f2fff5}
+.v20-upsets{border:1px solid #477c69;background:#102f3a;border-radius:13px;padding:16px;margin:19px 0}
+.v20-upsets summary{font-weight:900;font-size:13px;color:#eafff2;cursor:pointer}
+.v20-upsets>p{font-size:11px;color:#b7ddc9;line-height:1.65}
+.v20-upset-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:14px}
+.v20-upset-item{padding:13px;border:1px solid #457866;border-radius:9px;display:grid;gap:5px;background:#092831}
+.v20-upset-item span{font-size:9px;color:#a7ceb8}
+.v20-upset-item strong{font-size:12px;color:#d9ffe5}
+.v20-upset-item b{font:900 23px "Barlow Condensed",Impact,sans-serif;color:#b8ffce}
+@media(max-width:900px){.v20-scorecards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.v20-scorecards,.v20-upset-grid,.v20-watch-games,.v20-bracket-summary{grid-template-columns:1fr}.v20-watch-header label{flex:1 1 100%}}
