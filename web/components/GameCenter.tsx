@@ -133,8 +133,8 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
     return()=>{alive=false};
   },[]);
   const eligible=useMemo(()=>schedule?.games||[],[schedule]);
-  function toggleWatch(id:string){
-    if(!ratings?.teams.some(t=>t.teamId===id))return;
+  function toggleWatch(id:string|undefined){
+    if(!id||!ratings?.teams.some(t=>t.teamId===id))return;
     setWatchedTeams(current=>{
       const next=current.includes(id)?current.filter(t=>t!==id):current.length>=12?current:[...current,id];
       try{window.localStorage.setItem("marchforecast-watchlist-v20",JSON.stringify(next))}catch{}
@@ -142,13 +142,13 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
     });
   }
   const watchedUpcoming=useMemo(()=>eligible.filter(g=>
-    (watchedTeams.includes(g.homeTeamId)||watchedTeams.includes(g.awayTeamId))&&
+    (watchedTeams.includes(g.homeTeamId||"")||watchedTeams.includes(g.awayTeamId||""))&&
     (!now||Date.parse(g.scheduledStartUtc)>now)).sort((a,b)=>a.scheduledStartUtc.localeCompare(b.scheduledStartUtc)).slice(0,6),
     [eligible,watchedTeams,now]);
   const availableDays=useMemo(()=>[...new Set(eligible.map(x=>x.scheduledEasternDate))].sort(),[eligible]);
   const rows=useMemo(()=>eligible.filter(x=>(day==="all"||x.scheduledEasternDate===day) &&
       (!teamFilter||x.homeTeamId===teamFilter||x.awayTeamId===teamFilter) &&
-      (!onlyWatched||watchedTeams.includes(x.homeTeamId)||watchedTeams.includes(x.awayTeamId)) &&
+      (!onlyWatched||watchedTeams.includes(x.homeTeamId||"")||watchedTeams.includes(x.awayTeamId||"")) &&
       (showAll||!now||new Date(x.scheduledStartUtc).getTime()>now) &&
       (x.home+" "+x.away).toLowerCase().includes(search.toLowerCase())),
     [eligible,search,day,showAll,now,teamFilter,onlyWatched,watchedTeams]);
@@ -312,10 +312,10 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
             <div className="gc-quick-actions">
               <button type="button" onClick={copyGameLink}>{copied?"LINK COPIED ✓":"COPY GAME ANALYSIS LINK ↗"}</button>
                <button type="button" onClick={()=>toggleWatch(selected.homeTeamId)}>
-                 {watchedTeams.includes(selected.homeTeamId)?"★":"☆"} {watchedTeams.includes(selected.homeTeamId)?"Unfollow":"Follow"} {selected.home}
+                 {watchedTeams.includes(selected.homeTeamId||"")?"★":"☆"} {watchedTeams.includes(selected.homeTeamId||"")?"Unfollow":"Follow"} {selected.home}
                </button>
                <button type="button" onClick={()=>toggleWatch(selected.awayTeamId)}>
-                 {watchedTeams.includes(selected.awayTeamId)?"★":"☆"} {watchedTeams.includes(selected.awayTeamId)?"Unfollow":"Follow"} {selected.away}
+                 {watchedTeams.includes(selected.awayTeamId||"")?"★":"☆"} {watchedTeams.includes(selected.awayTeamId||"")?"Unfollow":"Follow"} {selected.away}
                </button>
               {onOpenModels&&<button type="button" onClick={onOpenModels}>COMPARE FORECASTING MODELS ↗</button>}
             </div>
