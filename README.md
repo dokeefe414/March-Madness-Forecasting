@@ -34,6 +34,22 @@ March Forecast is an open-source NCAA men's basketball forecasting and model-eva
 
 ---
 
+## v2.0 — Advanced basketball intelligence and model championship
+
+**Six genuine historical challenger models, one strictly chronological contest:** Elo, regularized logistic regression, gradient-boosted stumps, previous-year calibrated Elo, Gaussian scoring-margin probability, and conservative rating shrinkage. `research/forecast/model_championship.py` trains only on earlier NCAA tournament years, compares the same actual held-out games by Brier, log loss and winner accuracy, and selects its nested winner using **previously held-out seasons**. Source-verified season-block uncertainty is reported. **No historical replay or challenger automatically replaces live 2026–27 Elo.**
+
+**Real basketball statistics, not invented ones:** `research/forecast/historical_box_store.py` validates an optional official NCAA contest-level box-score CSV against pinned team IDs, pre-tournament dates, source URI, event uniqueness and plausible two-team possession/shooting/turnover/rebound totals. When a verified file is provided, it calculates offensive/defensive points per 100 possessions, effective field-goal%, turnovers per possession, offensive rebound share, free-throw rate, observed pace and opponent-strength summaries. **The currently pinned historical snapshots do not supply those historical Four Factors/possession box records**, so the dashboard honestly reports unavailable coverage rather than faking data or claiming a new feature-based accuracy boost. The championship continues with the real existing pre-tournament rating and record features.
+
+**Deeper real-field simulations:** The [Bracket](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=bracket) tab now provides expected tournament wins, repeatable 95% Monte Carlo **sampling-only** bands for championship probability, and explicitly conditional first-round upset candidates for source-verified completed seeded pairs. It still refuses to fabricate missing First Four entrants or the official future field.
+
+**Cleaner daily use:** A private, no-account **My Teams** watchlist on the [Game Center](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) follows up to 12 teams and shows their next source-listed matchups. It lives only in the browser and offers one-click fixture filtering. The five main tabs and all additional research pages are preserved.
+
+**Source and safety:** Research models use pre-tournament day-132 features, not imaginary per-regular-game stat histories. The historical feature coverage, multi-model competition and bracket simulations are **research-only**; no original archived pretipoff probability, settlement or current production model policy is changed. CI publishes reproducible JSON evidence, tests the real tournament history and validates bracket/watchlist behavior.
+
+Read the [v2.0 technical, source-data and scientific evaluation guide](docs/v20-basketball-intelligence-model-championship.md).
+
+---
+
 ## v1.9 — Verified prediction performance, first-pick score research and faster game navigation
 
 The [Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) page now has an original-first-pick accuracy center: **daily and weekly winners, Brier, paired Elo-vs-shadow experiments, source-verified settlement status, delayed-game triage, and actual margin/total error only once an original archived score prediction settles**. Pending is never mislabeled an incorrect pick; unverifiable final scores are withheld.
