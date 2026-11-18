@@ -118,7 +118,9 @@ class ModelUpgradeTests(unittest.TestCase):
                 sample.append({"eventId":f"{d}-{j}",
                    "date":(first+timedelta(days=d)).isoformat(),
                    "elo":.56 if y else .44,
-                   "research":.9 if y else .1,"y":y})
+                   "research":.9 if y else .1,"y":y,
+                   "originalAtUtc":(first+timedelta(days=d)).isoformat()+"T12:00:00Z",
+                   "settlementAtUtc":(first+timedelta(days=d+1)).isoformat()+"T02:00:00Z"})
         a=prequential_adaptive_weights(sample)
         self.assertGreater(a["evaluatedGames"],0)
         self.assertEqual(a["mode"],"research-only")
@@ -134,6 +136,13 @@ class ModelUpgradeTests(unittest.TestCase):
             if r["date"]==last:r["y"]=1-r["y"]
         b=prequential_adaptive_weights(modified)
         self.assertEqual(a["weightChanges"],b["weightChanges"])
+        # A final result published after a later forecast must never be
+        # sneaked into that earlier forecast's weight selection.
+        late=copy.deepcopy(sample)
+        for row in late:
+            if row["date"]<(first+timedelta(days=20)).isoformat():
+                row["settlementAtUtc"]=(first+timedelta(days=25)).isoformat()+"T02:00:00Z"
+        self.assertEqual(prequential_adaptive_weights(late)["evaluatedGames"],0)
         self.assertEqual(prequential_adaptive_weights([])["evaluatedGames"],0)
 
     def test_calibration_uses_only_real_settled_picks(self):
