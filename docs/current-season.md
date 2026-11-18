@@ -8,7 +8,7 @@ The published 2027 results originate from NCAA statistics via the **SportsDatave
 stats.ncaa.org → SportsDataverse NCAA raw/pipeline
               → ncaa_mbb_schedule_2027.csv.gz (GitHub public release)
               → research/forecast/live.py (strict validation)
-              → independent 2027 Elo & descriptive scores
+              → game-aware margin-sensitive Elo, matched classic reference & descriptive scores
               → web/public/current/2027.json (generated at deploy)
               → current-season dashboard with visible timestamps
 ```
@@ -23,7 +23,7 @@ The cutoff protects against letting 2027 postseason results leak into pre-tourna
 
 ## Current rating computation
 
-Every recorded team begins at Elo 1500 in the new season. Score winner and home/away location update Elo via `K=24`, home advantage 65 points. A bounded recent-slope projection creates a displayed projected rating. From final scores, the importer also computes points for/against per game, margin-per-game, and mean **current Elo** of recorded opponents. All are descriptive; no pace adjustment or proprietary efficiency claims are made. Same-day chronological ordering is approximate, not actual tipoff timing.
+Every recorded team begins at Elo 1500 in the new season. Each accepted game produces a bounded and zero-sum change for **both teams** using the recorded winner, pregame opponent strength, home/away adjustment of 65 Elo, and a logarithmically capped scoring-margin multiplier on K=24. A 25-point or larger margin has no more influence than a 25-point margin. A bounded recent-slope projection creates the displayed projected rating. From final scores the importer additionally computes points for/against, raw average margin, mean current opponent Elo and **mean opponent Elo as it actually stood before each game**. The JSON includes per-contest movement receipts and matched classic-versus-enhanced previous-date Brier/accuracy, without claiming the enhanced variant is better prospectively. All same-day fixtures are evaluated from the start-of-day ratings before any of their outcomes are applied; there is no authoritative same-day tipoff ordering. See [full game-aware Elo specification](game-aware-elo.md).
 
 To avoid unsupported cross-source identity mapping, NCAA team names become deterministic `ncaa-` prefixed SHA-256 identifiers. They are **not** merged into historical Kaggle integer IDs. In particular, a 2027 field of 76 is not projected from those identities.
 
@@ -40,7 +40,7 @@ The output includes `mode=current`, `season=2027`, `retrievedAtUtc`, `lastGameDa
 
 ## Automation and fail-safe publication
 
-The GitHub Pages workflow pulls the feed on main pushes, manually, and best-effort at **1:00 a.m. America/New_York daily**, with a **5:17 a.m. Eastern** catch-up during November–April. GitHub may delay scheduled jobs. It then generates both current and historical reports before building the site.
+The GitHub Pages workflow pulls the feed on main pushes, manually, and best-effort at **2:47 a.m. America/New_York daily**, with a **6:47 a.m. Eastern** catch-up during November–April, following corresponding 2:07/6:07 overnight source/forecast archiving runs. GitHub may delay scheduled jobs. It then generates both current and historical reports before building the site.
 
 If the release disappears, contains inconsistent scores, is empty, exceeds size limits or cannot be fetched, **the deploy fails** and leaves the last successful website intact. It must never substitute fabricated results. An absent local JSON displays an explicit unavailable state in the app.
 
@@ -54,9 +54,9 @@ If the release disappears, contains inconsistent scores, is empty, exceeds size 
 
 ## Sequential source-score model tracking
 
-The published `pregameDiagnostics` object reports `evaluatedGames`, `brier`, `accuracy`, `coinFlipBrier=0.25`, method and caveat. These values are accumulated **before each regular-season game updates Elo**, and they come from actual final scores in the published source. This is a retrospective chronological *pre-game backtest*, **not** an audited history of probabilities posted publicly prior to tipoff. As in the historical Kaggle source, same-day real tipoff order may be unavailable. The interface clearly labels this limitation.
+The published `pregameDiagnostics` and `eloComparison` objects report `evaluatedGames`, `brier`, `accuracy`, `coinFlipBrier=0.25`, method and caveat. These values are accumulated using **strictly prior-date team ratings before that day's games update Elo**, and they come from actual final scores in the published source. This is a retrospective chronological *pre-game backtest*, **not** an audited history of probabilities posted publicly prior to tipoff. As in the historical Kaggle source, same-day real tipoff order may be unavailable. The interface clearly labels this limitation.
 
-`forecast.core.EloEngine` tracks both pregame Brier and winner accuracy; `forecast.live` serializes them for the web. No fabricated win/loss streak chart or unobserved performance statistic is displayed.
+`forecast.game_aware_elo.GameAwareEloEngine` tracks game-aware and matched classic Brier/winner accuracy, plus exact score-margin and signed rating movements. The historical `forecast.core.EloEngine` remains unchanged; `forecast.live` serializes current-season evidence for the web. No fabricated win/loss streak chart or unobserved performance statistic is displayed.
 
 ### Date-format compatibility (deployment incident, Nov 16, 2026)
 
