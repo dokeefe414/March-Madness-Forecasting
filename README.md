@@ -5,18 +5,32 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v2.2%20Forecast%20Intelligence-a6ffce)
+![Version](https://img.shields.io/badge/release-v2.3%20Autonomous%20Recovery-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
 ### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting26-27/)
 
-[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [v2.2 forecasting intelligence](docs/v22-forecast-intelligence.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [v2.2 forecasting intelligence](docs/v22-forecast-intelligence.md) · [Automation recovery runbook](docs/nightly-recovery-2026-11-18.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v2.3 — Automatic archive recovery and duplicate-proof GitHub Pages deployment
+
+**The fix is operational, not cosmetic.** After the Nov 18 release, GitHub Actions showed two genuine failures: a missed scheduled archival capture (detected by the monitor) and a scheduled Pages build that uploaded a correct artifact but whose downstream deployment step initially could not see it. Retrying that SAME failed Pages job produced a duplicate artifact under one workflow ID, revealing why naive "rerun failed jobs" is the wrong recovery strategy.
+
+- **Re-registered archive schedules:** independent 02:07, 06:07, 09:07 and 16:07 Eastern expressions in November–April, each rebuilding source-backed Elo, retraining, freezing only valid *future* original predictions and settling *independently verified* past finals. Archive captures remain immutably committed and never forced.
+- **Self-healing archive watchdog:** 03:41, 07:41, 11:41 and 18:41 Eastern, plus a check after successful Pages runs. If committed archive evidence is over four hours old, the watchdog checks for an existing active archiver and sends a narrowly permissioned `workflow_dispatch` if none is running. The incident remains visible until a later *successful* capture and ledger audit, then the old issue automatically closes.
+- **Safe Pages artifact propagation:** after building, the deployment polls GitHub's Actions artifact API for exactly one uploaded `github-pages` artifact and waits briefly for replication. Downstream Pages retries are longer and bounded; missing or duplicate artifacts cause a clear failure, never a false success.
+- **New independent Pages recovery:** if only the Pages deployment step fails and the original run uploaded exactly one artifact, a separate workflow dispatches a **fresh site build under a new run ID**. It never reruns the same artifact-upload job, loops on a dispatched retry, or conceals data/model failures.
+- **Tests and complete runbook:** schedule sequencing, recovery guardrails, no-force archive behavior, token scopes, and four-hour freshness thresholds have regression checks in the standard Python CI suite. Source/final-state rules, research-only promotion policy and frozen original pick history are unchanged.
+
+GitHub Actions remains a best-effort scheduler; no solution based only on cron can guarantee an immediate postgame update or eliminate third-party outages. We report actual workflow and archive health rather than promising flawless automation. [Incident evidence, self-recovery design and validation](docs/nightly-recovery-2026-11-18.md) · [Operations schedule](docs/v09-forecast-operations.md).
 
 ---
 
