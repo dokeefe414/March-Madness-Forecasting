@@ -7,7 +7,16 @@ on:
     # 4:07 p.m. ET: refresh future evening picks and settle available finals.
     # A settled score is only published after ESPN STATUS_FINAL and matching NCAA scores.
     # Never retroactively labels a completed game a pregame forecast.
-    - cron: "7 2,6,9,16 * 1,2,3,4,11,12 *"
+    # Separate cron entries make each capture independently visible, and
+    # re-register the schedule after the 2026-11-18 missing archive runs.
+    # The archive watchdog is a second, independent scheduled recovery path.
+    - cron: "7 2 * 1,2,3,4,11,12 *"
+      timezone: "America/New_York"
+    - cron: "7 6 * 1,2,3,4,11,12 *"
+      timezone: "America/New_York"
+    - cron: "7 9 * 1,2,3,4,11,12 *"
+      timezone: "America/New_York"
+    - cron: "7 16 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
   workflow_dispatch:
   push:
