@@ -7,7 +7,8 @@
 | `CI` | feature branch push, main push, pull request | Hermetic Python tests, held-out historical benchmark, JSON report artifact, 42-year data consistency, TypeScript bracket simulations, TypeScript typecheck and production Next build |
 | `Deploy website to GitHub Pages` | main push, dispatch, daily best-effort 2:47 a.m. Eastern all year + 6:47 a.m. Eastern Nov–Apr backup | Real NCAA-source 2027 finals → current Elo snapshot → historical research report → data check → static Next export → GitHub Pages |
 | `Archive real pre-tipoff forecasts` | 2:07, 6:07, 9:07, 16:07 a.m./p.m. Eastern Nov–Apr; dispatch; own workflow push | Independently settle exact-source final scores against frozen pretipoff picks and append valid new future predictions |
-| `Monitor before-tipoff prediction archive freshness` | 7:35, 11:35, 18:35 Eastern Nov–Apr | Alert if successful archive evidence is more than six hours old |
+| `Monitor before-tipoff prediction archive freshness` | 3:41, 7:41, 11:41, 18:41 Eastern Nov–Apr plus successful Pages runs | Automatically request a safe archive workflow dispatch if no active archiver and committed forecast evidence is over four hours old; alert if still stale |
+| `Recover transient Pages artifact deployment failures` | Pages workflow completion with deploy-only failure | Dispatch one fresh Pages workflow run when exactly one uploaded Pages artifact existed; never retry same-run artifact upload |
 | `Rebuild historical snapshots` | manual dispatch | Regenerate source-pinned historical artifacts without silently changing main |
 
 Historical unit tests and website builds do not require a live network feed. Publishing and pretipoff archival jobs fetch it, and an upstream error must **fail closed**. GitHub's scheduled cron is best-effort; it may skip or delay a run under load.
@@ -41,6 +42,10 @@ npm run build
 ```
 
 If your machine is offline, omit only `forecast.live`; the frontend explicitly marks the current feed unavailable. Do not skip test coverage or substitute synthetic results as live.
+
+## Scheduled Pages deployment fails after artifact upload
+
+A scheduled 2026-11-18 deployment built the website and uploaded its artifact but failed when the Pages API couldn't see it. Rerunning that **same** failed job created duplicate `github-pages` artifacts under one run ID, causing a second failure. The recovered workflow now polls for exactly one current-run artifact, waits for API propagation, and uses a separate `recover-pages.yml` workflow that dispatches a **new Pages run** if and only if the failure is at the deploy step (not source/model/build). Automatic retry is bounded to one fresh workflow dispatch and will not loop on an auto-dispatched failure. Full investigation and recovery tests: [nightly incident runbook](nightly-recovery-2026-11-18.md).
 
 ## GitHub Pages deployment fails at configure-pages
 

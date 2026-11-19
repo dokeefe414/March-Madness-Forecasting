@@ -1,0 +1,43 @@
+name: Recover transient Pages artifact deployment failures
+on:
+  workflow_run:
+    workflows: ["Deploy website to GitHub Pages"]
+    types: [completed]
+permissions:
+  actions: write
+  contents: read
+jobs:
+  retry-pages-only:
+    name: Dispatch one fresh Pages build when an earlier run's upload existed
+    # Never retry on run attempt 2+ or if this watchdog dispatched
+    # the failed deployment: there must be no retry loop.
+    # Do not retry code/data/source errors; preserve the last good site.
+    if: github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.run_attempt == 1 && github.event.workflow_run.event != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect failed step and uploaded artifact before retry
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          FAILED_RUN: ${{ github.event.workflow_run.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The original scheduled failure on 2026-11-18 showed a healthy
+          # build and successful upload, but deploy-pages returned artifact
+          # metadata NOT_FOUND from the downstream API.
+          failed_steps="$(gh api "repos/${GH_REPO}/actions/runs/${FAILED_RUN}/jobs?per_page=100" \
+            --jq '[.jobs[] | select(.conclusion=="failure") | .steps[] | select(.conclusion=="failure") | .name] | unique | join(",")')"
+          if [ "$failed_steps" != "Run actions/deploy-pages@v4" ]; then
+            echo "Not a transient Pages-only failure ($failed_steps). No automatic retry."
+            exit 0
+          fi
+          artifacts="$(gh api "repos/${GH_REPO}/actions/runs/${FAILED_RUN}/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.name=="github-pages" and .expired==false)] | length')"
+          if [ "$artifacts" != "1" ]; then
+            echo "No uniquely readable Pages artifact in failed run ($artifacts); no blind retry."
+            exit 0
+          fi
+          echo "Launching a FRESH workflow run (new artifact scope) after ${FAILED_RUN}; original upload was present."
+          gh workflow run deploy-pages.yml --ref main
+          echo "One-time fresh deployment dispatch requested. Workflow-dispatch failures are not retried, preventing loops and same-run duplicate artifacts."

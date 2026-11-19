@@ -23,6 +23,7 @@ on:
       timezone: "America/New_York"
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 concurrency:
@@ -144,8 +145,42 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: /March-Madness-Forecasting26-27
         run: npm run build
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload one named GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: web/out
+      - name: Wait for Pages artifact metadata to become queryable
+        # In the 2026-11-18 scheduled failure, upload succeeded and an
+        # artifact existed, but deploy-pages immediately received NOT_FOUND.
+        # Check the GitHub Actions artifact listing before invoking Pages.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 18); do
+            count="$(gh api "repos/${GH_REPO}/actions/runs/${GITHUB_RUN_ID}/artifacts?per_page=100" \
+              --jq '[.artifacts[] | select(.name == "github-pages" and .expired == false)] | length' 2>/dev/null)" || count=""
+            if [ "$count" = "1" ]; then
+              echo "One Pages artifact visible on attempt $attempt."
+              # Allow metadata replication into the Pages deployment API.
+              sleep 12
+              exit 0
+            fi
+            if [ "$count" != "" ] && [ "$count" != "0" ]; then
+              echo "::error::Expected exactly one github-pages artifact; found $count"
+              exit 1
+            fi
+            echo "Artifact metadata not ready ($attempt/18); retrying in 10 seconds."
+            sleep 10
+          done
+          echo "::error::Pages artifact never became visible to the Actions API."
+          exit 1
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Default GitHub API intermittently returns artifact NOT_FOUND even
+          # after successful upload; keep ample retry room for transient errors.
+          error_count: 20
+          timeout: 900000

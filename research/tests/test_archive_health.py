@@ -23,6 +23,21 @@ class ArchiveMonitorTests(unittest.TestCase):
    }))
    self.assertEqual(assess_archive(root,NOW)["status"],"current")
    self.assertEqual(assess_archive(root,NOW+timedelta(hours=30))["status"],"stale")
+ def test_watchdog_four_hour_freshness_is_sensitive_to_dropped_capture(self):
+  with TemporaryDirectory() as p:
+   root=Path(p)
+   data={"uniqueGames":{"forecastedUniqueGames":21,"settledUniqueGames":10},
+         "archiveHealth":{"sourceWarnings":[]}}
+   data["generatedAtUtc"]=(NOW-timedelta(hours=3,minutes=58)).isoformat().replace("+00:00","Z")
+   (root/"index.json").write_text(json.dumps(data))
+   healthy=assess_archive(root,NOW,max_age_hours=4)
+   self.assertEqual(healthy["status"],"current")
+   data["generatedAtUtc"]=(NOW-timedelta(hours=4,minutes=3)).isoformat().replace("+00:00","Z")
+   (root/"index.json").write_text(json.dumps(data))
+   stale=assess_archive(root,NOW,max_age_hours=4)
+   self.assertEqual(stale["status"],"stale")
+   self.assertEqual(stale["settledUniqueGames"],10)
+   self.assertEqual(stale["archivedPredictions"],21)
  def test_archived_fixture_with_no_first_pick_does_not_get_success(self):
   with TemporaryDirectory() as p:
    root=Path(p)

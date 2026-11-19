@@ -2,31 +2,63 @@ name: Monitor before-tipoff prediction archive freshness
 on:
   workflow_dispatch:
   schedule:
-    # After overnight 02:07/06:07 and daytime 09:07/16:07 archives.
-    # 07:35 catches missed overnight settlement before the morning visit.
-    # 11:35 and 18:35 protect morning and afternoon captures.
-    - cron: "35 7,11,18 * 1,2,3,4,11,12 *"
+    # Independent watchdog. Check 90–155 minutes after each target archive.
+    # If the 02:07, 06:07, 09:07 or 16:07 schedule is dropped, recover
+    # instead of only sending an issue and waiting for a human.
+    - cron: "41 3,7,11,18 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
+  workflow_run:
+    # A successful site rebuild is additional evidence that a source refresh
+    # happened; if independent archival data is stale, dispatch the archiver.
+    # An archive -> deploy -> monitor chain terminates when the capture is fresh.
+    workflows: ["Deploy website to GitHub Pages"]
+    types: [completed]
 permissions:
   contents: read
+  actions: write
   issues: write
+concurrency:
+  group: march-forecast-archive-watchdog
+  cancel-in-progress: false
 jobs:
   verify:
-    name: Ensure prior real-game forecast evidence was archived
+    name: Verify source ledger freshness and request safe replay on failure
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Check missing or stale archive (never invent win percentage)
+      - id: freshness
+        name: Check missing or stale archive (never invent win percentage)
         env:
           PYTHONPATH: research
-        run: python -m forecast.archive_health --ledger web/public/forecasts --require-recent --max-age-hours 6
+        run: python -m forecast.archive_health --ledger web/public/forecasts --require-recent --max-age-hours 4
       - name: Verify original predictions and recorded score arithmetic
         env:
           PYTHONPATH: research
         run: python -m forecast.audit --dir web/public/forecasts
+      - name: Dispatch verified original-first-pick archive after missing capture
+        if: failure() && steps.freshness.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Archive is missing/stale. Request safe workflow_dispatch on main."
+          # Do not flood the workflow queue if a separate archiver has started.
+          pending="$(gh run list --workflow archive-pregame.yml --limit 15 --json status --jq '[.[] | select(.status == "in_progress" or .status == "queued" or .status == "waiting" or .status == "pending" or .status == "requested")] | length')"
+          if [ "$pending" -gt 0 ]; then
+            echo "Already have $pending active/pending archive run(s); no duplicate dispatch."
+          else
+            # GITHUB_TOKEN workflow_dispatch is specifically permitted by
+            # GitHub Actions; the archival code itself enforces true pretipoff
+            # and independent final validation and never edits old snapshots.
+            gh workflow run archive-pregame.yml --ref main
+            echo "Recovery archive was dispatched. This monitor fails visibly until a fresh verified capture exists."
+          fi
       - name: Open one actionable issue on archive monitor failure
         if: failure()
         env:
@@ -41,5 +73,20 @@ jobs:
           if [ -n "$existing" ]; then
             echo "Open archive recovery issue #$existing already exists; no duplicate created."
           else
-            gh issue create --title "$title" --body "The scheduled pretipoff archive monitor failed. See the [failed workflow run]($RUN_URL). Check missing/stale original snapshots, source availability, and Git write permissions. Recover using docs/v09-forecast-operations.md. Never backfill forecasts after tipoff."
+            gh issue create --title "$title" --body "An archive watchdog checkpoint failed. It attempted to dispatch a fresh, original-pick-safe archive when the ledger was stale. See [failed monitor]($RUN_URL) and [archive workflow](https://github.com/$GH_REPO/actions/workflows/archive-pregame.yml) to confirm recovery. No post-tipoff backfills or invented finals are allowed. If the retry fails, check source availability and Git write permissions in docs/v09-forecast-operations.md."
+          fi
+      - name: Resolve incident after a healthy, audited archive
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="Forecast archive health needs attention"
+          existing="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" --comment "Independent archive freshness and immutable prediction audit both passed. Watchdog recovered automatically."
+          else
+            echo "Archive is fresh; no prior recovery issue remains open."
           fi

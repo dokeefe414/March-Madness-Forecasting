@@ -37,7 +37,8 @@ class NightlyAutomationContract(unittest.TestCase):
     def test_nightly_archive_runs_before_nightly_site_rebuild(self):
         archive = schedules("archive-pregame.yml")
         deploy = schedules("deploy-pages.yml")
-        self.assertEqual(archive, ["7 2,6,9,16 * 1,2,3,4,11,12 *"])
+        self.assertEqual(archive, ["7 2 * 1,2,3,4,11,12 *", "7 6 * 1,2,3,4,11,12 *",
+                                  "7 9 * 1,2,3,4,11,12 *", "7 16 * 1,2,3,4,11,12 *"])
         self.assertIn("47 2 * * *", deploy)
         self.assertIn("47 6 * 1,2,3,4,11,12 *", deploy)
         self.assertIn("17 10,17 * 1,2,3,4,11,12 *", deploy)
@@ -63,9 +64,47 @@ class NightlyAutomationContract(unittest.TestCase):
     def test_morning_monitor_catches_missing_overnight_settlement(self):
         monitor = (WORKFLOWS / "monitor-archive.yml").read_text(encoding="utf-8")
         self.assertEqual(schedules("monitor-archive.yml"),
-                         ["35 7,11,18 * 1,2,3,4,11,12 *"])
-        self.assertIn("--require-recent --max-age-hours 6", monitor)
+                         ["41 3,7,11,18 * 1,2,3,4,11,12 *"])
+        self.assertIn("--require-recent --max-age-hours 4", monitor)
         self.assertIn("if: failure()", monitor)
+        self.assertIn("steps.freshness.outcome == 'failure'", monitor)
+        self.assertIn("gh workflow run archive-pregame.yml --ref main", monitor)
+        self.assertIn("actions: write", monitor)
+        self.assertIn("gh run list --workflow archive-pregame.yml", monitor)
+        self.assertIn('workflows: ["Deploy website to GitHub Pages"]', monitor)
+        self.assertIn("gh issue close", monitor)
+
+
+    def test_github_pages_artifact_metadata_and_bounded_fresh_retry(self):
+        deploy = (WORKFLOWS / "deploy-pages.yml").read_text(encoding="utf-8")
+        recovery = (WORKFLOWS / "recover-pages.yml").read_text(encoding="utf-8")
+        self.assertIn("actions/upload-pages-artifact@v3", deploy)
+        self.assertIn("actions/deploy-pages@v4", deploy)
+        self.assertIn("Wait for Pages artifact metadata to become queryable", deploy)
+        self.assertIn('.name == "github-pages"', deploy)
+        self.assertIn("exit 1", deploy)  # fail closed without a unique artifact
+        self.assertIn("actions: read", deploy)
+        self.assertIn("error_count: 20", deploy)
+        self.assertIn("timeout: 900000", deploy)
+        self.assertIn("actions: write", recovery)
+        self.assertIn("workflow_run.run_attempt == 1", recovery)
+        self.assertIn("workflow_run.event != 'workflow_dispatch'", recovery)
+        self.assertIn('failed_steps" != "Run actions/deploy-pages@v4"', recovery)
+        self.assertIn('artifacts" != "1"', recovery)
+        # Rerunning the SAME job reuploads a SECOND github-pages artifact,
+        # which defeats deployment. Always use a fresh workflow_run.
+        self.assertIn("gh workflow run deploy-pages.yml --ref main", recovery)
+        self.assertNotIn("rerun-failed-jobs", recovery)
+        self.assertNotIn("gh run rerun", recovery)
+
+    def test_archiver_is_safe_for_watchdog_dispatch(self):
+        archive = (WORKFLOWS / "archive-pregame.yml").read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", archive)
+        self.assertIn("cancel-in-progress: false", archive)
+        self.assertIn("python -m forecast.snapshot", archive)
+        self.assertIn("python -m forecast.audit", archive)
+        self.assertIn("git rebase origin/main", archive)
+        self.assertNotIn("--force", archive)
 
 
 if __name__ == "__main__":
