@@ -110,3 +110,22 @@ The archive's **actual original forecast grading** remains strictly
 dual-provider, even when the Elo input accepts source-ID-verified ESPN
 finals earlier. No guarantee of instant buzzer publication or steadily
 improving accuracy. See [daily Elo research and incident runbook](daily-elo-2026-11-19.md).
+
+
+## v2.6 Monday AP Top 25 research capture
+
+The existing archive now also runs `python -m forecast.ap_poll` after
+source-verified 2027 Elo is built. New AP editions (strict `AP Top 25`
+from the ESPN men's NCAA rankings feed) are compared against **Elo replayed
+only through the Sunday before the new AP poll week**, using exact
+season-2027 source ESPN IDs. Each source week is committed once in the
+same non-force archival Git push as the frozen forecast ledger:
+`web/public/research/ap-poll-history.json`.
+
+**New Monday slots:** 18:07 Eastern for AP poll/forecast archive; 18:47
+Eastern for website publication. Every other standard archival run also
+checks if an AP edition has appeared late; an unavailable poll leaves
+the prior history intact and cannot block game scores or first picks.
+Model Lab shows AP-versus-Elo overlap, gap, correlation, outsiders and
+the weekly trend. These are rank-agreement diagnostics only, never
+prospective forecast accuracy. See [AP comparison research runbook](ap-poll-weekly.md).
