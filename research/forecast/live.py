@@ -465,7 +465,11 @@ def main() -> None:
         receipts = None
         espn_rows = []
     else:
-        receipts = load_receipts(args.espn_receipts_path)
+        # An offline CSV fixture is self-contained unless ESPN boards are
+        # explicitly supplied too. Never silently blend committed live receipts
+        # into a reproducible historical unit-test fixture.
+        receipts = (load_receipts(args.espn_receipts_path)
+                    if not args.input or args.espn_scoreboards_json else None)
         try:
             espn_report = build_finals(
                 espn_boards, provisional, games, datetime.now(timezone.utc),
