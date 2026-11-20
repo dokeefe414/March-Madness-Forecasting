@@ -21,6 +21,10 @@ on:
     # also rebuilds promptly following any successful archive job.
     - cron: "17 10,17 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
+    # 22:47 ET: same-evening finals and archived picks after the 22:07
+    # capture. ESPN final status can be newer than the NCAA-derived ratings.
+    - cron: "47 22 * 1,2,3,4,11,12 *"
+      timezone: "America/New_York"
 permissions:
   contents: read
   actions: read
@@ -122,6 +126,10 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.gamecenter --games web/public/current/2027-games.json --ratings web/public/current/2027.json --online-model web/public/current/2027-online-model.json --state-space web/public/current/2027-state-space.json --opponent-model web/public/current/2027-opponents.json --ensemble-model web/public/current/forward-ensemble.json --out web/public/current/upcoming.json
+      - name: Publish current-day ESPN-confirmed finals independently of lagging NCAA Elo
+        env:
+          PYTHONPATH: research
+        run: python -m forecast.recent_finals --ratings web/public/current/2027.json --games web/public/current/2027-games.json --out web/public/current/recent-finals.json
       - name: Validate accepted-game totals and publish refresh provenance
         env:
           PYTHONPATH: research
