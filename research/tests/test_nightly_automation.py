@@ -44,7 +44,6 @@ class NightlyAutomationContract(unittest.TestCase):
         self.assertIn("47 6 * 1,2,3,4,11,12 *", deploy)
         self.assertIn("17 10,17 * 1,2,3,4,11,12 *", deploy)
         self.assertIn("47 22 * 1,2,3,4,11,12 *", deploy)
-        self.assertIn("python -m forecast.recent_finals", deploy)
         archive_times, page_times = times(archive), times(deploy)
         for hour, minute in ((2, 47), (6, 47), (10, 17), (17, 17), (22, 47)):
             self.assertIn((hour, minute), page_times)
@@ -58,6 +57,7 @@ class NightlyAutomationContract(unittest.TestCase):
     def test_archive_triggers_site_and_commits_only_verified_ledger(self):
         archive = (WORKFLOWS / "archive-pregame.yml").read_text(encoding="utf-8")
         deploy = (WORKFLOWS / "deploy-pages.yml").read_text(encoding="utf-8")
+        self.assertIn("python -m forecast.recent_finals", deploy)
         self.assertIn("python -m forecast.snapshot", archive)
         self.assertIn("python -m forecast.audit", archive)
         self.assertIn("git add web/public/forecasts", archive)
