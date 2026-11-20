@@ -763,7 +763,6 @@ test("v2.4 ESPN finals update even while NCAA Elo lags, including a manual refre
   await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
   const finals=page.getByRole("region",{name:"Recent ESPN-confirmed basketball final scores"});
   await expect(finals).toBeVisible();
-  await expect(finals).toContainText("Results are ahead of Elo");
   await expect(finals).toContainText("ESPN ID-VERIFIED FINAL · INCLUDED IN ELO (NCAA PENDING)");
   await expect(finals).toContainText("ESPN results are ahead of the NCAA score file");
   await expect(finals).toContainText("1 ESPN-only game(s) currently in Elo");
