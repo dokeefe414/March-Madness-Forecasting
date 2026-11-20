@@ -2,10 +2,11 @@ name: Monitor before-tipoff prediction archive freshness
 on:
   workflow_dispatch:
   schedule:
-    # Independent watchdog. Check 90–155 minutes after each target archive.
+    # Independent watchdog after overnight, morning, afternoon and evening
+    # archival runs. Additional 23:41 check protects the 22:07 result capture.
     # If the 02:07, 06:07, 09:07 or 16:07 schedule is dropped, recover
     # instead of only sending an issue and waiting for a human.
-    - cron: "41 3,7,11,18 * 1,2,3,4,11,12 *"
+    - cron: "41 3,7,11,18,23 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
   workflow_run:
     # A successful site rebuild is additional evidence that a source refresh
