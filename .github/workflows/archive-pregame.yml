@@ -52,6 +52,8 @@ jobs:
         env:
           PYTHONPATH: research
         run: python -m forecast.live --out web/public/current/2027.json --games-out web/public/current/2027-games.json --save-espn-receipts --espn-receipts-path web/public/forecasts/espn-final-receipts.json
+      # Real polls may tie at a ranking (e.g., two No.18 teams); the parser
+      # preserves official competition-style positions and frozen week history.
       - name: Capture newly published AP Top 25 against pre-week Elo without changing forecasts
         env:
           PYTHONPATH: research
