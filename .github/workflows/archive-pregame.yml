@@ -5,6 +5,7 @@ on:
     # 6:07 a.m. ET: recheck late West Coast finals and delayed NCAA results.
     # 9:07 a.m. ET: capture current-day pregame picks and retry pending settlements.
     # 4:07 p.m. ET: refresh future evening picks and settle available finals.
+    # 10:07 p.m. ET: recheck verified finals and preserve evening source receipts.
     # A settled score is only published after ESPN STATUS_FINAL and matching NCAA scores.
     # Never retroactively labels a completed game a pregame forecast.
     # Separate cron entries make each capture independently visible, and
@@ -17,6 +18,10 @@ on:
     - cron: "7 9 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
     - cron: "7 16 * 1,2,3,4,11,12 *"
+      timezone: "America/New_York"
+    # Capture newly available evening finals and current picks before midnight.
+    # Never reconstruct a pretipoff pick for a game that already began.
+    - cron: "7 22 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
   workflow_dispatch:
   push:
