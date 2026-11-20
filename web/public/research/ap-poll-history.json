@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "season": 2027,
+  "mode": "weekly-AP-vs-Elo-independent-research",
+  "pollSourceUrl": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/rankings?groups=50",
+  "sourceLandingUrl": "https://www.espn.com/mens-college-basketball/rankings",
+  "weeks": [],
+  "policy": "First valid ESPN-transmitted AP edition is frozen by source week. Compare to before-week Elo replays; source-aligned ESPN IDs only. NOT model training, promotion or independently graded forecast accuracy."
+}

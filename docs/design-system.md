@@ -111,3 +111,20 @@ visible `:focus-visible` outlines; reduced-motion safe; mobile grid at
 1100/730/490px breakpoints. Source retrieval mismatches withhold invalid
 research comparisons. Tests continue to run at the exact GitHub Pages project
 prefix, and browser navigation remains tied to the original five main tabs.
+
+
+## v2.6 AP Top 25 vs Elo lab
+
+The five primary navigation destinations do not change. Under
+**Model Lab** after Forecast Intelligence, a scoped `.ap-lab`
+comparison visually separates poll *opinion* from game *prediction*:
+mint/blue historical-overlap bars, large condensed numeric evidence,
+one controlled week picker, a 25-school AP/Elo rank table, disagreement
+filter, week-over-week timeline and model Top-25 outsiders. The two data
+sources are labeled, source cutoff dates are shown, unverified poll
+identities display dashes, and partial source coverage does not appear
+as a complete comparison. The UI includes keyboard-visible focus,
+explicit `aria-label` for the panel, row counts and mobile layouts at
+1100/680/420 px. AP agreement bars are not styled as successful
+probabilistic prediction-validation claims. Scientific definitions:
+[AP comparison contract](ap-poll-weekly.md).

@@ -1188,3 +1188,76 @@ body{background:radial-gradient(circle at 100% 0,#11333e 0,transparent 33%),radi
 @media(max-width:1070px){.gc-finals-list{grid-template-columns:repeat(2,minmax(0,1fr))}.gc-finals-proof{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.gc-finals-list{grid-template-columns:1fr}.gc-finals-proof{gap:7px}.gc-finals-proof>div{padding:12px;min-height:96px}.gc-finals-header{align-items:flex-start}.gc-finals-refresh{width:100%}}
 @media(prefers-reduced-motion:reduce){.gc-finals-refresh{transition:none}.gc-finals-refresh:hover:not(:disabled){transform:none}}
+
+
+/* v2.6 Weekly AP-vs-Elo lab: source-validated poll evidence, no extra top nav. */
+.ap-lab{--ap-ink:#08181e;--ap-mint:#b6ffd3;--ap-blue:#94dcf5;background:linear-gradient(145deg,#10292e,#0b1822 74%,#0d2728);color:#e9fff3;border:1px solid rgba(168,255,209,.34);border-radius:24px;padding:clamp(18px,3vw,34px);margin:27px 0;box-shadow:0 20px 52px rgba(0,0,0,.17)}
+.ap-lab *{box-sizing:border-box}
+.ap-lab-eyebrow{font-size:10px;letter-spacing:.17em;font-weight:900;color:#a8ddc5;display:flex;align-items:center;gap:9px}
+.ap-lab-dot{width:8px;height:8px;border-radius:50%;background:#bcffd1;box-shadow:0 0 16px rgba(169,255,213,.8)}
+.ap-lab-head-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(165px,.55fr);align-items:center;gap:25px;margin-top:18px}
+.ap-lab h2{font:900 clamp(38px,4.6vw,65px)/.95 "Barlow Condensed",Impact,sans-serif;letter-spacing:-.018em;margin:0 0 13px;color:#f1fff6}
+.ap-lab h2 span{color:var(--ap-mint);font-style:italic}
+.ap-lab-head-grid p{line-height:1.75;font-size:13px;max-width:730px;color:#b6d2cd;margin:0}
+.ap-lab-summary{border:1px solid rgba(175,255,215,.35);background:radial-gradient(circle at 60% 0%,rgba(161,255,209,.18),transparent 75%),rgba(12,40,40,.72);border-radius:15px;padding:17px 19px;display:flex;flex-direction:column;gap:8px}
+.ap-lab-summary small{letter-spacing:.1em;font-size:10px;font-weight:900;color:#b1d4c7}
+.ap-lab-summary strong{font:900 clamp(52px,6vw,84px)/.95 "Barlow Condensed",Impact,sans-serif;color:#b8ffd0;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ap-lab-summary em{font-size:27px;font-style:normal;color:#9bcbb5}
+.ap-lab-summary span{font-size:10px;color:#b1cbbf;line-height:1.5}
+.ap-lab-controls{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:14px;margin:23px 0 15px;border-bottom:1px solid #35504b;padding-bottom:19px}
+.ap-lab-controls label{font-size:10px;font-weight:900;letter-spacing:.1em;color:#a7d8c4;display:flex;flex-direction:column;gap:8px;min-width:210px}
+.ap-lab-controls select{appearance:auto;width:100%;background:#173137;color:#edfff6;border:1px solid #54746b;border-radius:9px;padding:11px 12px;font-size:12px;font-weight:800;letter-spacing:normal}
+.ap-lab-source{display:flex;flex-wrap:wrap;gap:12px}
+.ap-lab-source span{font-size:9px;color:#a5c5b7;display:flex;flex-direction:column;gap:5px;letter-spacing:.06em;font-weight:850}
+.ap-lab-source b{color:#e7fff2;font-size:11px;font-weight:800;letter-spacing:normal}
+.ap-lab-warning{border:1px solid rgba(247,200,123,.3);color:#f3d9b5;background:rgba(245,185,105,.08);padding:13px;border-radius:9px;font-size:12px;line-height:1.7}
+.ap-lab-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:21px}
+.ap-lab-metrics>div{border:1px solid #2f4e4b;background:#132a31;border-radius:13px;padding:15px}
+.ap-lab-metrics small{font-size:9px;font-weight:900;letter-spacing:.08em;color:#9bcaaf}
+.ap-lab-metrics strong{display:block;font:900 clamp(34px,3.5vw,54px)/1 "Barlow Condensed",Impact,sans-serif;color:#effff2;margin:10px 0 5px;font-variant-numeric:tabular-nums}
+.ap-lab-metrics strong span{font-size:22px;color:#99bcb4}
+.ap-lab-metrics p{font-size:10px;line-height:1.65;color:#adcbc4;margin:0}
+.ap-lab-main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(260px,.65fr);gap:14px}
+.ap-lab-table-panel,.ap-lab-trend,.ap-lab-outsiders{border:1px solid #35524e;border-radius:15px;background:#0e2027;overflow:hidden}
+.ap-lab-panel-head{padding:17px 18px;display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-bottom:1px solid #34524c}
+.ap-lab-panel-head small,.ap-lab-trend>small,.ap-lab-outsiders>small{letter-spacing:.13em;font-size:9px;font-weight:900;color:#93c4b7}
+.ap-lab-panel-head h3,.ap-lab-trend h3,.ap-lab-outsiders h3{font:900 29px/1.08 "Barlow Condensed",Impact,sans-serif;color:#effff6;margin:7px 0 0}
+.ap-lab-toggle{font-size:9px;font-weight:900;letter-spacing:.07em;color:#b6d2c7;display:flex;gap:7px;align-items:center;cursor:pointer}
+.ap-lab-toggle input{accent-color:#aeffcd}
+.ap-lab-table-scroll{overflow-x:auto}
+.ap-lab-table{width:100%;border-collapse:collapse;text-align:left}
+.ap-lab-table thead{background:#1c3538}
+.ap-lab-table th{font-size:9px;letter-spacing:.075em;color:#9dc3b7;padding:11px 12px;white-space:nowrap}
+.ap-lab-table td{font-size:12px;color:#dbeee6;padding:9px 12px;border-bottom:1px solid rgba(130,189,162,.11);vertical-align:middle}
+.ap-lab-table td:nth-child(2){min-width:145px}
+.ap-lab-table td:nth-child(2)>strong{font-size:12px;display:block;line-height:1.4}
+.ap-lab-table td:nth-child(2)>small{display:block;font-size:9px;color:#9aafa8;margin-top:4px}
+.ap-lab-ap-rank{display:inline-flex;align-items:center;justify-content:center;width:29px;height:29px;border-radius:8px;background:#204036;color:#c6ffd6;font:900 18px "Barlow Condensed",Impact,sans-serif}
+.ap-lab-elo-in{font-weight:900;color:#b7ffd2}
+.ap-lab-elo-out{font-weight:800;color:#c4d0d0}
+.ap-lab-large-gap{font-weight:900;color:#f5ce9f}
+.ap-lab-missing{color:#a6b1aa}
+.ap-lab-legend{font-size:10px;line-height:1.7;color:#a6c8bd;margin:0;padding:14px 18px}
+.ap-lab-legend strong{color:#d7ffe6}
+.ap-lab-empty-results{padding:12px 18px;color:#b0d0c3;font-size:12px}
+.ap-lab-side{display:grid;gap:14px;align-content:start}
+.ap-lab-trend,.ap-lab-outsiders{padding:19px}
+.ap-lab-trend h3,.ap-lab-outsiders h3{margin-bottom:17px}
+.ap-lab-history-line{display:grid;grid-template-columns:84px minmax(0,1fr) 45px;align-items:center;gap:8px;width:100%;background:none;border:1px solid transparent;border-radius:7px;color:#bfd6cc;text-align:left;padding:9px 5px;cursor:pointer;font-size:10px}
+.ap-lab-history-line.selected{border-color:#46836e;background:#193832}
+.ap-lab-history-line i{height:8px;border-radius:9px;background:#284844;display:block;overflow:hidden}
+.ap-lab-history-line i b{display:block;height:100%;background:linear-gradient(90deg,#64adcf,#baffc9);border-radius:9px}
+.ap-lab-history-line strong{text-align:right;font-size:11px;font-variant-numeric:tabular-nums}
+.ap-lab-trend>p,.ap-lab-outsiders>p{color:#adcec3;font-size:11px;line-height:1.7}
+.ap-lab-outsiders>div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(177,255,208,.1);padding:10px 0;font-size:11px;color:#b7cfc6}
+.ap-lab-outsiders>div strong{color:#e9fff0;font-size:12px;margin-left:6px}
+.ap-lab-outsiders>div>b{color:#b4ffca;white-space:nowrap;font-size:10px}
+.ap-lab-footnote{border-top:1px solid #35504b;margin:21px 0 0;padding-top:18px;font-size:10px;line-height:1.8;color:#aac8be}
+.ap-lab-footnote a{color:#c0ffdb;text-decoration:underline}
+.ap-empty{background:#153037;border:1px dashed #4f7569;color:#c4dbd2;font-size:12px;line-height:1.8;border-radius:12px;padding:22px;margin-top:20px}
+.ap-empty p{font-size:12px;line-height:1.75;margin:6px 0 0}
+.ap-lab button:focus-visible,.ap-lab select:focus-visible,.ap-lab input:focus-visible{outline:3px solid #f0ffd4;outline-offset:3px}
+@media(max-width:1100px){.ap-lab-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ap-lab-main{grid-template-columns:1fr}.ap-lab-side{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.ap-lab{padding:17px;border-radius:17px}.ap-lab-head-grid{grid-template-columns:1fr}.ap-lab-summary{max-width:270px}.ap-lab-controls{align-items:stretch}.ap-lab-side{grid-template-columns:1fr}.ap-lab-source{gap:15px}.ap-lab-table th,.ap-lab-table td{padding:9px 8px}}
+@media(max-width:420px){.ap-lab-metrics{gap:7px}.ap-lab-metrics>div{padding:11px}.ap-lab-metrics strong{font-size:34px}.ap-lab-metrics small{font-size:8px}.ap-lab-history-line{grid-template-columns:84px minmax(0,1fr) 42px}}
+@media(prefers-reduced-motion:reduce){.ap-lab-history-line{transition:none}}

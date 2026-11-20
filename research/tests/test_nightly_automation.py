@@ -39,11 +39,13 @@ class NightlyAutomationContract(unittest.TestCase):
         deploy = schedules("deploy-pages.yml")
         self.assertEqual(archive, ["7 2 * 1,2,3,4,11,12 *", "7 6 * 1,2,3,4,11,12 *",
                                   "7 9 * 1,2,3,4,11,12 *", "7 16 * 1,2,3,4,11,12 *",
-                                  "7 22 * 1,2,3,4,11,12 *"])
+                                  "7 22 * 1,2,3,4,11,12 *",
+                                  "7 18 * 1,2,3,4,11,12 1"])
         self.assertIn("47 2 * * *", deploy)
         self.assertIn("47 6 * 1,2,3,4,11,12 *", deploy)
         self.assertIn("17 10,17 * 1,2,3,4,11,12 *", deploy)
         self.assertIn("47 22 * 1,2,3,4,11,12 *", deploy)
+        self.assertIn("47 18 * 1,2,3,4,11,12 1", deploy)
         archive_times, page_times = times(archive), times(deploy)
         for hour, minute in ((2, 47), (6, 47), (10, 17), (17, 17), (22, 47)):
             self.assertIn((hour, minute), page_times)
@@ -59,6 +61,8 @@ class NightlyAutomationContract(unittest.TestCase):
         deploy = (WORKFLOWS / "deploy-pages.yml").read_text(encoding="utf-8")
         self.assertIn("python -m forecast.recent_finals", deploy)
         self.assertIn("python -m forecast.snapshot", archive)
+        self.assertIn("python -m forecast.ap_poll", archive)
+        self.assertIn("git add web/public/forecasts web/public/research/ap-poll-history.json", archive)
         self.assertIn("python -m forecast.audit", archive)
         self.assertIn("git add web/public/forecasts", archive)
         self.assertIn('workflows: ["Archive real pre-tipoff forecasts"]', deploy)

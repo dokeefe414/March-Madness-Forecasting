@@ -778,3 +778,66 @@ test("v2.4 ESPN finals update even while NCAA Elo lags, including a manual refre
   }));
   expect(width.actual,"daily finals layout exceeds viewport").toBeLessThanOrEqual(width.viewport+3);
 });
+
+
+test("weekly AP poll study shows frozen 2027 poll, weekly trend, precise missing schools and disagreement filter",async ({page})=>{
+  const json=(value:unknown)=>({contentType:"application/json",body:JSON.stringify(value)});
+  const makeWeek=(day:string,common:number)=>{
+    const teams=Array.from({length:25},(_,i)=>({
+      apRank:i+1,apName:"Basketball School "+(i+1),espnTeamId:String(100+i),
+      eloRank:i<common?i+1:(i+1===25?null:i+40),
+      elo:i<common?1670-i*3:(i+1===25?null:1510-i),
+      eloTeamName:i+1===25?null:"Basketball School "+(i+1),
+      eloGames:i+1===25?null:7,
+      rankGap:i<common?0:(i+1===25?null:39),
+      eloTop25:i<common,
+    }));
+    return {pollKey:"AP-2027-"+day,sourceWeekStart:day,
+      sourceWeekNumber:day==="2026-11-16"?3:2,
+      capturedAtUtc:day+"T23:30:00Z",
+      eloGameCutoffDate:day==="2026-11-16"?"2026-11-15":"2026-11-08",
+      eloModelVersion:"source-aware-game-elo-v2-espn-final",
+      status:"ready",matchedApTeams:24,missingApTeams:1,
+      top25Overlap:common,top10Overlap:10,
+      meanAbsoluteRankGap:day==="2026-11-16"?4.2:6.4,
+      spearmanWithinMatched:.71,divisionIRatedProgramsAtCutoff:300,
+      ncaaPlusEspnRatedGamesThroughCutoff:950,teams,
+      eloTop25:Array.from({length:25},(_,i)=>({
+        eloRank:i+1,team:i<common?"Basketball School "+(i+1):"Different School "+i,
+        espnTeamId:String(i<common?100+i:800+i),elo:1680-i*4,
+      })),
+    };
+  };
+  await page.route("**/research/ap-poll-history.json",r=>r.fulfill(json({
+    schemaVersion:1,season:2027,mode:"weekly-AP-vs-Elo-independent-research",
+    pollSourceUrl:"https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/rankings?groups=50",
+    sourceLandingUrl:"https://www.espn.com/mens-college-basketball/rankings",
+    weeks:[makeWeek("2026-11-09",18),makeWeek("2026-11-16",21)],
+  })));
+  await page.goto("/?view=models");
+  const panel=page.getByRole("region",{name:"Weekly AP Top 25 versus Elo rankings"});
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText("THE POLL");
+  await expect(panel).toContainText("21/25");
+  await expect(panel.locator(".ap-lab-table tbody tr")).toHaveCount(25);
+  await expect(panel).toContainText("NO PRE-WEEK ELO MATCH");
+  await panel.getByLabel("Select AP poll comparison week").selectOption("AP-2027-2026-11-09");
+  await expect(panel).toContainText("18/25");
+  await panel.getByText("BIG GAPS ONLY").click();
+  await expect(panel.locator(".ap-lab-table tbody tr")).toHaveCount(7);
+  const size=await page.evaluate(()=>({width:document.documentElement.scrollWidth,
+    viewport:document.documentElement.clientWidth}));
+  expect(size.width,"AP study introduces viewport overflow").toBeLessThanOrEqual(size.viewport+3);
+});
+
+test("weekly AP study fails gracefully when no source poll has been captured yet",async ({page})=>{
+  await page.route("**/research/ap-poll-history.json",r=>r.fulfill({
+    contentType:"application/json",
+    body:JSON.stringify({schemaVersion:1,season:2027,
+      mode:"weekly-AP-vs-Elo-independent-research",weeks:[]}),
+  }));
+  await page.goto("/?view=models");
+  const panel=page.getByRole("region",{name:"Weekly AP Top 25 versus Elo rankings"});
+  await expect(panel).toContainText("First weekly comparison pending");
+  await expect(panel.locator(".ap-lab-table tbody tr")).toHaveCount(0);
+});
