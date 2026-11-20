@@ -389,6 +389,15 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("web/public/current/2027.json"))
     parser.add_argument("--games-out", type=Path, help="Save the exact accepted source games with snapshot timestamp for causal in-season training")
     parser.add_argument("--box-out", type=Path, help="Save exact source-linked two-sided box-game rows, or honest unavailable status")
+    parser.add_argument("--espn-scoreboards-json", type=Path,
+                        help="Offline list of ESPN scoreboard JSON objects; never access web")
+    parser.add_argument("--espn-receipts-path", type=Path,
+                        default=Path("web/public/forecasts/espn-final-receipts.json"),
+                        help="Previously observed same-season ESPN final receipts committed by archive")
+    parser.add_argument("--save-espn-receipts", action="store_true",
+                        help="Explicitly persist durable ESPN final receipts (archive workflow only)")
+    parser.add_argument("--skip-espn", action="store_true",
+                        help="Retain historical NCAA-only behavior for offline studies")
     args = parser.parse_args()
     if args.input:
         raw = args.input.read_bytes()
@@ -426,7 +435,71 @@ def main() -> None:
         directory_csv, box_csv, group_seasons_csv, membership_csv, alias_csv, crosswalk_csv)
     for warning in warnings:
         print(f"Optional source validation: {warning}")
+    # Use NCAA scores as the retained authoritative history, but do not
+    # wait days to learn about independently ESPN-confirmed completed games.
+    # The durable receipt file prevents an ESPN-only result from vanishing
+    # from Elo when it moves outside the rolling ESPN API lookback.
+    from .elo_results import load_receipts, merge_games, save_receipts
+    from .recent_finals import build_finals
+    from .snapshot import retrieve_fixture
+    from zoneinfo import ZoneInfo
+    provisional = build_current(games, url=origin, **verified)
+    espn_boards = []
+    espn_warnings = []
+    if args.espn_scoreboards_json:
+        espn_boards = json.loads(args.espn_scoreboards_json.read_text(encoding="utf-8"))
+    elif not args.input and not args.skip_espn:
+        eastern_today = datetime.now(timezone.utc).astimezone(
+            ZoneInfo("America/New_York")).date()
+        for offset in range(7):
+            day = eastern_today - timedelta(days=offset)
+            if day < FIRST_DATE:
+                continue
+            try:
+                espn_boards.append(retrieve_fixture(day))
+            except (OSError, TimeoutError, ValueError) as exc:
+                espn_warnings.append(f"{day.isoformat()}: {type(exc).__name__}")
+    if args.skip_espn:
+        # An explicitly NCAA-only offline baseline neither imports stale
+        # stored ESPN receipts nor silently changes archived assumptions.
+        receipts = None
+        espn_rows = []
+    else:
+        # An offline CSV fixture is self-contained unless ESPN boards are
+        # explicitly supplied too. Never silently blend committed live receipts
+        # into a reproducible historical unit-test fixture.
+        receipts = (load_receipts(args.espn_receipts_path)
+                    if not args.input or args.espn_scoreboards_json else None)
+        try:
+            espn_report = build_finals(
+                espn_boards, provisional, games, datetime.now(timezone.utc),
+                espn_warnings, requested_days=7, result_limit=None)
+            espn_rows = espn_report["games"]
+        except (ValueError, KeyError, TypeError) as exc:
+            if args.espn_scoreboards_json:
+                raise
+            espn_warnings.append(f"ESPN scoreboard integrity: {type(exc).__name__}")
+            espn_rows = []
+    merged_games, reconciliation, receipts_file = merge_games(
+        games, espn_rows, provisional, receipts,
+        datetime.now(timezone.utc), espn_warnings)
+    if args.save_espn_receipts and not args.skip_espn:
+        save_receipts(args.espn_receipts_path, receipts_file)
+    games = merged_games
     output = build_current(games, url=origin, **verified)
+    output["sourceReconciliation"] = reconciliation
+    output["eloMethodology"]["version"] = "source-aware-game-elo-v2-espn-final"
+    output["source"] = (
+        "SportsDataverse NCAA-derived scored schedule + ESPN STATUS_FINAL "
+        "with independent same-season source-provided ESPN program IDs"
+    )
+    output["limitations"].append(
+        "Only two-sided provider-ID-verified ESPN finals may supplement the slower NCAA schedule. "
+        "ESPN-only scores are not yet independently NCAA score-confirmed; provider disagreements "
+        "are withheld, duplicates reconciled, and prior archived predictions never rewritten."
+    )
+    if espn_warnings:
+        output["espnSourceWarnings"] = espn_warnings
     if warnings:
         output["supplementalSourceWarnings"] = warnings
     # Historical parameters are an extrapolation scenario, NOT evidence
@@ -460,8 +533,13 @@ def main() -> None:
             "retrievedAtUtc": output["retrievedAtUtc"],
             "sourceUrl": origin, "games": games,
         }, indent=2) + "\n", encoding="utf-8")
-    print(f"Published {len(games)} confirmed NCAA-source games, "
+    print(f"Published {len(games)} rated games from "
+          f"{reconciliation['ncaaAcceptedGames']} NCAA source results and "
+          f"{reconciliation['ratedEspnOnlyFinals']} uniquely verified ESPN-only finals, "
           f"{len(output['teams'])} teams, through {output['lastGameDate']}")
+    print(f"ESPN receipt ledger: {reconciliation['persistedEspnFinalReceipts']} unique finals; "
+          f"source conflicts: {reconciliation['rejectedOrReconciled']}; "
+          f"ESPN source failures: {len(espn_warnings)}")
     print(f"Division I group-linked teams: {output['divisionCoverage'].get('divisionIConfirmed', 0)}; "
           f"conference-matched programs: {output['identityCoverage'].get('matchedRatedTeams', 0)}; "
           f"possession rows: {output['efficiencyCoverage'].get('matchedTeamGames', 0)}; "

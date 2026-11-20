@@ -5,18 +5,32 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v2.4%20Daily%20Games-a6ffce)
+![Version](https://img.shields.io/badge/release-v2.5%20Daily%20Elo-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
 ### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting26-27/)
 
-[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [v2.2 forecasting intelligence](docs/v22-forecast-intelligence.md) · [Automation recovery runbook](docs/nightly-recovery-2026-11-18.md) · [Daily ESPN finals and NCAA lag](docs/daily-games-2026-11-19.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [v2.2 forecasting intelligence](docs/v22-forecast-intelligence.md) · [Automation recovery runbook](docs/nightly-recovery-2026-11-18.md) · [Daily ESPN finals and NCAA lag](docs/daily-games-2026-11-19.md) · [v2.5 daily Elo reconciliation](docs/daily-elo-2026-11-19.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v2.5 — Actual daily Elo learning when the NCAA file is behind
+
+**This fixes the game-to-model pipeline, not just the scoreboard.** The 2026–27 season Elo originally read only the delayed NCAA-derived SportsDataverse schedule, so a successful nightly deployment could have exactly the same ratings as the previous day. From v2.5 forward, each scheduled archive and Pages build also examines the last seven Eastern calendar days of ESPN results. Games must be **STATUS_FINAL, completed=true**, have two valid unequal final scores and both schools must match **independent season-2027 ESPN team IDs** before they can become supplemental Elo training inputs. No guessed school-name linkage.
+
+**Every accepted new game now affects both schools' Elo ratings, wins/losses, and the re-trained research models and future forecast probabilities.** The score-margin/strength/venue-aware Elo replay continues to be deterministic. The archive commits verified ESPN-final *score receipts* under `web/public/forecasts/espn-final-receipts.json`, so a result remains known even if its ESPN scoreboard date falls out of the 7-day window. When the NCAA file finally reports the game, its team pair, scores, and date are reconciled and **the win is counted only once**. Contradictory or ambiguous ESPN/NCAA results are withheld rather than silently trusted.
+
+**You can see what really updated:** the Game Center displays the latest rating date, the last NCAA-only scored date, ESPN-only games already included in Elo, and games waiting on identity/source verification. `sourceReconciliation` reports the exact counts, conflicts and source warnings. The source-method version is explicitly `source-aware-game-elo-v2-espn-final`; earlier published predictions remain immutable. Official accuracy still requires an independently matching ESPN final **and** NCAA final; ESPN-only scores cannot inflate right/wrong picks.
+
+**Important:** Adding yesterday's games makes forecasts more current, but retraining and increased Elo sample size do not guarantee better accuracy. The site's original first-pick evidence, Brier score and calibration must justify any model change; challenger model adoption remains manual. This is scheduled after-game learning, not instant buzzer-to-rating streaming.
+
+[Technical source reconciliation, leak-free archiving, tests and recovery guide](docs/daily-elo-2026-11-19.md) · [v2.4 score display](docs/daily-games-2026-11-19.md) · [daily workflow schedule](docs/v09-forecast-operations.md).
 
 ---
 

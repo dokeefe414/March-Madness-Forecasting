@@ -64,6 +64,13 @@ export type RatingsDataset = {
   teams: Team[];
   retrievedAtUtc?: string;
   lastGameDate?: string;
+  sourceReconciliation?: {
+    mode:string;ncaaAcceptedGames:number;ratedEspnOnlyFinals:number;
+    totalRatedGames:number;espnFinalsObservedThisRun:number;
+    persistedEspnFinalReceipts:number;ncaaLastGameDate:string|null;
+    espnOnlyLastGameDate:string|null;rejectedOrReconciled:Record<string,number>;
+    sourceWarnings?:string[];
+  };
   cutoffDate?: string;
   recentGames?: Array<{id: string; date: string; home: string; away: string; homeScore: number; awayScore: number}>;
   isOfficialBracket?: boolean;

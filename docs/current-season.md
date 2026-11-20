@@ -134,3 +134,30 @@ Generated `/current/upcoming.json` and `/current/2027-state-space.json` are refr
 `forecast.opponents` builds bounded opponent-strength-adjusted Elo signals and date-frozen retrospective performance from the exact `2027-games.json` retrieval as `2027.json`, published at `/current/2027-opponents.json`. The independently scored **adaptive Gaussian state-space** research filter uses previous signed innovation evidence to change only *subsequent* process variance. The selected outcome prediction is still Elo unless a previously defined, source-verified logistic challenger passes prospective and chronological gates. No same-day provisional results are intentionally used to fit future game-day probabilities.
 
 `forecast.archive_health` now publishes `/current/archive-health.json` from actual Git-committed snapshot artifacts, and `ModelLab.tsx` reads it alongside current-season sources; the website distinguishes no first-pick settled data from an honest zero percentage and from a published research replay. A player's identity, injury, roster or game status is not guessed. [Detailed model methodology](v09-model-validation.md) · [Operating schedule](v09-forecast-operations.md).
+
+
+## v2.5: Same-evening results now update Elo when NCAA source lags
+
+As of v2.5, each scheduled ratings/archival build reads the original
+NCAA-derived scored-game schedule **and** the previous seven Eastern days of
+ESPN scoreboard final-status records. Only `STATUS_FINAL` with
+`completed=true`, two valid scores, and **both same-season, source-authored
+ESPN program-ID links** can enter the supplemental Elo game set.
+Unmatched ESPN scoreboard finals remain visible in the Game Center but are
+not treated as rating results.
+
+The `sourceReconciliation` block distinguishes NCAA accepted games,
+ESPN-only rated finals, total team-rating game count, latest respective
+results, durable receipt count, explicit conflicts and missing-source
+warnings. A new ESPN-only final updates Elo, both team records and future
+model training; later matching NCAA results **replace** rather than duplicate
+that outcome in a deterministic replay. ESPN final receipts are durably
+committed by the archive workflow so missed scoreboards do not make a
+previously rated game disappear. Disputed provider scores or identities
+are quarantined. See [complete implementation and audit](daily-elo-2026-11-19.md).
+
+The immutable prediction archive still requires ESPN final **and matching
+NCAA final** before grading an original prior-to-tipoff pick. No retroactive
+predictions are backfilled. Extra training examples cannot guarantee future
+accuracy improvement; judge them by actual verified, prospectively published
+first-pick Brier scores and calibration.

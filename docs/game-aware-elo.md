@@ -106,3 +106,23 @@ bounded score-margin scaling, high/low-strength opponent sensitivity,
 home/away/neutral mechanics in the Elo engine, complete same-date pregame
 embargo, input reordering stability, unaltered historical Elo and published
 team-level game receipts.
+
+
+## v2.5 source-reconciled daily updates
+
+The zero-sum, bounded-margin Elo equations are unchanged, but the accepted
+input stream is now **NCAA schedule plus ESPN-confirmed completed finals
+with both programs matched to same-season source ESPN IDs**. This removes
+the previous block where a green daily website build had no new rating
+inputs because NCAA publication was a day late. `forecast.elo_results`
+stores append-only observed ESPN final receipts, checks the NCAA corpus for
+identical team-pair and score within ±1 calendar day, and withholds
+conflicting/double-header-ambiguous results rather than guessing. A prior
+ESPN game is only one result even when NCAA subsequently publishes it.
+
+The current version tag is `source-aware-game-elo-v2-espn-final`. The
+ratings/schedule JSON disclose separate NCAA and ESPN-only counts and
+dates. As before, archived 2027 original pregame predictions are frozen;
+the historical v2.1 backtest and new multi-source replay must not be
+confused with actual first-published prospective evidence. Full
+reconciliation policy: [daily Elo v2.5](daily-elo-2026-11-19.md).

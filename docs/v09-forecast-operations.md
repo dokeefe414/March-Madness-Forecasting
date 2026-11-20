@@ -86,3 +86,27 @@ The previous scheduled site refresh built successfully but GitHub's Pages deploy
 ## v2.4 daily final-score visibility (Nov 19, 2026)
 
 The regularly refreshed NCAA-derived schedule is not an instantaneous authoritative final-status feed. An evening Nov 19 Pages deployment used 953 source-accepted games but included only games through Nov 18. Separately, the main fixture list hid already-started games, making successful updates appear absent. The Game Center now includes a dedicated [ESPN-confirmed Recent Finals scoreboard](daily-games-2026-11-19.md) (past four Eastern dates), which does **not** silently add unconfirmed ESPN results into Elo or immutable grading. The browser rechecks static JSON every ten minutes/on tab return, and an evening 22:07 archive, 22:47 site refresh and 23:41 watchdog reduce long after-school gaps. A green build is not proof the NCAA source has today's scores; compare ESPN `mostRecentEspnFinalDate` and NCAA `lastGameDate` separately.
+
+
+## v2.5 source-reconciled Elo in existing overnight and evening jobs
+
+The nightly pipeline now actually updates 2027 Elo when a qualifying
+ESPN-completed game is available ahead of the delayed NCAA schedule.
+The archive workflow runs `forecast.live --save-espn-receipts` before
+`retrain`, `state_space` and the pretipoff snapshot. It commits the
+durable `web/public/forecasts/espn-final-receipts.json` alongside
+immutable forecast/settlement artifacts. The Pages workflow reads those
+receipts and also checks the latest seven Eastern days of ESPN finals
+before it retrains and publishes the upcoming fixtures.
+
+Check `current/2027.json.sourceReconciliation` after a run:
+`ratedEspnOnlyFinals` should be positive when the NCAA file is behind
+but uniquely ID-verified ESPN finals have arrived. `ncaaLastGameDate`
+can lag while `lastGameDate` reflects newer rated ESPN games.
+Review `rejectedOrReconciled` and source warnings for skipped outcomes.
+On a provider outage, the committed receipts protect earlier rated
+ESPN-only games; no nonexistent scores or pretipoff picks are manufactured.
+The archive's **actual original forecast grading** remains strictly
+dual-provider, even when the Elo input accepts source-ID-verified ESPN
+finals earlier. No guarantee of instant buzzer publication or steadily
+improving accuracy. See [daily Elo research and incident runbook](daily-elo-2026-11-19.md).

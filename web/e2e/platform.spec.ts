@@ -725,7 +725,13 @@ test("v2.4 ESPN finals update even while NCAA Elo lags, including a manual refre
   });
   await page.route("**/current/2027.json",r=>r.fulfill(json({
     mode:"current",season:2027,retrievedAtUtc:captured,
-    lastGameDate:"2026-11-18",teams:[team("ncaa-h","Home U"),team("ncaa-a","Away U")],
+    lastGameDate:"2026-11-19",
+    sourceReconciliation:{mode:"daily-multi-source-Elo",ncaaAcceptedGames:953,
+      ratedEspnOnlyFinals:1,totalRatedGames:954,
+      ncaaLastGameDate:"2026-11-18",espnOnlyLastGameDate:"2026-11-19",
+      espnFinalsObservedThisRun:2,persistedEspnFinalReceipts:1,
+      rejectedOrReconciled:{}},
+    teams:[team("ncaa-h","Home U"),team("ncaa-a","Away U")],
   })));
   await page.route("**/current/upcoming.json",r=>r.fulfill(json({
     schemaVersion:1,generatedAtUtc:captured,ratingRetrievedAtUtc:captured,
@@ -737,6 +743,7 @@ test("v2.4 ESPN finals update even while NCAA Elo lags, including a manual refre
     eventId:id,date:"2026-11-19",scheduledStartUtc:"2026-11-20T00:15:00Z",
     home:"Home U",away:"Away U",homeScore:85,awayScore,
     winner:"Home U",status:"ESPN-final",ncaaRatingInputConfirmed:false,
+    eloRatingInputConfirmed:id==="401-first",
     ncaaIdentityMatchConfirmed:true,
   });
   let requests=0;
@@ -756,13 +763,15 @@ test("v2.4 ESPN finals update even while NCAA Elo lags, including a manual refre
   await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
   const finals=page.getByRole("region",{name:"Recent ESPN-confirmed basketball final scores"});
   await expect(finals).toBeVisible();
-  await expect(finals).toContainText("Results are ahead of Elo");
-  await expect(finals).toContainText("NOT YET CONFIRMED IN NCAA ELO SOURCE");
+  await expect(finals).toContainText("ESPN ID-VERIFIED FINAL · INCLUDED IN ELO (NCAA PENDING)");
+  await expect(finals).toContainText("ESPN results are ahead of the NCAA score file");
+  await expect(finals).toContainText("1 ESPN-only game(s) currently in Elo");
   await expect(finals.locator(".gc-final-card")).toHaveCount(1);
   await expect(finals).toContainText("85");
   await expect(finals).toContainText("72");
   await finals.getByRole("button",{name:/CHECK FOR UPDATES/}).click();
   await expect(finals.locator(".gc-final-card")).toHaveCount(2);
+  await expect(finals).toContainText("ID / SOURCE VERIFICATION PENDING, NOT IN ELO");
   const width=await page.evaluate(()=>({
     actual:document.documentElement.scrollWidth,
     viewport:document.documentElement.clientWidth,

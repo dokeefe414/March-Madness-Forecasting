@@ -221,7 +221,9 @@ def forecast_scheduled(scoreboards: list[dict], ratings: dict,
             p=challenger if selected else baseline
             elo_version = (ratings.get("eloMethodology") or {}).get("version")
             model_name=("chronologically validated in-season logistic"
-                        if selected else "source-aware margin Elo v2.1"
+                        if selected else "ESPN-final reconciled Elo v2.4"
+                        if elo_version == "source-aware-game-elo-v2-espn-final"
+                        else "source-aware margin Elo v2.1"
                         if elo_version == "source-aware-game-elo-v1"
                         else "as-of regular-season Elo")
             unique[event_id] = {
