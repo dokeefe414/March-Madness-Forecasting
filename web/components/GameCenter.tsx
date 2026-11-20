@@ -5,6 +5,7 @@ import {matchupProbability} from "../lib/models";
 import GameAudit, {type ArchivedSnapshot,type ArchivedSettlement} from "./GameAudit";
 import MatchupIntelligence from "./MatchupIntelligence";
 import DailyDesk from "./DailyDesk";
+import RecentFinals,{type RecentFinalsReport} from "./RecentFinals";
 import ScoreProjection from "./ScoreProjection";
 
 const basePath=process.env.NEXT_PUBLIC_BASE_PATH||"";
@@ -80,6 +81,10 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
   const [forward,setForward]=useState<Forward|null>(null);
   const [ledger,setLedger]=useState<Ledger|null>(null);
   const [archiveHealth,setArchiveHealth]=useState<{status:string;message:string;lastArchiveUtc:string|null}|null>(null);
+  const [recentFinals,setRecentFinals]=useState<RecentFinalsReport|null>(null);
+  const [refreshing,setRefreshing]=useState(false);
+  const [refreshVersion,setRefreshVersion]=useState(0);
+  const refreshPublished=()=>setRefreshVersion(value=>value+1);
   const [copied,setCopied]=useState(false);
   const [problem,setProblem]=useState("");
   const [search,setSearch]=useState("");
@@ -107,19 +112,35 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
     return()=>window.clearInterval(timerId);
   },[]);
   useEffect(()=>{
+    // Static GitHub Pages snapshots do not push updates to an already-open
+    // browser. Check the published JSON every ten minutes and on tab return.
+    // Nothing here changes the immutable original pretipoff prediction ledger.
+    const timer=window.setInterval(refreshPublished,10*60_000);
+    const onVisible=()=>{if(document.visibilityState==="visible")refreshPublished();};
+    document.addEventListener("visibilitychange",onVisible);
+    return()=>{window.clearInterval(timer);document.removeEventListener("visibilitychange",onVisible);};
+  },[]);
+  useEffect(()=>{
     let alive=true;
+    setRefreshing(true);
     Promise.all([
-      fetch(basePath+"/current/upcoming.json").then(r=>{if(!r.ok)throw new Error("Upcoming-game snapshot is not published.");return r.json() as Promise<Schedule>}),
-      fetch(basePath+"/current/2027.json").then(r=>{if(!r.ok)throw new Error("Current NCAA-source ratings unavailable.");return r.json() as Promise<RatingsDataset>}),
-      fetch(basePath+"/forecasts/index.json").then(r=>r.ok?r.json():null).catch(()=>null) as Promise<Ledger|null>,
-      fetch(basePath+"/current/archive-health.json").then(r=>r.ok?r.json():null).catch(()=>null),
-    ]).then(([s,r,l,h])=>{
+      fetch(basePath+"/current/upcoming.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("Upcoming-game snapshot is not published.");return r.json() as Promise<Schedule>}),
+      fetch(basePath+"/current/2027.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw new Error("Current NCAA-source ratings unavailable.");return r.json() as Promise<RatingsDataset>}),
+      fetch(basePath+"/forecasts/index.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null) as Promise<Ledger|null>,
+      fetch(basePath+"/current/archive-health.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null),
+      fetch(basePath+"/current/recent-finals.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).catch(()=>null) as Promise<RecentFinalsReport|null>,
+    ]).then(([s,r,l,h,latestFinals])=>{
       if(!alive)return;
       if(s.schemaVersion!==1||!Array.isArray(s.games)||r.mode!=="current"||r.season!==2027)
         throw new Error("Scheduled game/ratings source validation failed.");
       setSchedule(s);setRatings(r);setForward(l?.uniqueGames||null);setLedger(l);
       setArchiveHealth(h);
-      setA(r.teams[0]?.teamId||"");setB(r.teams[1]?.teamId||"");
+      // Reject mismatched score and rating snapshots, not just HTTP 200.
+      setRecentFinals(latestFinals?.schemaVersion===1&&
+        latestFinals?.season===2027&&latestFinals?.ratingRetrievedAtUtc===r.retrievedAtUtc?
+        latestFinals:null);
+      setA(old=>old&&r.teams.some(t=>t.teamId===old)?old:(r.teams[0]?.teamId||""));
+      setB(old=>old&&r.teams.some(t=>t.teamId===old)?old:(r.teams[1]?.teamId||""));
       const params=new URLSearchParams(window.location.search);
       const team=params.get("team");
       if(team&&r.teams.some(t=>t.teamId===team))setTeamFilter(team);
@@ -127,11 +148,15 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
       const archivedIds=new Set((l?.settlements||[]).map(x=>x.eventId));
       const initial=(s.games.find(g=>g.eventId===link)||archivedIds.has(link||""))?
         (link||""):s.games.find(g=>g.status==="ready")?.eventId||s.games[0]?.eventId||"";
-      setSelectedId(initial);
+      setSelectedId(previous=>
+        previous&&(s.games.some(g=>g.eventId===previous)||archivedIds.has(previous))?
+        previous:initial);
       setNow(Date.now());
-    }).catch((e:Error)=>{if(alive)setProblem(e.message)});
+      setProblem("");
+    }).catch((e:Error)=>{if(alive)setProblem(e.message)})
+      .finally(()=>{if(alive)setRefreshing(false)});
     return()=>{alive=false};
-  },[]);
+  },[refreshVersion]);
   const eligible=useMemo(()=>schedule?.games||[],[schedule]);
   function toggleWatch(id:string|undefined){
     if(!id||!ratings?.teams.some(t=>t.teamId===id))return;
@@ -238,8 +263,10 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
       health={archiveHealth} generatedAt={schedule.generatedAtUtc}
       settled={forward?.settledUniqueGames||0} onChoose={(id)=>{setDay("all");setShowAll(true);setTeamFilter("");setSearch("");choose(id);}}
       onToday={chooseToday}/></div>}
+    <RecentFinals report={recentFinals} ncaaLastDate={ratings?.lastGameDate||null}
+      onRefresh={refreshPublished} refreshing={refreshing}/>
     <div className="gc-intro" id="gc-fixture-browser"><div><span className="section-kicker">01 / THE VERIFIED SCHEDULE</span><h2>Pick a <span>game.</span></h2>
-      <p>Future ESPN scheduled fixtures only. The nightly refresh updates probabilities and team form as source results change.</p></div>
+      <p>Future ESPN scheduled fixtures only. The scheduled site refresh updates probabilities as validated NCAA scores arrive. ESPN-confirmed recent finals are shown above, including results still awaiting NCAA rating-source confirmation.</p></div>
       <span className="gc-source-pill">{schedule?formatTime(schedule.generatedAtUtc):"CHECKING LATEST SOURCE…"}</span></div>
     {!schedule?<div className="premium-empty" role={problem?"alert":"status"}><h3>{problem||"LOADING REAL GAMES…"}</h3>
       <p>The site does not manufacture matchups if the schedule is unavailable.</p></div>:<>

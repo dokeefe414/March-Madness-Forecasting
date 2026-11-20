@@ -5,18 +5,32 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v2.3%20Autonomous%20Recovery-a6ffce)
+![Version](https://img.shields.io/badge/release-v2.4%20Daily%20Games-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
 ### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting26-27/)
 
-[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [v2.2 forecasting intelligence](docs/v22-forecast-intelligence.md) · [Automation recovery runbook](docs/nightly-recovery-2026-11-18.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [v2.2 forecasting intelligence](docs/v22-forecast-intelligence.md) · [Automation recovery runbook](docs/nightly-recovery-2026-11-18.md) · [Daily ESPN finals and NCAA lag](docs/daily-games-2026-11-19.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v2.4 — Daily completed games, faster nightly updates and refreshable Game Center
+
+**Why games looked stuck even while automation was green:** on Nov 19, the latest successful website build had processed 953 NCAA-derived scored games, but that particular provider release contained game results only through Nov 18. Also, the Find a Game list deliberately showed **future games only**, hiding completed ones, and a browser tab did not re-fetch data after a deployment.
+
+**What's fixed:**
+- A new **Recent Finals** scoreboard on the existing **Find a Game** page shows strictly ESPN **STATUS_FINAL + completed=true** games, latest scores and dates from a four-day Eastern window, even when the NCAA-derived model feed is running behind. It clearly distinguishes ESPN-confirmed results from results actually accepted into Elo; it never silently changes Elo or the official immutable prediction archive.
+- The Game Center now **refreshes published data every ten minutes, whenever you return to the tab, and with a visible refresh button**. It fetches fresh static JSON while retaining selected games and saved team filters when those records remain available.
+- Added a **10:07 p.m. Eastern pretipoff archive/settlement pass**, a **10:47 p.m. Eastern website build** and a **11:41 p.m. Eastern watchdog** during the season, in addition to overnight, morning and afternoon updates. This reduces evening gaps but does not guarantee instant buzzer-to-browser publishing.
+- Source retrieval timestamps and scores remain transparent. A finished ESPN game without a matching accepted NCAA source result is visible as a final, **not falsely counted as new Elo training data or a graded correct/missed prediction**.
+
+The two independent clocks are intentional: **ESPN verified final-score display** can be newer than **NCAA-accepted Elo and settlement evidence**. The [daily source separation and operations runbook](docs/daily-games-2026-11-19.md) explains exactly what updates when, how missing source days are handled, and how to reproduce the tests.
 
 ---
 

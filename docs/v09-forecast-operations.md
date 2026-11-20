@@ -22,12 +22,15 @@ Local DST-aware GitHub Actions cron with `timezone: America/New_York`:
 | 07:41 ET Nov–Apr | `monitor-archive.yml` | Inspect late-night settlement capture; dispatch recovery if missing |
 | 11:41 ET Nov–Apr | `monitor-archive.yml` | Recover absent/stale morning archive and alert until healthy |
 | 16:07 ET Nov–Apr | `archive-pregame.yml` | Capture evening fixtures and retry unresolved scores |
+| 22:07 ET Nov–Apr | `archive-pregame.yml` | Same-evening source-verified finals and remaining future pretipoff picks |
 | 17:17 ET Nov–Apr | `deploy-pages.yml` | Republish verified afternoon picks and updated models |
+| 22:47 ET Nov–Apr | `deploy-pages.yml` | Rebuild ESPN-confirmed recent finals panel and newest NCAA-derived Elo |
 | 18:41 ET Nov–Apr | `monitor-archive.yml` | Recheck afternoon archive and dispatch safe recovery if missing |
+| 23:41 ET Nov–Apr | `monitor-archive.yml` | Recheck 22:07 evening archival evidence and recover if missing |
 
 GitHub Actions is **best effort**; scheduled jobs may run late, be skipped under load or fail if third-party endpoints are unavailable. The monitor itself is best-effort. The page never guarantees second-by-second scores.
 
-Important: GitHub Actions runs made with the default `GITHUB_TOKEN` do not reliably fire downstream `push` workflows, so the explicit **02:47/06:47/10:17/17:17** Pages refreshes serve the immutable archive captured at 02:07/06:07/09:07/16:07 respectively. A successful archival `workflow_run` also requests a Pages build; the independent schedule is a backup when that event fails.
+Important: GitHub Actions runs made with the default `GITHUB_TOKEN` do not reliably fire downstream `push` workflows, so the explicit **02:47/06:47/10:17/17:17/22:47** Pages refreshes serve the immutable archive captured at 02:07/06:07/09:07/16:07 respectively. A successful archival `workflow_run` also requests a Pages build; the independent schedule is a backup when that event fails.
 
 ## Final-status validation and failure behavior
 
@@ -39,7 +42,7 @@ New and historical scores in the public Git archive are immutable files; only `i
 
 The daily archive outputs **`archiveHealth`** in `index.json`: run time, new predictions, verified new settlements, total archived predictions, count of completed ESPN events checked, source warnings and current status. The independent Pages rebuild evaluates age and publishes **`/current/archive-health.json`** with state `current`, `stale`, `source-partial`, `no-picks-yet`, or `awaiting-first-archive`. The website displays that honestly; a missing index is not replaced by a manufactured percentage.
 
-`monitor-archive.yml` now runs independently at **03:41/07:41/11:41/18:41 ET** and also after successful Pages deployments. It fails if the in-season Git-committed ledger is missing, older than **4 hours**, or cannot provide an eligible verified archive. If only freshness is failing, it first checks for an already-running archive and dispatches `archive-pregame.yml` on `main` if none is active; the archived snapshot code still prevents post-tipoff prediction backfill. An actionable issue stays open while evidence is stale, and closes only after a genuinely fresh, audited archive exists. GitHub's workflow failure notifications remain an additional alert, not a promise of perfectly timed cron.
+`monitor-archive.yml` now runs independently at **03:41/07:41/11:41/18:41/23:41 ET** and also after successful Pages deployments. It fails if the in-season Git-committed ledger is missing, older than **4 hours**, or cannot provide an eligible verified archive. If only freshness is failing, it first checks for an already-running archive and dispatches `archive-pregame.yml` on `main` if none is active; the archived snapshot code still prevents post-tipoff prediction backfill. An actionable issue stays open while evidence is stale, and closes only after a genuinely fresh, audited archive exists. GitHub's workflow failure notifications remain an additional alert, not a promise of perfectly timed cron.
 
 ## Model training and score audit
 
@@ -78,3 +81,8 @@ The ESPN scoreboard and NCAA-derived schedule may both lag and could share data-
 ## v2.3 recovery hardening, November 18–19, 2026
 
 The previous scheduled site refresh built successfully but GitHub's Pages deploy API temporarily failed to find the already-uploaded artifact. Repeating that job under the same run ID then uploaded a duplicate artifact and failed again. Pages builds now verify that **exactly one** artifact exists before attempting deployment and allow extra propagation time; a guarded `workflow_run` recovery dispatches a **fresh run** only for the specific deploy-only error. Separate explicit Eastern archive cron expressions plus the independent four-hour watchdog address dropped scheduler invocations. The first-pick archive remains immutable, and GitHub's scheduling remains best-effort rather than a continuous service. Full verified failure evidence, recovery guards, CI procedures and response steps: [nightly recovery incident runbook](nightly-recovery-2026-11-18.md).
+
+
+## v2.4 daily final-score visibility (Nov 19, 2026)
+
+The regularly refreshed NCAA-derived schedule is not an instantaneous authoritative final-status feed. An evening Nov 19 Pages deployment used 953 source-accepted games but included only games through Nov 18. Separately, the main fixture list hid already-started games, making successful updates appear absent. The Game Center now includes a dedicated [ESPN-confirmed Recent Finals scoreboard](daily-games-2026-11-19.md) (past four Eastern dates), which does **not** silently add unconfirmed ESPN results into Elo or immutable grading. The browser rechecks static JSON every ten minutes/on tab return, and an evening 22:07 archive, 22:47 site refresh and 23:41 watchdog reduce long after-school gaps. A green build is not proof the NCAA source has today's scores; compare ESPN `mostRecentEspnFinalDate` and NCAA `lastGameDate` separately.

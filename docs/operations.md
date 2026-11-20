@@ -6,12 +6,16 @@
 |---|---|---|
 | `CI` | feature branch push, main push, pull request | Hermetic Python tests, held-out historical benchmark, JSON report artifact, 42-year data consistency, TypeScript bracket simulations, TypeScript typecheck and production Next build |
 | `Deploy website to GitHub Pages` | main push, dispatch, daily best-effort 2:47 a.m. Eastern all year + 6:47 a.m. Eastern Nov–Apr backup | Real NCAA-source 2027 finals → current Elo snapshot → historical research report → data check → static Next export → GitHub Pages |
-| `Archive real pre-tipoff forecasts` | 2:07, 6:07, 9:07, 16:07 a.m./p.m. Eastern Nov–Apr; dispatch; own workflow push | Independently settle exact-source final scores against frozen pretipoff picks and append valid new future predictions |
-| `Monitor before-tipoff prediction archive freshness` | 3:41, 7:41, 11:41, 18:41 Eastern Nov–Apr plus successful Pages runs | Automatically request a safe archive workflow dispatch if no active archiver and committed forecast evidence is over four hours old; alert if still stale |
+| `Archive real pre-tipoff forecasts` | 2:07, 6:07, 9:07, 16:07 and 22:07 Eastern Nov–Apr; dispatch; own workflow push | Independently settle exact-source final scores against frozen pretipoff picks and append valid new future predictions |
+| `Monitor before-tipoff prediction archive freshness` | 3:41, 7:41, 11:41, 18:41 and 23:41 Eastern Nov–Apr plus successful Pages runs | Automatically request a safe archive workflow dispatch if no active archiver and committed forecast evidence is over four hours old; alert if still stale |
 | `Recover transient Pages artifact deployment failures` | Pages workflow completion with deploy-only failure | Dispatch one fresh Pages workflow run when exactly one uploaded Pages artifact existed; never retry same-run artifact upload |
 | `Rebuild historical snapshots` | manual dispatch | Regenerate source-pinned historical artifacts without silently changing main |
 
 Historical unit tests and website builds do not require a live network feed. Publishing and pretipoff archival jobs fetch it, and an upstream error must **fail closed**. GitHub's scheduled cron is best-effort; it may skip or delay a run under load.
+
+## v2.4 independent ESPN final-score display
+
+A separate `forecast.recent_finals` step fetches the last four Eastern days of ESPN scoreboards on every GitHub Pages build and writes `web/public/current/recent-finals.json`. Only actual ESPN `STATUS_FINAL`, `completed=true`, valid final scores and valid IDs appear. The output discloses its own retrieval timestamp, warnings, coverage, most recent ESPN final date and the independent NCAA scored-game cutoff. It is a **display feed**, not model training or archive grading. A daily source release can lag while the GitHub workflow stays green; current-season Elo continues to use validated NCAA-scored data. The browser refreshes JSON every ten minutes and on visibility return, with manual refresh. The seasonal evening archive/site/watchdog slots are 22:07/22:47/23:41 Eastern. See [full runbook](daily-games-2026-11-19.md).
 
 ## Published files versus committed historical archives
 

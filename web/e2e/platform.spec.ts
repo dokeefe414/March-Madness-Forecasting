@@ -713,3 +713,59 @@ test("v2.2 source-aligned Forecast Studio switches real research evidence and re
   }));
   expect(widths.outer,"new workbench causes horizontal overflow").toBeLessThanOrEqual(widths.viewport+3);
 });
+
+
+test("v2.4 ESPN finals update even while NCAA Elo lags, including a manual refresh",async ({page})=>{
+  // Browser fixtures are hermetic; no assertion here depends on a live game.
+  const captured="2026-11-20T02:20:00Z";
+  const json=(value:unknown)=>({contentType:"application/json",body:JSON.stringify(value)});
+  const team=(teamId:string,name:string)=>({
+    rank:1,teamId,name,rating:1510,projectedRating:1510,trend:0,
+    wins:3,losses:1,history:[1500,1510],recentGames:[],ratingHistory:[1500,1510],
+  });
+  await page.route("**/current/2027.json",r=>r.fulfill(json({
+    mode:"current",season:2027,retrievedAtUtc:captured,
+    lastGameDate:"2026-11-18",teams:[team("ncaa-h","Home U"),team("ncaa-a","Away U")],
+  })));
+  await page.route("**/current/upcoming.json",r=>r.fulfill(json({
+    schemaVersion:1,generatedAtUtc:captured,ratingRetrievedAtUtc:captured,
+    lastIncludedGameDate:"2026-11-18",
+    coverage:{futureScheduled:0,eligibleForecasts:0,unmatchedOrAmbiguous:0},
+    games:[],
+  })));
+  const makeFinal=(id:string,awayScore:number)=>({
+    eventId:id,date:"2026-11-19",scheduledStartUtc:"2026-11-20T00:15:00Z",
+    home:"Home U",away:"Away U",homeScore:85,awayScore,
+    winner:"Home U",status:"ESPN-final",ncaaRatingInputConfirmed:false,
+    ncaaIdentityMatchConfirmed:true,
+  });
+  let requests=0;
+  await page.route("**/current/recent-finals.json",r=>{
+    requests++;
+    const finals=[makeFinal("401-first",72),...(requests>1?[makeFinal("401-next",71)]:[])];
+    return r.fulfill(json({
+      schemaVersion:1,season:2027,type:"ESPN-recent-final-scoreboard",
+      status:"source-ready",ratingRetrievedAtUtc:captured,generatedAtUtc:captured,
+      ncaaResultsThroughDate:"2026-11-18",
+      mostRecentEspnFinalDate:"2026-11-19",
+      confirmedFinalCount:finals.length,ncaaRatingInputMatched:0,
+      boardDaysRetrieved:4,lookbackDays:4,sourceWarnings:[],games:finals,
+    }));
+  });
+  await page.goto("/?view=games");
+  await expect(page.locator('main[data-hydrated="yes"]')).toBeVisible();
+  const finals=page.getByRole("region",{name:"Recent ESPN-confirmed basketball final scores"});
+  await expect(finals).toBeVisible();
+  await expect(finals).toContainText("Results are ahead of Elo");
+  await expect(finals).toContainText("NOT YET CONFIRMED IN NCAA ELO SOURCE");
+  await expect(finals.locator(".gc-final-card")).toHaveCount(1);
+  await expect(finals).toContainText("85");
+  await expect(finals).toContainText("72");
+  await finals.getByRole("button",{name:/CHECK FOR UPDATES/}).click();
+  await expect(finals.locator(".gc-final-card")).toHaveCount(2);
+  const width=await page.evaluate(()=>({
+    actual:document.documentElement.scrollWidth,
+    viewport:document.documentElement.clientWidth,
+  }));
+  expect(width.actual,"daily finals layout exceeds viewport").toBeLessThanOrEqual(width.viewport+3);
+});
