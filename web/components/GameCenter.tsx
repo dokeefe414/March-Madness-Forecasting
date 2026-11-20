@@ -263,7 +263,10 @@ export default function GameCenter({onOpenAccuracy,onOpenModels,onOpenSelection}
       health={archiveHealth} generatedAt={schedule.generatedAtUtc}
       settled={forward?.settledUniqueGames||0} onChoose={(id)=>{setDay("all");setShowAll(true);setTeamFilter("");setSearch("");choose(id);}}
       onToday={chooseToday}/></div>}
-    <RecentFinals report={recentFinals} ncaaLastDate={ratings?.lastGameDate||null}
+    <RecentFinals report={recentFinals}
+      ncaaLastDate={ratings?.sourceReconciliation?.ncaaLastGameDate||ratings?.lastGameDate||null}
+      eloLastDate={ratings?.lastGameDate||null}
+      espnRatedGames={ratings?.sourceReconciliation?.ratedEspnOnlyFinals||0}
       onRefresh={refreshPublished} refreshing={refreshing}/>
     <div className="gc-intro" id="gc-fixture-browser"><div><span className="section-kicker">01 / THE VERIFIED SCHEDULE</span><h2>Pick a <span>game.</span></h2>
       <p>Future ESPN scheduled fixtures only. The scheduled site refresh updates probabilities as validated NCAA scores arrive. ESPN-confirmed recent finals are shown above, including results still awaiting NCAA rating-source confirmation.</p></div>
