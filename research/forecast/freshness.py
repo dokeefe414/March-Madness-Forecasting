@@ -83,6 +83,9 @@ def check_snapshot(data: dict, now: datetime | None = None) -> dict:
         "auditTimeUtc": now.isoformat().replace("+00:00", "Z"),
         "retrievedAtUtc": retrieved.isoformat().replace("+00:00", "Z"),
         "lastIncludedGameDate": included.isoformat(),
+        "lastNcaaScoredGameDate":(data.get("sourceReconciliation") or {}).get("ncaaLastGameDate",included.isoformat()),
+        "espnOnlyRatedGames":(data.get("sourceReconciliation") or {}).get("ratedEspnOnlyFinals",0),
+        "ratedGameProvenance":(data.get("sourceReconciliation") or {}).get("mode","NCAA-only"),
         "acceptedGameCount": total,
         "ratedTeamCount": len(teams),
         "confirmedDivisionIPrograms": sum(t.get("divisionIConfirmed") is True for t in teams),
@@ -92,7 +95,7 @@ def check_snapshot(data: dict, now: datetime | None = None) -> dict:
         "lateResultCatchUp": "5:17 a.m. America/New_York, November-April",
         "preTipoffArchive": "9:07 a.m. America/New_York, November-April",
         "source": data["sourceUrl"],
-        "notice": "Data is a scored-game subset of the latest provider release, not a real-time verified final-status API; no game is guessed when source data is unavailable.",
+        "notice": "Ratings include accepted NCAA scores plus independently ESPN-final and same-season-ID-verified supplemental games when available, with deduplication. This is not live streaming.",
     }
 
 
@@ -107,7 +110,9 @@ def main() -> None:
     print(
         f"Nightly data checked: {result['acceptedGameCount']} sourced games, "
         f"{result['ratedTeamCount']} rated programs, last score date "
-        f"{result['lastIncludedGameDate']} (source lag {result['sourceLagCalendarDaysUtc']} UTC calendar days)"
+        f"{result['lastIncludedGameDate']} ({result['espnOnlyRatedGames']} ESPN-only finals; "
+        f"NCAA file through {result['lastNcaaScoredGameDate']}; "
+        f"source lag {result['sourceLagCalendarDaysUtc']} UTC calendar days)"
     )
 
 
