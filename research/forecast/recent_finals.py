@@ -52,6 +52,9 @@ def build_finals(scoreboards: list[dict], ratings: dict, ncaa_games: list[dict],
         raise ValueError("Finals inputs must be lists")
     now = captured_at.astimezone(timezone.utc)
     today = now.astimezone(EASTERN).date()
+    if not isinstance(requested_days,int) or requested_days < 1 or requested_days > 14:
+        raise ValueError("A bounded recent-finals lookback is required")
+    earliest = today - timedelta(days=requested_days-1)
 
     name_index: dict[str, list[dict]] = defaultdict(list)
     id_index: dict[str, list[dict]] = defaultdict(list)
@@ -66,7 +69,6 @@ def build_finals(scoreboards: list[dict], ratings: dict, ncaa_games: list[dict],
                   game["homeScore"], game["awayScore"])] += 1
 
     found: dict[str, dict] = {}
-    finals_count = 0
     for board in scoreboards:
         if not isinstance(board, dict) or not isinstance(board.get("events"), list):
             raise ValueError("ESPN scoreboard response missing events list")
@@ -77,7 +79,7 @@ def build_finals(scoreboards: list[dict], ratings: dict, ncaa_games: list[dict],
             if source is None:
                 continue
             day = date.fromisoformat(source["date"])
-            if not FIRST_DATE <= day <= min(today, REGULAR_SEASON_CUTOFF):
+            if not max(FIRST_DATE,earliest) <= day <= min(today,REGULAR_SEASON_CUTOFF):
                 continue
             competitions = event.get("competitions") or []
             if len(competitions) != 1:
@@ -175,7 +177,18 @@ def main() -> None:
                 warnings.append(f"{day.isoformat()}: {exc}")
         if warnings:
             print("WARNING: Recent ESPN finals feed partially unavailable; omitted dates will not be fabricated: "+"; ".join(warnings))
-    report=build_finals(boards,ratings,ncaa["games"],now,warnings)
+    try:
+        report=build_finals(boards,ratings,ncaa["games"],now,warnings)
+    except ValueError as exc:
+        if args.scoreboards_json:
+            # Offline tests and fixtures fail closed on inconsistent inputs.
+            raise
+        # A malformed *optional* ESPN scoreboard must not stop the primary
+        # validated NCAA/Elo site from publishing. Withhold only this panel
+        # and report the problem; never publish a guessed score.
+        print(f"WARNING: ESPN recent-finals integrity check failed: {exc}")
+        report=build_finals([],ratings,ncaa["games"],now,
+                            [*warnings,f"ESPN final-source integrity error: {exc}"])
     args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
     print(f"ESPN daily scoreboard: {report['confirmedFinalCount']} final games "
