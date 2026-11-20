@@ -118,15 +118,22 @@ def merge_games(ncaa_games:list[dict],espn_finals:list[dict],
     if not isinstance(ncaa_games,list) or not isinstance(espn_finals,list):
         raise ValueError("Expected two game arrays")
     trusted_by_id:dict[str,dict]={}
+    ambiguous_linked:set[str]=set()
     for team in ratings["teams"]:
         linked=str(team.get("espnSourceTeamId") or "").strip()
-        if linked:
-            if linked in trusted_by_id and trusted_by_id[linked]["name"]!=team["name"]:
-                raise ValueError("Ambiguous same-season ESPN ID in provisional ratings")
-            trusted_by_id[linked]=team
+        if linked and linked not in ambiguous_linked:
+            if linked in trusted_by_id and trusted_by_id[linked]["teamId"]!=team["teamId"]:
+                # A bad optional identity crosswalk must not kill all Elo.
+                # Exclude this ESPN ID rather than accepting a guessed school.
+                ambiguous_linked.add(linked)
+                trusted_by_id.pop(linked,None)
+            else:
+                trusted_by_id[linked]=team
     saved_by_id=_read_saved(saved)
     current_by_id:dict[str,dict]={}
     rejected=Counter()
+    if ambiguous_linked:
+        rejected["ambiguousProviderTeamIds"]=len(ambiguous_linked)
     for row in espn_finals:
         if not row.get("espnIdentityIdsMatch"):
             rejected["noAuthoritativeTeamIdPair"]+=1
