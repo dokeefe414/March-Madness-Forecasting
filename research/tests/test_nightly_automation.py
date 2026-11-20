@@ -38,14 +38,17 @@ class NightlyAutomationContract(unittest.TestCase):
         archive = schedules("archive-pregame.yml")
         deploy = schedules("deploy-pages.yml")
         self.assertEqual(archive, ["7 2 * 1,2,3,4,11,12 *", "7 6 * 1,2,3,4,11,12 *",
-                                  "7 9 * 1,2,3,4,11,12 *", "7 16 * 1,2,3,4,11,12 *"])
+                                  "7 9 * 1,2,3,4,11,12 *", "7 16 * 1,2,3,4,11,12 *",
+                                  "7 22 * 1,2,3,4,11,12 *"])
         self.assertIn("47 2 * * *", deploy)
         self.assertIn("47 6 * 1,2,3,4,11,12 *", deploy)
         self.assertIn("17 10,17 * 1,2,3,4,11,12 *", deploy)
+        self.assertIn("47 22 * 1,2,3,4,11,12 *", deploy)
+        self.assertIn("python -m forecast.recent_finals", deploy)
         archive_times, page_times = times(archive), times(deploy)
-        for hour, minute in ((2, 47), (6, 47), (10, 17), (17, 17)):
+        for hour, minute in ((2, 47), (6, 47), (10, 17), (17, 17), (22, 47)):
             self.assertIn((hour, minute), page_times)
-            preceding = {(2, 7), (6, 7), (9, 7), (16, 7)}
+            preceding = {(2, 7), (6, 7), (9, 7), (16, 7), (22, 7)}
             self.assertTrue(
                 any(0 < 60 * hour + minute - (60 * ah + am) <= 75
                     for ah, am in archive_times & preceding),
@@ -64,7 +67,7 @@ class NightlyAutomationContract(unittest.TestCase):
     def test_morning_monitor_catches_missing_overnight_settlement(self):
         monitor = (WORKFLOWS / "monitor-archive.yml").read_text(encoding="utf-8")
         self.assertEqual(schedules("monitor-archive.yml"),
-                         ["41 3,7,11,18 * 1,2,3,4,11,12 *"])
+                         ["41 3,7,11,18,23 * 1,2,3,4,11,12 *"])
         self.assertIn("--require-recent --max-age-hours 4", monitor)
         self.assertIn("if: failure()", monitor)
         self.assertIn("steps.freshness.outcome == 'failure'", monitor)
