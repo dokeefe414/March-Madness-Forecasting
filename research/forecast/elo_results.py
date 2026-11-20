@@ -79,6 +79,11 @@ def _read_saved(saved:dict|None)->dict[str,dict]:
     if (saved.get("schemaVersion")!=SCHEMA or saved.get("season")!=2027
         or not isinstance(saved.get("receipts"),list)):
         raise ValueError("Unknown or corrupt durable ESPN final receipt file")
+    quarantined=saved.get("quarantinedEventIds",[])
+    if (not isinstance(quarantined,list) or
+        any(not isinstance(x,str) or not x for x in quarantined) or
+        len(set(quarantined))!=len(quarantined)):
+        raise ValueError("Invalid quarantined ESPN event IDs in durable receipt file")
     found={}
     for item in saved["receipts"]:
         if not isinstance(item,dict):
@@ -130,6 +135,7 @@ def merge_games(ncaa_games:list[dict],espn_finals:list[dict],
             else:
                 trusted_by_id[linked]=team
     saved_by_id=_read_saved(saved)
+    prior_quarantined=set(saved.get("quarantinedEventIds",[])) if saved else set()
     current_by_id:dict[str,dict]={}
     rejected=Counter()
     if ambiguous_linked:
@@ -151,7 +157,7 @@ def merge_games(ncaa_games:list[dict],espn_finals:list[dict],
         elif event_id not in current_by_id:
             current_by_id[event_id]=item
 
-    conflicts=set()
+    conflicts=set(prior_quarantined)
     for eid,new in current_by_id.items():
         if new is None:
             conflicts.add(eid)
@@ -219,6 +225,7 @@ def merge_games(ncaa_games:list[dict],espn_finals:list[dict],
     merged.sort(key=lambda g:(g["date"],str(g["id"])))
     counts={key:int(value) for key,value in sorted(rejected.items())}
     persisted={"schemaVersion":SCHEMA,"season":2027,"source":SOURCE,
+               "quarantinedEventIds":sorted(conflicts),
                "receipts":[saved_by_id[eid] for eid in sorted(saved_by_id)]}
     report={"schemaVersion":SCHEMA,"mode":"daily-multi-source-Elo",
             "ncaaAcceptedGames":len(ncaa_games),
@@ -226,6 +233,7 @@ def merge_games(ncaa_games:list[dict],espn_finals:list[dict],
             "totalRatedGames":len(merged),
             "espnFinalsObservedThisRun":len(espn_finals),
             "persistedEspnFinalReceipts":len(saved_by_id),
+            "quarantinedEspnEvents":len(conflicts),
             "espnOnlyLastGameDate":max((g["date"] for g in merged
                                        if g["source"]=="ESPN-confirmed STATUS_FINAL"),default=None),
             "ncaaLastGameDate":max((g["date"] for g in ncaa_games),default=None),
