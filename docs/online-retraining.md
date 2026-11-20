@@ -86,3 +86,22 @@ The operational Elo/logistic switch still requires the prior-date chronological 
 ## Source-aware Elo update parity (Nov 2026)
 
 The `forecast.retrain` replay calculates its daily score-margin-adjusted team-Elo changes from the exact same formula as `forecast.live`: baseline K=24, recorded home=65 Elo, and a capped logarithmic score margin factor. Every source date is evaluated before that date's changes are applied, and the date's updates are accumulated without leaking earlier-listed same-day results. This prevents training the logistic residual correction against a different classic Elo state than the one used for published current-season probabilities. See [game-aware Elo mathematics and limitations](game-aware-elo.md).
+
+
+## v2.5: More timely source-verified training, same conservative model gate
+
+The daily `2027-games.json` training corpus is now reconciled from
+original NCAA results plus ESPN `STATUS_FINAL` records only where both
+teams have explicit source-authored, same-season ESPN IDs. The previous
+NCAA one-to-two-day release lag no longer necessarily blocks all rated
+results from the preceding night. ESPN-only scores are recorded in
+`espn-final-receipts.json` and are deduplicated against NCAA catch-up;
+`sourceReconciliation` documents quarantined disagreements.
+
+All challenger model recomputation uses the newly accepted game corpus.
+A retrospective replay of newly imported older games cannot prove the
+game was known on the timestamp of an old archived forecast. Independent
+**actual prospective** scoring and the non-automatic promotion gate stay
+unchanged: original first-published snapshots are immutable, and their
+correctness still requires separately matching ESPN and NCAA finals.
+See [daily Elo v2.5](daily-elo-2026-11-19.md).
