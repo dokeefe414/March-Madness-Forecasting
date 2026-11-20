@@ -67,9 +67,13 @@ def build_finals(scoreboards: list[dict], ratings: dict, ncaa_games: list[dict],
             id_index[str(team["espnSourceTeamId"])].append(team)
 
     accepted: dict[tuple[str, str, str, int, int], int] = defaultdict(int)
+    rating_inputs: dict[tuple[str, str, str, int, int], int] = defaultdict(int)
     for game in ncaa_games:
-        accepted[(game["date"], game["home"], game["away"],
-                  game["homeScore"], game["awayScore"])] += 1
+        key = (game["date"], game["home"], game["away"],
+               game["homeScore"], game["awayScore"])
+        rating_inputs[key] += 1
+        if game.get("source", "NCAA-derived schedule") == "NCAA-derived schedule":
+            accepted[key] += 1
 
     found: dict[str, dict] = {}
     for board in scoreboards:
@@ -113,6 +117,9 @@ def build_finals(scoreboards: list[dict], ratings: dict, ncaa_games: list[dict],
                 str(away_record.get("espnSourceTeamId") or "") == away_espn_id)
             key = (source["date"], name_h, name_a, *scores)
             included = eligible and accepted.get(key, 0) == 1
+            # NCAA may still lag even after the Elo pipeline has used a
+            # strictly ESPN-final+ID-verified result. Keep these separate.
+            rating_included = eligible and rating_inputs.get(key, 0) == 1
             public = {
                 "eventId": eid, "date":source["date"],
                 "scheduledStartUtc":parse_time(event["date"]).isoformat().replace("+00:00", "Z"),
@@ -121,6 +128,7 @@ def build_finals(scoreboards: list[dict], ratings: dict, ncaa_games: list[dict],
                 "winner":name_h if scores[0] > scores[1] else name_a,
                 "status":"ESPN-final",
                 "ncaaRatingInputConfirmed":included,
+                "eloRatingInputConfirmed":rating_included,
                 "ncaaIdentityMatchConfirmed":eligible,
                 "espnIdentityIdsMatch":id_linked,
                 "homeEspnTeamId":home_espn_id,
@@ -149,11 +157,12 @@ def build_finals(scoreboards: list[dict], ratings: dict, ncaa_games: list[dict],
         "sourceWarnings":warnings,
         "confirmedFinalCount":len(found),
         "ncaaRatingInputMatched":sum(bool(g["ncaaRatingInputConfirmed"]) for g in found.values()),
+        "eloRatingInputMatched":sum(bool(g["eloRatingInputConfirmed"]) for g in found.values()),
         "mostRecentEspnFinalDate":all_rows[0]["date"] if all_rows else None,
         "games":all_rows if result_limit is None else all_rows[:result_limit],
         "limitations":[
             "Only ESPN-confirmed completed finals are displayed. Some dates may be missing when ESPN is unavailable.",
-            "The NCAA-derived team Elo, win/loss records, and trained models still update only when their separately validated scored-game feed includes those games.",
+            "Elo, team records and research train from the accepted NCAA score stream plus strictly ESPN-final+same-season-ID-verified supplemental games, deduplicated by team pair/date/score.",
             "A game without an exact NCAA pair/date/score match is marked not confirmed in rating source, not treated as an erroneous result.",
             "Independent forecast settlement still requires both ESPN final status and the exact NCAA score matching the earliest archived before-tipoff pick.",
             "The listed game time originates from ESPN; it is not a guaranteed independently verified actual tipoff.",
