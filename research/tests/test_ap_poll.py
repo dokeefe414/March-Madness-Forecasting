@@ -179,6 +179,9 @@ class WeeklyAPTests(unittest.TestCase):
             extract_ap_poll(bad,AT)
         bad=copy.deepcopy(self.payload)
         bad["rankings"][1]["ranks"][18]["current"]=17
+        # Give the fabricated tie equal voting points so the test reaches
+        # the *rank-skipping* validation rather than failing on points first.
+        bad["rankings"][1]["ranks"][18]["points"]=bad["rankings"][1]["ranks"][16]["points"]
         with self.assertRaisesRegex(ValueError,"competition ranking"):
             extract_ap_poll(bad,AT)
 
