@@ -25,6 +25,9 @@ on:
     # capture. ESPN final status can be newer than the NCAA-derived ratings.
     - cron: "47 22 * 1,2,3,4,11,12 *"
       timezone: "America/New_York"
+    # Monday AP poll comparison after new AP edition snapshot at 18:07 ET.
+    - cron: "47 18 * 1,2,3,4,11,12 1"
+      timezone: "America/New_York"
 permissions:
   contents: read
   actions: read
