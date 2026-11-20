@@ -107,8 +107,23 @@ def extract_ap_poll(payload: dict, captured_at: datetime) -> dict:
         out.append({"apRank": rank, "espnTeamId": team_id,
                     "apName": name, "pollPoints": row.get("points")})
     out.sort(key=lambda t: t["apRank"])
-    if [x["apRank"] for x in out] != list(range(1, 26)):
-        raise ValueError("AP Top 25 ranks must cover exactly 1-25")
+    # A real AP Top 25 may contain ties (e.g. the November 16, 2026
+    # poll tied Michigan and USC at #18, skipping #19). Preserve the
+    # official competition-style ranks, rather than inventing rank 19.
+    # For a tied group of k, the following rank must skip k-1 slots.
+    i=0
+    while i<len(out):
+        rank=out[i]["apRank"]
+        if rank!=i+1:
+            raise ValueError("AP poll ranks violate competition ranking after a tie")
+        j=i+1
+        while j<len(out) and out[j]["apRank"]==rank:
+            j+=1
+        if j-i>1:
+            points=[x["pollPoints"] for x in out[i:j]]
+            if all(p is not None for p in points) and len({str(p) for p in points})!=1:
+                raise ValueError("AP tied ranks have inconsistent vote point totals")
+        i=j
     return {"sourceWeekStart": week_start.isoformat(),
             "sourceWeekNumber": (week.get("number") or
                                  (poll.get("occurrence") or {}).get("number")),
@@ -116,18 +131,37 @@ def extract_ap_poll(payload: dict, captured_at: datetime) -> dict:
             "ranks": out}
 
 
+def _average_ranks(values: list[int]) -> list[float]:
+    """Standard Spearman tie handling: assign the mean occupied rank."""
+    n=len(values)
+    ordered=sorted(range(n),key=lambda i:(values[i],i))
+    output=[0.0]*n
+    start=0
+    while start<n:
+        stop=start+1
+        while stop<n and values[ordered[stop]]==values[ordered[start]]:
+            stop+=1
+        average=(start+1+stop)/2
+        for k in range(start,stop):
+            output[ordered[k]]=average
+        start=stop
+    return output
+
+
 def _spearman(pairs: list[tuple[int, int]]) -> float | None:
-    """Spearman of ranks *within the shared cohort*, never full-pool ranks."""
-    n = len(pairs)
-    if n < 3:
+    """Pearson of matched-cohort average ranks, valid for actual AP ties."""
+    n=len(pairs)
+    if n<3:
         return None
-    ap_order = {key: rank + 1 for rank, (key, _) in
-                enumerate(sorted(pairs))}
-    elo_order = {key: rank + 1 for rank, (key, _) in
-                 enumerate(sorted(pairs, key=lambda p: (p[1], p[0])))}
-    score = 1 - 6 * sum((ap_order[ap] - elo_order[ap]) ** 2
-                        for ap, _ in pairs) / (n * (n * n - 1))
-    return round(score, 5)
+    a=_average_ranks([p[0] for p in pairs])
+    b=_average_ranks([p[1] for p in pairs])
+    mean=(n+1)/2
+    cov=sum((x-mean)*(y-mean) for x,y in zip(a,b))
+    va=sum((x-mean)**2 for x in a)
+    vb=sum((y-mean)**2 for y in b)
+    if va<=0 or vb<=0:
+        return None
+    return round(cov/math.sqrt(va*vb),5)
 
 
 def snapshot(poll: dict, current: dict, games: list[dict],
