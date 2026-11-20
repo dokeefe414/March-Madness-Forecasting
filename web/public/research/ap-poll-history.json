@@ -4,6 +4,461 @@
   "mode": "weekly-AP-vs-Elo-independent-research",
   "pollSourceUrl": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/rankings?groups=50",
   "sourceLandingUrl": "https://www.espn.com/mens-college-basketball/rankings",
-  "weeks": [],
+  "weeks": [
+    {
+      "pollKey": "AP-2027-2026-11-16",
+      "sourceWeekStart": "2026-11-16",
+      "sourceWeekNumber": 3,
+      "capturedAtUtc": "2026-11-20T16:40:34.251766Z",
+      "eloGameCutoffDate": "2026-11-15",
+      "eloModelVersion": "source-aware-game-elo-v2-espn-final",
+      "sourcePollName": "AP Top 25",
+      "ncaaPlusEspnRatedGamesThroughCutoff": 861,
+      "divisionIRatedProgramsAtCutoff": 365,
+      "matchedApTeams": 25,
+      "missingApTeams": 0,
+      "status": "ready",
+      "top25Overlap": 7,
+      "top10Overlap": 1,
+      "meanAbsoluteRankGap": 48.72,
+      "spearmanWithinMatched": 0.27967,
+      "teams": [
+        {
+          "apRank": 1,
+          "apName": "Gators",
+          "espnTeamId": "57",
+          "eloRank": 12,
+          "elo": 1560.1,
+          "eloTeamName": "Florida",
+          "eloGames": 4,
+          "rankGap": 11,
+          "eloTop25": true
+        },
+        {
+          "apRank": 2,
+          "apName": "Spartans",
+          "espnTeamId": "127",
+          "eloRank": 14,
+          "elo": 1558.9,
+          "eloTeamName": "Michigan St.",
+          "eloGames": 4,
+          "rankGap": 12,
+          "eloTop25": true
+        },
+        {
+          "apRank": 3,
+          "apName": "Huskies",
+          "espnTeamId": "41",
+          "eloRank": 39,
+          "elo": 1551.9,
+          "eloTeamName": "UConn",
+          "eloGames": 4,
+          "rankGap": 36,
+          "eloTop25": false
+        },
+        {
+          "apRank": 4,
+          "apName": "Cavaliers",
+          "espnTeamId": "258",
+          "eloRank": 5,
+          "elo": 1567.2,
+          "eloTeamName": "Virginia",
+          "eloGames": 5,
+          "rankGap": 1,
+          "eloTop25": true
+        },
+        {
+          "apRank": 5,
+          "apName": "Blue Devils",
+          "espnTeamId": "150",
+          "eloRank": 129,
+          "elo": 1524.6,
+          "eloTeamName": "Duke",
+          "eloGames": 4,
+          "rankGap": 124,
+          "eloTop25": false
+        },
+        {
+          "apRank": 6,
+          "apName": "Longhorns",
+          "espnTeamId": "251",
+          "eloRank": 35,
+          "elo": 1552.9,
+          "eloTeamName": "Texas",
+          "eloGames": 4,
+          "rankGap": 29,
+          "eloTop25": false
+        },
+        {
+          "apRank": 7,
+          "apName": "Bruins",
+          "espnTeamId": "26",
+          "eloRank": 58,
+          "elo": 1545.0,
+          "eloTeamName": "UCLA",
+          "eloGames": 3,
+          "rankGap": 51,
+          "eloTop25": false
+        },
+        {
+          "apRank": 8,
+          "apName": "Cougars",
+          "espnTeamId": "248",
+          "eloRank": 61,
+          "elo": 1542.7,
+          "eloTeamName": "Houston",
+          "eloGames": 3,
+          "rankGap": 53,
+          "eloTop25": false
+        },
+        {
+          "apRank": 9,
+          "apName": "Red Raiders",
+          "espnTeamId": "2641",
+          "eloRank": 40,
+          "elo": 1551.6,
+          "eloTeamName": "Texas Tech",
+          "eloGames": 4,
+          "rankGap": 31,
+          "eloTop25": false
+        },
+        {
+          "apRank": 10,
+          "apName": "Fighting Illini",
+          "espnTeamId": "356",
+          "eloRank": 91,
+          "elo": 1530.8,
+          "eloTeamName": "Illinois",
+          "eloGames": 4,
+          "rankGap": 81,
+          "eloTop25": false
+        },
+        {
+          "apRank": 11,
+          "apName": "Jayhawks",
+          "espnTeamId": "2305",
+          "eloRank": 46,
+          "elo": 1549.9,
+          "eloTeamName": "Kansas",
+          "eloGames": 3,
+          "rankGap": 35,
+          "eloTop25": false
+        },
+        {
+          "apRank": 12,
+          "apName": "Wildcats",
+          "espnTeamId": "12",
+          "eloRank": 93,
+          "elo": 1530.6,
+          "eloTeamName": "Arizona",
+          "eloGames": 4,
+          "rankGap": 81,
+          "eloTop25": false
+        },
+        {
+          "apRank": 13,
+          "apName": "Red Storm",
+          "espnTeamId": "2599",
+          "eloRank": 32,
+          "elo": 1553.7,
+          "eloTeamName": "St. John's (NY)",
+          "eloGames": 4,
+          "rankGap": 19,
+          "eloTop25": false
+        },
+        {
+          "apRank": 14,
+          "apName": "Volunteers",
+          "espnTeamId": "2633",
+          "eloRank": 75,
+          "elo": 1538.5,
+          "eloTeamName": "Tennessee",
+          "eloGames": 3,
+          "rankGap": 61,
+          "eloTop25": false
+        },
+        {
+          "apRank": 15,
+          "apName": "Commodores",
+          "espnTeamId": "238",
+          "eloRank": 19,
+          "elo": 1556.2,
+          "eloTeamName": "Vanderbilt",
+          "eloGames": 4,
+          "rankGap": 4,
+          "eloTop25": true
+        },
+        {
+          "apRank": 16,
+          "apName": "Crimson Tide",
+          "espnTeamId": "333",
+          "eloRank": 45,
+          "elo": 1550.3,
+          "eloTeamName": "Alabama",
+          "eloGames": 4,
+          "rankGap": 29,
+          "eloTop25": false
+        },
+        {
+          "apRank": 17,
+          "apName": "Hurricanes",
+          "espnTeamId": "2390",
+          "eloRank": 89,
+          "elo": 1531.0,
+          "eloTeamName": "Miami (FL)",
+          "eloGames": 4,
+          "rankGap": 72,
+          "eloTop25": false
+        },
+        {
+          "apRank": 18,
+          "apName": "Wolverines",
+          "espnTeamId": "130",
+          "eloRank": 92,
+          "elo": 1530.8,
+          "eloTeamName": "Michigan",
+          "eloGames": 4,
+          "rankGap": 74,
+          "eloTop25": false
+        },
+        {
+          "apRank": 18,
+          "apName": "Trojans",
+          "espnTeamId": "30",
+          "eloRank": 25,
+          "elo": 1555.7,
+          "eloTeamName": "Southern California",
+          "eloGames": 4,
+          "rankGap": 7,
+          "eloTop25": true
+        },
+        {
+          "apRank": 20,
+          "apName": "Razorbacks",
+          "espnTeamId": "8",
+          "eloRank": 105,
+          "elo": 1527.7,
+          "eloTeamName": "Arkansas",
+          "eloGames": 4,
+          "rankGap": 85,
+          "eloTop25": false
+        },
+        {
+          "apRank": 21,
+          "apName": "Cougars",
+          "espnTeamId": "252",
+          "eloRank": 36,
+          "elo": 1552.7,
+          "eloTeamName": "BYU",
+          "eloGames": 4,
+          "rankGap": 15,
+          "eloTop25": false
+        },
+        {
+          "apRank": 22,
+          "apName": "Bulldogs",
+          "espnTeamId": "2250",
+          "eloRank": 172,
+          "elo": 1513.3,
+          "eloTeamName": "Gonzaga",
+          "eloGames": 3,
+          "rankGap": 150,
+          "eloTop25": false
+        },
+        {
+          "apRank": 23,
+          "apName": "Cardinals",
+          "espnTeamId": "97",
+          "eloRank": 174,
+          "elo": 1512.5,
+          "eloTeamName": "Louisville",
+          "eloGames": 3,
+          "rankGap": 151,
+          "eloTop25": false
+        },
+        {
+          "apRank": 24,
+          "apName": "Cornhuskers",
+          "espnTeamId": "158",
+          "eloRank": 22,
+          "elo": 1556.1,
+          "eloTeamName": "Nebraska",
+          "eloGames": 4,
+          "rankGap": -2,
+          "eloTop25": true
+        },
+        {
+          "apRank": 25,
+          "apName": "Tigers",
+          "espnTeamId": "99",
+          "eloRank": 21,
+          "elo": 1556.1,
+          "eloTeamName": "LSU",
+          "eloGames": 4,
+          "rankGap": -4,
+          "eloTop25": true
+        }
+      ],
+      "eloTop25": [
+        {
+          "eloRank": 1,
+          "team": "Texas St.",
+          "espnTeamId": "326",
+          "elo": 1576.6
+        },
+        {
+          "eloRank": 2,
+          "team": "Virginia Tech",
+          "espnTeamId": "259",
+          "elo": 1574.2
+        },
+        {
+          "eloRank": 3,
+          "team": "Old Dominion",
+          "espnTeamId": "295",
+          "elo": 1573.5
+        },
+        {
+          "eloRank": 4,
+          "team": "High Point",
+          "espnTeamId": "2272",
+          "elo": 1570.8
+        },
+        {
+          "eloRank": 5,
+          "team": "Virginia",
+          "espnTeamId": "258",
+          "elo": 1567.2
+        },
+        {
+          "eloRank": 6,
+          "team": "Santa Clara",
+          "espnTeamId": "2541",
+          "elo": 1566.7
+        },
+        {
+          "eloRank": 7,
+          "team": "Wright St.",
+          "espnTeamId": "2750",
+          "elo": 1565.1
+        },
+        {
+          "eloRank": 8,
+          "team": "Pittsburgh",
+          "espnTeamId": "221",
+          "elo": 1562.8
+        },
+        {
+          "eloRank": 9,
+          "team": "Central Mich.",
+          "espnTeamId": "2117",
+          "elo": 1560.6
+        },
+        {
+          "eloRank": 10,
+          "team": "Rhode Island",
+          "espnTeamId": "227",
+          "elo": 1560.3
+        },
+        {
+          "eloRank": 11,
+          "team": "DePaul",
+          "espnTeamId": "305",
+          "elo": 1560.2
+        },
+        {
+          "eloRank": 12,
+          "team": "Florida",
+          "espnTeamId": "57",
+          "elo": 1560.1
+        },
+        {
+          "eloRank": 13,
+          "team": "Col. of Charleston",
+          "espnTeamId": "232",
+          "elo": 1560.0
+        },
+        {
+          "eloRank": 14,
+          "team": "Michigan St.",
+          "espnTeamId": "127",
+          "elo": 1558.9
+        },
+        {
+          "eloRank": 15,
+          "team": "Houston Christian",
+          "espnTeamId": "2277",
+          "elo": 1558.7
+        },
+        {
+          "eloRank": 16,
+          "team": "CSU Bakersfield",
+          "espnTeamId": "2934",
+          "elo": 1557.5
+        },
+        {
+          "eloRank": 17,
+          "team": "Texas A&M",
+          "espnTeamId": "245",
+          "elo": 1557.0
+        },
+        {
+          "eloRank": 18,
+          "team": "Georgetown",
+          "espnTeamId": "46",
+          "elo": 1556.5
+        },
+        {
+          "eloRank": 19,
+          "team": "Vanderbilt",
+          "espnTeamId": "238",
+          "elo": 1556.2
+        },
+        {
+          "eloRank": 20,
+          "team": "Georgia",
+          "espnTeamId": "61",
+          "elo": 1556.1
+        },
+        {
+          "eloRank": 21,
+          "team": "LSU",
+          "espnTeamId": "99",
+          "elo": 1556.1
+        },
+        {
+          "eloRank": 22,
+          "team": "Nebraska",
+          "espnTeamId": "158",
+          "elo": 1556.1
+        },
+        {
+          "eloRank": 23,
+          "team": "UNCW",
+          "espnTeamId": "350",
+          "elo": 1555.9
+        },
+        {
+          "eloRank": 24,
+          "team": "Utah St.",
+          "espnTeamId": "328",
+          "elo": 1555.8
+        },
+        {
+          "eloRank": 25,
+          "team": "Southern California",
+          "espnTeamId": "30",
+          "elo": 1555.7
+        }
+      ],
+      "limitations": [
+        "AP is a voted ranking, not the truth for game prediction accuracy.",
+        "Elo replay uses only games with dates before the AP edition week. Backfilled game results may have been published after the poll; this is not a time-stamped prospective prediction.",
+        "Unmatched schools are not assigned a fictitious Elo rank; incomplete coverage suppresses agreement metrics.",
+        "Rank comparisons are among source-linked rated 2027 Division I programs, not all rated opponents.",
+        "Existing immutable historical poll comparisons never change after the first successful capture."
+      ]
+    }
+  ],
   "policy": "First valid ESPN-transmitted AP edition is frozen by source week. Compare to before-week Elo replays; source-aligned ESPN IDs only. NOT model training, promotion or independently graded forecast accuracy."
 }
