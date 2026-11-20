@@ -5,18 +5,34 @@
 [![CI](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/ci.yml)
 [![GitHub Pages](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/deploy-pages.yml)
 [![Pregame archive monitor](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml/badge.svg)](https://github.com/dokeefe414/March-Madness-Forecasting26-27/actions/workflows/monitor-archive.yml)
-![Version](https://img.shields.io/badge/release-v2.5%20Daily%20Elo-a6ffce)
+![Version](https://img.shields.io/badge/release-v2.6%20AP%20Poll%20Comparison-a6ffce)
 ![Python](https://img.shields.io/badge/Python-3.12-37709a)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Next.js%2016-3178c6)
 ![Data](https://img.shields.io/badge/NCAA%20data-source%20verified-24bd89)
 
 ### [OPEN GAME CENTER — FIND A REAL GAME](https://dokeefe414.github.io/March-Madness-Forecasting26-27/)
 
-[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [v2.2 forecasting intelligence](docs/v22-forecast-intelligence.md) · [Automation recovery runbook](docs/nightly-recovery-2026-11-18.md) · [Daily ESPN finals and NCAA lag](docs/daily-games-2026-11-19.md) · [v2.5 daily Elo reconciliation](docs/daily-elo-2026-11-19.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
+[Find a Game](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=games) · [Real Accuracy & Picks](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=predictions) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models) · [v0.9 model science](docs/v09-model-validation.md) · [v0.9 operations](docs/v09-forecast-operations.md) · [Game Center](docs/game-center.md) · [Forward accuracy](docs/forward-performance.md) · [State-space research](docs/state-space.md) · [Research models](docs/model-zoo-v06.md) · [Nightly outcome retraining](docs/online-retraining.md) · [Per-game Elo mathematics](docs/game-aware-elo.md) · [v2.2 forecasting intelligence](docs/v22-forecast-intelligence.md) · [Automation recovery runbook](docs/nightly-recovery-2026-11-18.md) · [Daily ESPN finals and NCAA lag](docs/daily-games-2026-11-19.md) · [v2.5 daily Elo reconciliation](docs/daily-elo-2026-11-19.md) · [Weekly AP-vs-Elo method](docs/ap-poll-weekly.md) · [Data quality](docs/identity-and-conferences.md) · [Pregame audit + integrity checks](docs/forecast-audit.md) · [2027 field watchlist](docs/selection-watchlist.md) · [Architecture](docs/architecture.md)
 
 March Forecast is an open-source NCAA men's basketball forecasting and model-evaluation platform. It combines **current source-backed 2026–27 results**, season-by-season rating trajectories, **eight explicitly evaluated forecasting algorithms**, true possession-based team metrics where NCAA box scores exist, a 76-team field-watch scenario, source-timestamped pretipoff prediction tracking, and a historically grounded tournament simulator. The experience is a bespoke, responsive, dark-themed sports analytics studio.
 
 > **Scientific trust is part of the product.** Actual results, historical backtests, NCAA-source team/conference membership, hypothetical selection scenarios, and future pretipoff predictions always have different labels. No invented March participants or scores. No "D-I certified" label from a name match. No promise that a more complex model will win.
+
+---
+
+## v2.6 — AP Top 25 versus Elo: a new independent weekly comparison
+
+**New feature:** Every week, [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models#ap-elo-comparison) compares the 2026–27 Associated Press **men's Top 25** against our own current-season game-aware Elo rankings, using the AP poll carried by ESPN. Historical comparisons accumulate for the season; **no existing main navigation tab is added**.
+
+The dashboard includes **Top-25 overlap, Top-10 overlap, average absolute rank gap, Spearman rank agreement, the full 25-school side-by-side leaderboard, Elo Top-25 outsiders, and a selectable week-by-week trend**. Team matches require independently source-linked season-2027 ESPN IDs, not guessed school names; missing matches are explicitly shown rather than assigned invented ranks.
+
+**A fair comparison:** a poll for week starting Monday is matched to the Elo model **replayed only on games dated through the preceding Sunday**. The first successfully captured comparison for a poll week is frozen in Git (`web/public/research/ap-poll-history.json`), preventing later results or backfilled data from rewriting old agreement numbers. This is a game-date-frozen study, not a retroactive claim that the data was available precisely at poll publication time.
+
+**Automatic update:** the archive checks for new AP poll editions on its existing daily schedule, with a dedicated **Monday 6:07 PM Eastern poll archive** and **6:47 PM Eastern website publication**. If the AP provider hasn't released the new edition yet, scheduled retries will check again; existing comparisons are preserved. Missing or incomplete polls never break daily Elo updates or public first-pick grading.
+
+**Scientific boundary:** AP voters are not an independent game-result ground truth. Greater agreement with the poll does **not** prove lower future Brier error; models are never trained or auto-promoted simply to imitate the AP ranking. Real forecasting skill is still measured from the immutable, independently settled pregame predictions.
+
+[Full AP source, ranking mathematics, fairness policy, GitHub schedule and testing](docs/ap-poll-weekly.md) · [Model Lab](https://dokeefe414.github.io/March-Madness-Forecasting26-27/?view=models#ap-elo-comparison).
 
 ---
 
