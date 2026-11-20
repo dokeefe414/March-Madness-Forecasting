@@ -431,6 +431,19 @@
       "source": "ESPN college basketball STATUS_FINAL and season-2027 provider-authorized team IDs"
     },
     {
+      "away": "Green Bay",
+      "awayEspnTeamId": "2739",
+      "awayScore": 63,
+      "date": "2026-11-20",
+      "eventId": "401909698",
+      "firstObservedAtUtc": "2026-11-20T21:46:01.699158Z",
+      "home": "Florida St.",
+      "homeEspnTeamId": "52",
+      "homeScore": 87,
+      "scheduledStartUtc": "2026-11-20T17:00:00Z",
+      "source": "ESPN college basketball STATUS_FINAL and season-2027 provider-authorized team IDs"
+    },
+    {
       "away": "Villanova",
       "awayEspnTeamId": "222",
       "awayScore": 61,
@@ -1042,6 +1055,19 @@
       "source": "ESPN college basketball STATUS_FINAL and season-2027 provider-authorized team IDs"
     },
     {
+      "away": "Temple",
+      "awayEspnTeamId": "218",
+      "awayScore": 85,
+      "date": "2026-11-20",
+      "eventId": "401916122",
+      "firstObservedAtUtc": "2026-11-20T21:46:01.699158Z",
+      "home": "Middle Tenn.",
+      "homeEspnTeamId": "2393",
+      "homeScore": 76,
+      "scheduledStartUtc": "2026-11-20T17:30:00Z",
+      "source": "ESPN college basketball STATUS_FINAL and season-2027 provider-authorized team IDs"
+    },
+    {
       "away": "Arkansas",
       "awayEspnTeamId": "8",
       "awayScore": 76,
@@ -1572,6 +1598,19 @@
       "homeEspnTeamId": "5",
       "homeScore": 94,
       "scheduledStartUtc": "2026-11-18T00:30:00Z",
+      "source": "ESPN college basketball STATUS_FINAL and season-2027 provider-authorized team IDs"
+    },
+    {
+      "away": "UAB",
+      "awayEspnTeamId": "5",
+      "awayScore": 81,
+      "date": "2026-11-20",
+      "eventId": "401919019",
+      "firstObservedAtUtc": "2026-11-20T21:46:01.699158Z",
+      "home": "George Washington",
+      "homeEspnTeamId": "45",
+      "homeScore": 76,
+      "scheduledStartUtc": "2026-11-20T19:00:00Z",
       "source": "ESPN college basketball STATUS_FINAL and season-2027 provider-authorized team IDs"
     },
     {
@@ -2729,6 +2768,19 @@
       "homeEspnTeamId": "107",
       "homeScore": 60,
       "scheduledStartUtc": "2026-11-15T19:00:00Z",
+      "source": "ESPN college basketball STATUS_FINAL and season-2027 provider-authorized team IDs"
+    },
+    {
+      "away": "Oklahoma St.",
+      "awayEspnTeamId": "197",
+      "awayScore": 70,
+      "date": "2026-11-20",
+      "eventId": "401921418",
+      "firstObservedAtUtc": "2026-11-20T21:46:01.699158Z",
+      "home": "Minnesota",
+      "homeEspnTeamId": "135",
+      "homeScore": 85,
+      "scheduledStartUtc": "2026-11-20T17:30:00Z",
       "source": "ESPN college basketball STATUS_FINAL and season-2027 provider-authorized team IDs"
     },
     {
