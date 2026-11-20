@@ -24,7 +24,7 @@ https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball
 
 ESPN **transmits** AP poll rankings; it is not an independent official
 result or a new game-score provider. The adapter requires exactly
-25 distinct source ESPN IDs, numbered 1–25, and an explicit
+25 distinct source ESPN IDs, using official AP competition-style ranks, and an explicit
 `latestWeek.startDate` or poll-date field provided by ESPN. If there
 is no authoritative poll edition, the previous frozen weeks remain
 visible and a missing poll is *not invented*. Other rankings (Coaches,
@@ -76,9 +76,7 @@ For every AP-ranked team (25 rows) show:
 - **Top-10 overlap:** number appearing in BOTH Top-10 lists out of 10.
 - **Mean absolute rank gap:** average |AP − Elo overall D-I rank|
   among the matched AP poll teams.
-- **Spearman rank correlation:** Spearman for the same matched AP
-  team cohort, re-ranked *within* that cohort; never pretend the Elo
-  rank values 1..N are a 25-team Spearman reference distribution.
+- **Spearman rank correlation:** tie-aware Spearman on matched AP teams, using average ranks for any authentic AP ties (or Elo ties). We never treat the full-pool 1..N Elo ranks as direct matched-cohort Spearman rank positions.
 - Highest-ranked 2027 Elo schools outside the AP Top 25.
 - Historical week-over-week agreement bars, selectable week archive
   and a large-gap filter.
@@ -160,3 +158,8 @@ that an early-season Elo has not learned. It is **not automatically a
 model mistake**, and closely tracking AP is **not automatically better**
 for predicting the March tournament. To answer the latter, compare
 prospectively frozen probabilities to actual independently settled games.
+
+
+### Actual November 16, 2026 AP ranking tie
+
+This week's genuine AP Top 25 has Michigan and USC **both at No. 18** (341 voting points each); there is no No. 19. A naive 1–25-unique-rank parser would reject this valid poll, and a naive rank-correlation implementation could overwrite one of the tied teams. The parser now enforces **competition ranking** (after a k-way tie, skip the next k-1 numerical positions), verifies equal AP points for a reported tie when points are available, and retains both schools with their original rank. Spearman is calculated with standard mean ranks for tied values. These checks are covered by source-shaped regression fixtures in `test_ap_poll.py`.
