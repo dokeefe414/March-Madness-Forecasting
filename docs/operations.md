@@ -180,3 +180,17 @@ The pregame workflow now runs when its own definition changes on main, in additi
 ## v1.3 verified capture operations dashboard
 
 The Pages rebuild publishes `current/operations.json` from source-controlled immutable prediction snapshots and final settlements. This file exposes archive capture age, source coverage, ambiguous ESPN fixture identities, repeated before-tipoff snapshots, unique ESPN events, independently settled game IDs and unresolved older-than-48h entries. The checklist is descriptive: old listed tipoff does **not** prove a game completed. When an ESPN event with the same ID appears in refreshed scoreboard data with a changed time, the original forecast is not edited; `archiveHealth.observedScheduleChanges` records a review warning. A changed date can prevent settlement because the original settlement rules refuse to invent a consistent result. Inspect [the v1.3 recovery and chronology guide](v13-research-tournament-operations.md) before intervening. The GitHub monitor remains independent of a successful Pages deployment and CI success is not evidence of actual prospective skill.
+
+
+## AP poll: independent Monday research schedule
+
+No new navigation, worker, paid API key, or additional persistent service
+is needed. `archive-pregame.yml` reuses the accepted current-season
+Elo/game inputs, fetches ESPN's **AP-only** basketball rankings, freezes
+the first valid source poll edition against a Sunday-cutoff Elo replay,
+and safely commits `web/public/research/ap-poll-history.json`. Weekly
+Monday 18:07 ET archival and 18:47 ET Pages publishing complement the
+existing daily jobs, which retry if AP is delayed. The site reads the
+committed JSON under Model Lab; a missing poll is visibly pending.
+First-pick win/loss grading is completely separate; see
+[weekly AP method and controls](ap-poll-weekly.md).
