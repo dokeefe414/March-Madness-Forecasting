@@ -154,6 +154,38 @@ class WeeklyAPTests(unittest.TestCase):
         self.assertEqual(len(later["weeks"]),2)
         self.assertEqual(h["weeks"],[original])
 
+
+    def test_actual_november_16_ap_tie_18_is_preserved_without_made_up_rank_19(self):
+        # November 16, 2026 source poll had Michigan and USC tied for
+        # No. 18 with 341 points; official No. 19 was skipped.
+        source=copy.deepcopy(self.payload)
+        ranked=source["rankings"][1]["ranks"]
+        ranked[17]["points"]=341
+        ranked[18]["current"]=18
+        ranked[18]["points"]=341
+        ap=extract_ap_poll(source,AT)
+        self.assertEqual([p["apRank"] for p in ap["ranks"][17:20]],[18,18,20])
+        result=snapshot(ap,self.rating,self.records,AT)
+        self.assertEqual(result["matchedApTeams"],25)
+        self.assertEqual(result["top25Overlap"],25)
+        self.assertEqual([x["apRank"] for x in result["teams"][17:20]],[18,18,20])
+        self.assertIsNotNone(result["spearmanWithinMatched"])
+        self.assertGreater(result["spearmanWithinMatched"],.95)
+
+    def test_invalid_rank_skip_or_false_vote_tie_is_rejected(self):
+        bad=copy.deepcopy(self.payload)
+        bad["rankings"][1]["ranks"][18]["current"]=18
+        with self.assertRaisesRegex(ValueError,"inconsistent vote"):
+            extract_ap_poll(bad,AT)
+        bad=copy.deepcopy(self.payload)
+        bad["rankings"][1]["ranks"][18]["current"]=17
+        with self.assertRaisesRegex(ValueError,"competition ranking"):
+            extract_ap_poll(bad,AT)
+
+    def test_spearman_tie_aware_and_never_overwrites_one_school(self):
+        self.assertAlmostEqual(_spearman([(1,1),(2,2),(2,3),(4,4)]),.94868,places=4)
+        self.assertAlmostEqual(_spearman([(1,4),(2,3),(2,2),(4,1)]),-.94868,places=4)
+
     def test_early_week_without_games_is_explicitly_incomplete(self):
         altered=copy.deepcopy(self.ap)
         altered["sourceWeekStart"]="2026-11-02"
