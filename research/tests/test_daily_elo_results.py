@@ -115,7 +115,13 @@ class DailyRatingTests(unittest.TestCase):
         self.assertEqual(len(replay),1)
         self.assertEqual(report["ratedEspnOnlyFinals"],0)
         self.assertEqual(report["rejectedOrReconciled"]["changedVerifiedEspnScore"],1)
-        self.assertEqual(stored,saved)
+        self.assertEqual(stored["receipts"],saved["receipts"])
+        self.assertEqual(stored["quarantinedEventIds"],["401-2"])
+        # The disputed ESPN final stays quarantined on subsequent refreshes
+        # after it leaves the provider's seven-day rolling lookback.
+        again,details,_=merge_games(NCAA,[],RATINGS,stored,observed=NOW)
+        self.assertEqual(len(again),1)
+        self.assertEqual(details["ratedEspnOnlyFinals"],0)
 
     def test_unverified_espn_game_does_not_train_model(self):
         unverified=provider(event(status="STATUS_SCHEDULED",completed=False))
